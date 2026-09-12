@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Your Name — Product Designer</title>
+  <meta name="description" content="Portfolio of a product designer working across research, interface design and design systems." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <a class="wordmark" href="#top">
+      <span class="wordmark__mark" aria-hidden="true"></span>
+      <span>Your Name</span>
+    </a>
+    <nav aria-label="Primary">
+      <a href="#work">Work</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- ─────────────────────────  HERO  ───────────────────────── -->
+    <section class="hero" id="top">
+      <div class="hero__text">
+        <h1 class="display">Your Name.</h1>
+        <p class="lede">
+          <strong>Senior product designer.</strong>
+          8 years across healthcare, fintech and developer tools.
+          MSc in Human&#8209;Computer Interaction.
+        </p>
+
+        <div class="previously">
+          <h2 class="eyebrow" id="prev-label">Previously at</h2>
+          <ul class="logos" aria-labelledby="prev-label">
+            <li>Company One</li>
+            <li>Company Two</li>
+            <li>Company Three</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="hero__companion">
+        <figure class="companion">
+          <div class="companion__halo" aria-hidden="true"></div>
+          <!-- Original character drawn as inline SVG. Expressions swap on interaction. -->
+          <svg class="companion__art" viewBox="0 0 220 240" role="img"
+               aria-labelledby="companion-title" data-companion>
+            <title id="companion-title">A small round drawn character</title>
+            <g fill="none" stroke="currentColor" stroke-width="4"
+               stroke-linecap="round" stroke-linejoin="round">
+              <path class="companion__body" fill="var(--skin)"
+                    d="M110 26c40 0 66 30 66 68 0 34-24 58-66 58s-66-24-66-58c0-38 26-68 66-68z" />
+              <path d="M74 34c-9-9-22-9-27 0-4 8 2 18 14 22" />
+              <path class="companion__antenna" d="M146 34c9-9 22-9 27 0 4 8-2 18-14 22" />
+              <g class="companion__eyes">
+                <circle cx="90" cy="92" r="6" fill="currentColor" />
+                <circle cx="132" cy="92" r="6" fill="currentColor" />
+              </g>
+              <path class="companion__mouth" d="M96 118c8 8 20 8 28 0" />
+              <path d="M84 152v54M110 154v58M136 152v54" />
+              <path d="M78 206h12M104 212h12M130 206h12" />
+            </g>
+          </svg>
+          <figcaption class="companion__caption">
+            <span data-companion-name>Say hello</span>
+          </figcaption>
+        </figure>
+        <button class="button" type="button" data-companion-button>
+          <span aria-hidden="true">◇</span> Change its mood
+        </button>
+      </div>
+    </section>
+
+    <!-- ─────────────────────────  WORK  ───────────────────────── -->
+    <section class="section" id="work">
+      <div class="section__head">
+        <h2 class="eyebrow">Selected work</h2>
+        <p class="section__count">3</p>
+      </div>
+
+      <ol class="cases">
+        <li class="case">
+          <a class="case__link" href="#work">
+            <div class="case__meta">
+              <span class="case__year">2025</span>
+              <span class="case__tag">Product design</span>
+            </div>
+            <h3 class="case__title">A short, plain title for the project</h3>
+            <p class="case__blurb">
+              One or two sentences on the problem, what you changed and the result.
+              Lead with the outcome, not the process.
+            </p>
+            <span class="case__cta">Read the case study</span>
+          </a>
+        </li>
+
+        <li class="case">
+          <a class="case__link" href="#work">
+            <div class="case__meta">
+              <span class="case__year">2024</span>
+              <span class="case__tag">Design systems</span>
+            </div>
+            <h3 class="case__title">The second project, named for its outcome</h3>
+            <p class="case__blurb">
+              Keep every blurb to a similar length. Uneven cards make the page
+              feel unfinished.
+            </p>
+            <span class="case__cta">Read the case study</span>
+          </a>
+        </li>
+
+        <li class="case">
+          <a class="case__link" href="#work">
+            <div class="case__meta">
+              <span class="case__year">2023</span>
+              <span class="case__tag">Research</span>
+            </div>
+            <h3 class="case__title">The third project goes here</h3>
+            <p class="case__blurb">
+              Three strong pieces beat eight weak ones. Cut anything you would
+              not want to be asked about in an interview.
+            </p>
+            <span class="case__cta">Read the case study</span>
+          </a>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ─────────────────────────  ABOUT  ──────────────────────── -->
+    <section class="section" id="about">
+      <div class="section__head">
+        <h2 class="eyebrow">About</h2>
+      </div>
+      <div class="prose">
+        <p>
+          Open with the thing that makes you different. Two or three sentences,
+          written the way you would say them out loud.
+        </p>
+        <p>
+          Then say what you are looking for now, and what kind of team you do
+          your best work in. Finish with something human.
+        </p>
+      </div>
+    </section>
+
+    <!-- ────────────────────────  CONTACT  ─────────────────────── -->
+    <section class="section section--contact" id="contact">
+      <div class="section__head">
+        <h2 class="eyebrow">Contact</h2>
+      </div>
+      <p class="contact__pitch">Working on something interesting?</p>
+      <ul class="contact__links">
+        <li><a href="mailto:you@example.com">you@example.com</a></li>
+        <li><a href="https://www.linkedin.com/">LinkedIn</a></li>
+        <li><a href="#top">Résumé</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>© <span data-year>2026</span> Your Name</p>
+    <p>Designed and built with care.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
