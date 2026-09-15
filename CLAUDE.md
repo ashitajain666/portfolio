@@ -64,3 +64,68 @@ anything on this list needs a real reason before it goes in.
 
 **The test:** if you could swap the company name, change the accent colour, and
 sell the same screen to 500 other startups, it is slop. Start again.
+
+---
+
+# Second list: where slop shows up
+
+The first four groups are tells of AI-generated interfaces. The last is slop in
+how AI features get added to products.
+
+**Visual styling**
+- Purple-to-blue or indigo-to-pink gradients on hero text, buttons and
+  backgrounds, with no connection to the brand.
+- Glassmorphism cards with backdrop blur floating over blurry gradient orbs.
+- Inter or a system sans everywhere, at a single weight, with no typographic
+  hierarchy beyond size.
+- Uniform rounded-2xl corners on every element, from buttons to modals to
+  avatars.
+- Soft glows, neon borders and drop shadows stacked on the same component.
+- Dark mode with near-black backgrounds and low-contrast grey text that fails
+  WCAG.
+- Emoji or generic Lucide icons as section markers in place of real visual
+  language.
+
+**Layout**
+- The default landing stack: centered hero, three feature cards, logo strip,
+  testimonials, pricing tiers, FAQ accordion, footer.
+- Everything centered, including long paragraphs that should be left-aligned.
+- Three-column card grids where each card has an icon, a bold two-word title
+  and one vague sentence.
+- Bento grids for content with no reason to be tiled.
+- Identical vertical spacing between every section, so nothing groups and
+  nothing breathes.
+- Dashboards full of stat cards showing "+12.5%" trends that answer no real
+  question.
+
+**Copy and content**
+- Headlines like "Unlock the power of…", "Supercharge your workflow",
+  "Seamless, intuitive, powerful."
+- Placeholder names and data that look real but are generic (Sarah Chen,
+  Acme Corp, $12,345).
+- Fake testimonials and invented metrics ("Trusted by 10,000+ teams").
+- Feature descriptions that restate the title in more words.
+- Button labels like "Get Started" everywhere, regardless of the action.
+
+**Components and interaction**
+- Hover effects on non-interactive elements — cards that lift but don't link.
+- Scroll-triggered fade-ups on every section.
+- Toasts, badges and "New" pills used decoratively.
+- Tabs, toggles and dropdowns with no defined empty, loading, error or edge
+  states.
+- Forms that look complete but lack validation, helper text or accessible
+  labels.
+- Components that look consistent but come from no real system, so padding and
+  sizes drift between screens.
+
+**AI feature slop in products**
+- The sparkle icon as the universal "AI lives here" signifier.
+- A chat panel bolted onto a workflow better served by inline assistance.
+- "Ask AI anything" empty states with no guidance on what the system can do.
+- Streaming text animations as theatre, even for short deterministic output.
+- Confident outputs with no sources, confidence cues or path to verify.
+- "Summarize" and "Improve with AI" buttons everywhere, with no job to be done.
+- Missing undo, diff or review steps before AI changes are applied.
+
+The common thread is surface polish without decisions behind it. Everything
+looks finished, but nothing reflects a specific user, constraint or brand.
