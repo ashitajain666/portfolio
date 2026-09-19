@@ -129,3 +129,25 @@ how AI features get added to products.
 
 The common thread is surface polish without decisions behind it. Everything
 looks finished, but nothing reflects a specific user, constraint or brand.
+
+---
+
+# Writing rules
+
+## No metaphors. Plain English.
+
+Ashita's standing instruction, and it applies to every word on the site:
+headlines, body copy, captions, button labels, alt text.
+
+- Say the thing literally. No figures of speech, no imagery, no analogies.
+- Avoid: "stood between", "the room", "burn them out", "the experts were the
+  product", "a way in", "tension", "think of it as", "under the reader's thumb".
+- Prefer the ordinary word: problem, not tension. Cost, not price tag. Limit,
+  not ceiling. People did not interact, not "nobody spoke into the void".
+- Short sentences. Concrete nouns. Ordinary verbs.
+- Do not write a sentence for rhythm. If a clause carries no information,
+  delete it.
+- Copy should sound like someone explaining their work to a colleague, not
+  like a brand voice.
+
+Quotes attributed to a real person are left as written.
