@@ -151,3 +151,9 @@ headlines, body copy, captions, button labels, alt text.
   like a brand voice.
 
 Quotes attributed to a real person are left as written.
+
+## No em dashes
+
+Ashita's standing instruction. Never use an em dash (— or &mdash;) in any
+visible text on the site. Rewrite the sentence instead: split it in two, or
+use a comma or a colon.
