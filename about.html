@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="About Ashita Jain: engineer turned UX designer, nine years in the work, mentoring designers, running marathons and pointing a telescope at the moon.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23faf7f5'/%3E%3Crect x='3' y='3' width='11' height='11' fill='none' stroke='%2334303a' stroke-width='2'/%3E%3Crect x='18' y='3' width='11' height='11' fill='%2334303a'/%3E%3Crect x='3' y='18' width='11' height='11' fill='%2334303a'/%3E%3Crect x='18' y='18' width='11' height='11' fill='none' stroke='%2334303a' stroke-width='2'/%3E%3C/svg%3E">
+<title>About Ashita Jain</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@200;300;400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #faf7f5;
+    --ink: #34303a;
+    --mid: #6b6571;
+    --light: #736d79;
+    --rule: #e6e0e2;
+    --cell-border: #ddd5dd;
+    --cell-filled: #f7f5f7;
+    --pur: #5b4fb8;
+    --pur-soft: #b9b0ee;
+    --pur-pale: #e5e2fa;
+    --pink: #f5cfe0;
+    --linen: #fff1e6;
+    --mint: #e2ece9;
+    --peri: #dfe7fd;
+    --blush: #fde2e4;
+    --lav: #eae4e9;
+    --hand: 'Patrick Hand', cursive;
+  }
+  * { box-sizing: border-box; }
+  figure { margin: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    overflow-x: clip;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { width: min(1160px, 100% - 48px); margin-inline: auto; }
+
+  /* ---- nav, the same chrome as the case studies ---- */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; justify-content: space-between; align-items: center;
+    padding-block: 20px;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(9px);
+    border-bottom: 1px solid transparent;
+  }
+  nav.stuck { border-bottom-color: var(--rule); }
+  .nav-brand {
+    display: inline-flex; align-items: center; gap: 11px;
+    font-size: 14px; font-weight: 500; letter-spacing: 0.04em;
+    color: var(--ink); text-decoration: none;
+  }
+  .nav-brand:hover { color: var(--mid); }
+  .monogram { display: grid; grid-template-columns: repeat(2, 13px); grid-auto-rows: 13px; gap: 1.5px; }
+  .monogram i {
+    display: grid; place-items: center;
+    border: 1px solid var(--ink);
+    font-style: normal; font-size: 8px; font-weight: 600;
+  }
+  .monogram i.fill { background: var(--ink); border-color: var(--ink); }
+  nav .back { font-size: 13.5px; color: var(--mid); text-decoration: none; }
+  nav .back:hover { color: var(--ink); }
+
+  /* ---- hero ---- */
+  .hero { display: grid; grid-template-columns: 440px minmax(0, 1fr); gap: 0 72px; align-items: center; padding: 56px 0 24px; }
+  .shot { position: relative; }
+  .shot .frame {
+    position: relative;
+    background: var(--pink);
+    padding: 26px 22px;
+    transform: rotate(-1.6deg);
+    box-shadow: 0 22px 50px rgba(52,48,58,.13);
+  }
+  .shot img { width: 100%; height: auto; aspect-ratio: 4 / 4.4; object-fit: cover; object-position: 50% 12%; display: block; }
+  .shot .tape {
+    position: absolute; z-index: 2;
+    width: 104px; height: 28px;
+    background: rgba(255,255,255,.62);
+    box-shadow: 0 1px 3px rgba(52,48,58,.12);
+  }
+  .shot .tape.a { left: -18px; top: 16px; transform: rotate(-32deg); }
+  .shot .tape.b { right: -20px; bottom: 34px; transform: rotate(-28deg); }
+  .shot .me {
+    position: absolute; right: -34px; bottom: -30px; z-index: 3;
+    width: 172px; background: #fff; padding: 8px;
+    box-shadow: 0 16px 34px rgba(52,48,58,.18);
+    transform: rotate(3.5deg);
+  }
+  .shot .me img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; object-position: 50% 22%; display: block; }
+  .shot figcaption {
+    font-family: var(--hand); font-size: 15.5px; color: var(--mid);
+    margin: 20px 0 0 14px; transform: rotate(-1.5deg);
+  }
+
+  h1 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 400; font-size: clamp(46px, 5.4vw, 74px);
+    line-height: 1.02; letter-spacing: -0.02em; margin: 0;
+  }
+  .role { font-size: 15px; color: var(--mid); margin: 16px 0 0; }
+  .role b { font-weight: 500; color: var(--ink); }
+  .hero p.lede { font-size: 16.5px; line-height: 1.75; margin: 26px 0 0; max-width: 48ch; }
+  .hero p.lede + p.lede { margin-top: 18px; }
+  .hi { font-family: var(--hand); font-size: 18px; color: var(--pur); margin: 0 0 6px; }
+
+  /* ---- section chrome ---- */
+  section { padding-block: 84px; }
+  .kicker {
+    display: flex; align-items: center; gap: 16px;
+    font-family: 'DM Mono', monospace; font-size: 11.5px;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--light);
+    margin: 0 0 34px;
+  }
+  .kicker::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+  h2 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 400; font-size: clamp(30px, 3.2vw, 44px);
+    line-height: 1.14; letter-spacing: -0.01em; margin: 0;
+  }
+  h2 em { font-style: normal; color: var(--pur); }
+
+  /* ---- the route: five stops on a drawn line ---- */
+  .route { position: relative; margin-top: 46px; }
+  .route svg.line { position: absolute; left: 0; top: -2px; width: 100%; height: 40px; color: var(--pur-soft); }
+  .route svg.line path { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 1 7; }
+  .stops { list-style: none; margin: 0; padding: 0; position: relative; display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
+  .stop { text-align: center; }
+  .stop .cells { display: flex; justify-content: center; gap: 2px; margin-bottom: 20px; }
+  .stop .cells i {
+    width: 26px; height: 26px; display: grid; place-items: center;
+    border: 1.2px solid var(--cell-border); background: #fff;
+    font-style: normal; font-size: 12px; font-weight: 600; color: var(--ink);
+  }
+  .stop.now .cells i { background: var(--pur-pale); border-color: var(--pur-soft); color: var(--pur); }
+  .stop .yr { font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--light); letter-spacing: 0.06em; }
+  .stop b { display: block; font-size: 15px; font-weight: 500; margin-top: 4px; }
+  .stop span { display: block; font-size: 13.5px; color: var(--mid); margin-top: 2px; }
+
+  /* ---- design, for me ---- */
+  .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 72px; align-items: start; }
+  .two p { font-size: 16px; margin: 0; }
+  .two p + p { margin-top: 16px; }
+
+  .beliefs { list-style: none; margin: 46px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
+  .beliefs li {
+    position: relative;
+    background: var(--tone);
+    padding: 26px 26px 28px;
+    transform: rotate(var(--rot));
+  }
+  .beliefs .word { display: flex; gap: 2px; margin-bottom: 16px; }
+  .beliefs .word i {
+    width: 25px; height: 25px; display: grid; place-items: center;
+    background: rgba(255,255,255,.75); border: 1.2px solid rgba(52,48,58,.14);
+    font-style: normal; font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
+  }
+  .beliefs p {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 25px; line-height: 1.24; margin: 0; letter-spacing: -0.005em;
+  }
+
+  /* ---- mentoring ---- */
+  .mentor { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 0 72px; align-items: center; }
+  .mentor p { font-size: 16.5px; margin: 0; max-width: 46ch; }
+  .tally { display: grid; gap: 14px; }
+  .tally div { display: flex; align-items: baseline; gap: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--rule); }
+  .tally b { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 34px; font-weight: 500; line-height: 1; color: var(--pur); }
+  .tally span { font-size: 13.5px; color: var(--mid); }
+
+  .talks { display: grid; grid-template-columns: 1.55fr 1fr; gap: 26px; margin-top: 48px; }
+  .talks .pin img { aspect-ratio: 3 / 2; }
+  .talks .pin:nth-child(2) img { object-position: 62% 50%; }
+
+  /* ---- off the clock ---- */
+  .wall { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px 24px; margin-top: 46px; }
+  .pin { position: relative; }
+  .pin .ph {
+    display: block; background: #fff; padding: 9px 9px 9px;
+    box-shadow: 0 14px 30px rgba(52,48,58,.13);
+    transform: rotate(var(--rot));
+  }
+  .pin img, .pin video { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; display: block; }
+  .pin figcaption {
+    font-family: var(--hand); font-size: 14.5px; color: var(--mid);
+    text-align: center; margin-top: 12px; transform: rotate(var(--rot));
+  }
+  .pin.tall { grid-column: span 2; }
+
+  /* ---- close ---- */
+
+  @media (max-width: 1000px) {
+    .hero { grid-template-columns: 1fr; gap: 40px; }
+    .shot { max-width: 420px; }
+    .two, .mentor { grid-template-columns: 1fr; gap: 28px; }
+    .beliefs { grid-template-columns: 1fr; }
+    .wall { grid-template-columns: repeat(3, 1fr); }
+    .talks { grid-template-columns: 1fr; }
+    .shot .me { width: 140px; right: -16px; }
+    .stops { grid-template-columns: repeat(3, 1fr); gap: 34px 20px; }
+    .route svg.line { display: none; }
+  }
+  @media (max-width: 620px) {
+    .wrap { width: calc(100% - 32px); }
+    section { padding-block: 60px; }
+    .wall { grid-template-columns: repeat(2, 1fr); }
+    .shot .me { width: 104px; right: 4px; bottom: -14px; }
+    .shot .tape.a { left: -6px; }
+    .shot .tape.b { right: -6px; }
+    .pin.tall { grid-column: span 2; }
+    .stops { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+  /* ---------------------------------------------------------------
+     Footer: the last puzzle. One composition on a fixed canvas,
+     scaled to the viewport.
+     ------------------------------------------------------------- */
+  .ftr {
+    --u: 52px;
+    --cw: 1160px;
+    --ch: 486px;
+    --s: 1;
+    --hand: 'Patrick Hand', cursive;
+    --pur: #5b4fb8;
+    --pur-soft: #b9b0ee;
+    --pur-pale: #e5e2fa;
+    position: relative;
+    margin-top: 96px;
+    padding: 24px 0 0;
+    color: var(--ink);
+  }
+  .ftr::before {
+    content: "";
+    position: absolute; inset: 0;
+    left: calc(50% - 50vw); right: calc(50% - 50vw);
+    background: #e3e7fb url(img/sky.webp) center / cover no-repeat;
+    pointer-events: none;
+  }
+  .ftr::after {
+    content: "";
+    position: absolute; inset: 0;
+    left: calc(50% - 50vw); right: calc(50% - 50vw);
+    background:
+      linear-gradient(rgba(52,48,58,.07) 1px, transparent 1px) 0 0 / var(--u) var(--u),
+      linear-gradient(90deg, rgba(52,48,58,.07) 1px, transparent 1px) 0 0 / var(--u) var(--u),
+      rgba(255,255,255,.18);
+    pointer-events: none;
+  }
+  .ftr-stage { position: relative; z-index: 1; height: calc(var(--ch) * var(--s)); }
+  .ftr-canvas {
+    position: absolute; left: 50%; top: 0;
+    width: var(--cw); height: var(--ch);
+    margin-left: calc(var(--cw) / -2);
+    transform: scale(var(--s)); transform-origin: 50% 0;
+  }
+  .ftr-canvas > * { position: absolute; }
+
+  /* handwriting */
+  .fhand { font-family: var(--hand); color: var(--ink); line-height: 1.32; margin: 0; }
+  .fhand.thanks { left: 236px; top: 14px; font-size: 18px; transform: rotate(-4deg); }
+  .fhand.thanks svg { position: absolute; left: 150px; top: 44px; width: 56px; height: 40px; }
+  .fhand.clue { left: 150px; top: 640px; font-size: 17.5px; width: 220px; }
+  .fhand.clue small { display: block; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .1em; color: var(--pur); opacity: .8; margin-bottom: 4px; }
+  .fhand.clue svg { position: absolute; left: -20px; top: -50px; width: 60px; height: 44px; transform: scaleX(-1); }
+  .fhand svg path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* headline wrapping the puzzle */
+  .ftr h2 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 400; font-size: 46px; line-height: 1; letter-spacing: -0.01em; margin: 0; color: var(--ink); white-space: nowrap; }
+  .ftr h2 { font-size: 40px; line-height: 1.08; letter-spacing: -0.015em; }
+  .ftr h2 .em { font-style: normal; color: #6f6296; }
+  .ftr h2.l1 { left: var(--x0); top: calc(var(--y0) + var(--u) * 3 - 58px); }
+  .ftr h2 .em { font-size: 19px; margin-left: 5px; }
+
+  /* crossword cells, absolutely placed */
+  .fcw { --x0: 380px; --y0: -6px; }
+  .fside { display: contents; }
+  .fw {
+    position: absolute;
+    left: calc(var(--x0) + var(--c) * var(--u)); top: calc(var(--y0) + var(--r) * var(--u));
+    display: flex;
+  }
+  .fw.d { flex-direction: column; }
+  .fw i {
+    position: relative;
+    width: var(--u); height: var(--u); box-sizing: border-box;
+    border: 1.5px solid var(--cell-border); background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-style: normal; font-weight: 400; font-size: calc(var(--u) * 0.42);
+    letter-spacing: .04em; color: #9b95a3;
+  }
+  .fw.k i {
+    background: var(--pur-pale); border-color: var(--pur-soft); color: var(--pur); font-weight: 600;
+    width: calc(var(--u) - 6px); height: calc(var(--u) - 6px); margin: 3px;
+  }
+
+  /* 4 down: the empty answer, which is the email link */
+  .fmail {
+    position: absolute;
+    left: calc(var(--x0) + var(--u) * -6 - 8px); top: calc(var(--y0) + var(--u) * 7 - 8px);
+    width: calc(var(--u) + 16px); height: calc(var(--u) * 5 + 16px);
+    border: 2px solid rgba(91,79,184,.35); border-radius: 12px;
+    box-sizing: border-box; padding: 6px;
+    text-decoration: none; color: var(--pur);
+    display: grid; grid-auto-rows: var(--u);
+    background: rgba(255,255,255,.35);
+    transition: background .3s, border-color .3s;
+  }
+  .fmail i {
+    position: relative; width: var(--u); height: var(--u); box-sizing: border-box;
+    border: 2px dashed var(--pur-soft); background: #fbfaff; margin-top: -2px;
+    display: flex; align-items: center; justify-content: center;
+    font-style: normal; font-weight: 600; font-size: 22px; letter-spacing: .04em;
+  }
+  .fmail i b { opacity: 0; transform: translateY(6px); transition: opacity .25s ease, transform .3s ease; transition-delay: calc(var(--i) * 70ms); font-weight: inherit; }
+  .fmail i small { position: absolute; top: 3px; left: 5px; font-size: 10px; color: var(--light); }
+  .fmail:hover, .fmail:focus-visible { border-color: var(--pur); background: rgba(255,255,255,.7); outline: none; }
+  .fmail:hover i, .fmail:focus-visible i { border-style: solid; background: var(--pur-pale); }
+  .fmail:hover i b, .fmail:focus-visible i b { opacity: 1; transform: none; }
+
+  /* yoga clue and the LinkedIn entry */
+  .fcta { left: var(--x0); top: 224px; }
+  .fcta .lede { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 22px; line-height: 1.32; letter-spacing: .004em; color: var(--mid); margin: 0 0 18px; }
+  .fcta .ask { font-family: var(--hand); font-size: 17px; color: var(--ink); margin: 0 0 13px; }
+  .fcta .row { display: flex; align-items: center; gap: 12px; }
+  .fcta .arr { width: 34px; height: 34px; color: var(--mid); flex: none; }
+  .fcta .arr path { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .flink {
+    position: static;
+    display: inline-flex; align-items: center; gap: 9px;
+    height: 46px; padding: 0 22px; border-radius: 0;
+    font-size: 14px; font-weight: 500; text-decoration: none;
+    border: 1.5px solid var(--pur); color: var(--pur);
+    transition: background .2s, color .2s, transform .2s;
+  }
+  .flink svg { width: 15px; height: 15px; }
+  .flink.mail { background: var(--pur); color: #fff; border-color: var(--pur); }
+  .flink.mail:hover { background: #4b40a0; transform: translateY(-2px); }
+  .flink:not(.mail) { background: transparent; }
+  .flink:not(.mail):hover { background: var(--pur-pale); transform: translateY(-2px); }
+
+  /* the weakness note */
+  .fcopy { font-family: var(--hand); font-size: 15px; color: var(--pur); opacity: 0; transform: translateX(-6px); transition: opacity .25s ease, transform .25s ease; white-space: nowrap; }
+  .fcopy.on { opacity: 1; transform: none; }
+  .fnote { display: none; right: 0; top: 0; width: 200px; padding: 16px 18px 20px; background: #fffbea; box-shadow: 0 8px 22px rgba(52,48,58,.10); transform: rotate(2deg); font-family: var(--hand); font-size: 17.5px; line-height: 1.3; color: var(--ink); }
+  .fnote b { display: block; font-weight: 400; font-size: 14.5px; color: var(--mid); margin-bottom: 2px; }
+
+  /* scattered blocks on the paper */
+  .fdeco i { position: absolute; width: var(--u); height: var(--u); left: calc(var(--c) * var(--u)); top: calc(var(--r) * var(--u)); background: #fff; opacity: .8; }
+  .fdeco i.l { background: var(--pur-pale); }
+  .fdeco i.h { background: repeating-linear-gradient(135deg, rgba(91,79,184,.16) 0 1.5px, transparent 1.5px 7px); opacity: .7; }
+
+  .ftr-bar { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 10px; padding-bottom: 26px; font-size: 13px; color: var(--mid); }
+  @media (max-width: 620px) { .ftr-bar { flex-direction: column; align-items: flex-start; gap: 10px; padding-bottom: 22px; } }
+  .ftr-bar .thanks { font-family: var(--hand); font-size: 17px; color: var(--pur); }
+  .ftr-bar .up { color: var(--mid); text-decoration: none; }
+  .ftr-bar .up:hover { color: var(--ink); }
+
+
+  @media (max-width: 760px) {
+    .ftr { --u: 40px; padding: 8px 0 0; }
+    .ftr-stage { height: auto; }
+    .ftr-canvas {
+      position: static; width: auto; height: auto; margin: 0;
+      transform: none;
+      display: flex; flex-direction: column; align-items: flex-start;
+    }
+    .ftr-canvas > * { position: static; }
+    .fdeco { display: none; }
+    .fhand.thanks { order: 1; margin: 0 0 16px 2px; font-size: 17px; transform: rotate(-3deg); }
+    .fhand.thanks svg { display: none; }
+    .ftr h2.l1 { order: 2; font-size: clamp(30px, 8.5vw, 40px); margin: 0 0 14px; white-space: normal; }
+    .ftr h2 .em { font-size: 0.5em; margin-left: 4px; }
+    .fw.k { order: 3; margin-bottom: 30px; }
+    .fcta { order: 4; margin-bottom: 34px; }
+    .fcta .lede { font-size: 20px; }
+    .fcta .row { margin-left: 0 !important; flex-wrap: wrap; gap: 10px; }
+    .fcta .arr { display: none; }
+    .fcopy { flex-basis: 100%; }
+    .fside { display: flex; flex-direction: column; gap: 10px; order: 5; margin-bottom: 8px; }
+    .fw { position: static; }
+    .fw.d { flex-direction: row; }
+  }
+  @media (max-width: 420px) {
+    .ftr { --u: 34px; }
+    .fcta .lede { font-size: 18px; }
+    .fcta .lede br { display: none; }
+  }
+
+  /* the footer arrives as a crossword; the cells clear as you scroll */
+  .ftrcw {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: calc(50% - 50vw); right: calc(50% - 50vw);
+    z-index: 5;
+    display: grid;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .ftrcw i {
+    background: #fbf8f7;
+    border: 1.5px solid #d5ccd4;
+    margin: -0.75px;
+    transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.3, 0.9, 0.4, 1);
+  }
+  .ftrcw i.f { background: #e7e0e6; }
+  .ftrcw i.p1 { background: #e5e2fa; border-color: #cec9f0; }
+  .ftrcw i.p2 { background: #e2ece9; border-color: #cbdcd7; }
+  .ftrcw i.p3 { background: #cddafd; border-color: #bccaf5; }
+  .ftrcw i.p4 { background: #fad2e1; border-color: #f1bed2; }
+  .ftrcw i.off { opacity: 0; transform: scale(0.66); }
+
+  @media (prefers-reduced-motion: reduce) { .fmail i b { transition: none; } }
+  .skip { position: absolute; left: 16px; top: -48px; z-index: 100; padding: 8px 14px; background: #34303a; color: #fff; font-size: 14px; text-decoration: none; }
+  .skip:focus { top: 12px; outline: 2px solid #5b4fb8; outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <a class="skip" href="#main">Skip to content</a>
+<nav id="nav">
+    <a class="nav-brand" href="./" aria-label="Ashita Jain, home">
+      <span class="monogram" aria-hidden="true"><i>A</i><i class="fill"></i><i class="fill"></i><i>J</i></span>
+      Ashita Jain
+    </a>
+    <a class="back" href="./">&larr; Home</a>
+  </nav>
+<main id="main">
+
+  <header class="hero">
+    <figure class="shot">
+      <span class="tape a" aria-hidden="true"></span>
+      <span class="tape b" aria-hidden="true"></span>
+      <span class="frame"><img src="img/ill-cw.webp" alt="Line drawing of Ashita at a desk, filling in a crossword" width="820" height="1090"></span>
+      <span class="me"><img src="img/ashita.webp" alt="Ashita Jain" width="820" height="1100"></span>
+      <figcaption>Most evenings, roughly.</figcaption>
+    </figure>
+    <div>
+      <p class="hi">Hello, I am</p>
+      <h1>Ashita Jain</h1>
+      <p class="role">Senior UX designer at <b>JPMorgan Chase</b> &middot; London &middot; 9 years</p>
+      <p class="lede">I turn complex systems into products people can actually use. Research, prototyping and design systems.</p>
+      <p class="lede">I studied Computer Science Engineering, then Communication Design, then Human Computer Interaction at UCL.</p>
+    </div>
+  </header>
+
+  <section id="route">
+    <p class="kicker">How I got here</p>
+    <div class="route">
+      <svg class="line" viewBox="0 0 1000 40" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M83 20 C 200 4, 300 36, 417 20 C 530 4, 640 36, 750 20 C 820 10, 870 30, 917 20"/>
+      </svg>
+      <ol class="stops">
+        <li class="stop">
+          <span class="cells" aria-hidden="true"><i>C</i><i>S</i><i>E</i></span>
+          <span class="yr">2010 to 2014</span>
+          <b>Computer Science</b>
+          <span>B.E., Bhilai</span>
+        </li>
+        <li class="stop">
+          <span class="cells" aria-hidden="true"><i>D</i><i>E</i><i>S</i></span>
+          <span class="yr">2015 to 2017</span>
+          <b>Communication Design</b>
+          <span>M.Des, DAIICT</span>
+        </li>
+        <li class="stop">
+          <span class="cells" aria-hidden="true"><i>0</i><i>&rarr;</i><i>1</i></span>
+          <span class="yr">2017 to 2021</span>
+          <b>ConnectLab.ai</b>
+          <span>MiDigiWorld, founding designer</span>
+        </li>
+        <li class="stop">
+          <span class="cells" aria-hidden="true"><i>S</i><i>E</i><i>C</i></span>
+          <span class="yr">2021</span>
+          <b>ServiceNow</b>
+          <span>MITRE ATT&amp;CK</span>
+        </li>
+        <li class="stop">
+          <span class="cells" aria-hidden="true"><i>H</i><i>C</i><i>I</i></span>
+          <span class="yr">2021 to 2022</span>
+          <b>UCL</b>
+          <span>MSc HCI, Dean's List</span>
+        </li>
+        <li class="stop now">
+          <span class="cells" aria-hidden="true"><i>A</i><i>I</i></span>
+          <span class="yr">2022 to now</span>
+          <b>JPMorgan Chase</b>
+          <span>Agentic AI onboarding</span>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="design">
+    <p class="kicker">Design, for me</p>
+    <div class="two">
+      <h2>Design is not about making things beautiful. It is about asking the right questions, making things clearer and shaping what comes next.</h2>
+      <div>
+        <p>I like the problems where nobody agrees on the question yet.</p>
+        <p>Beauty is not the opposite of function. It is part of it. A screen that looks calm is usually a screen somebody understood.</p>
+      </div>
+    </div>
+
+    <ul class="beliefs">
+      <li style="--tone: var(--peri); --rot: -0.8deg">
+        <span class="word" aria-hidden="true"><i>C</i><i>O</i><i>M</i><i>P</i><i>L</i><i>E</i><i>X</i></span>
+        <p>I design to make sense of complexity.</p>
+      </li>
+      <li style="--tone: var(--mint); --rot: 0.7deg">
+        <span class="word" aria-hidden="true"><i>T</i><i>O</i><i>O</i><i>L</i></span>
+        <p>I see technology as a tool, not the goal.</p>
+      </li>
+      <li style="--tone: var(--linen); --rot: 0.6deg">
+        <span class="word" aria-hidden="true"><i>F</i><i>R</i><i>I</i><i>C</i><i>T</i><i>I</i><i>O</i><i>N</i></span>
+        <p>I am drawn to thoughtful friction.</p>
+      </li>
+      <li style="--tone: var(--blush); --rot: -0.6deg">
+        <span class="word" aria-hidden="true"><i>G</i><i>I</i><i>V</i><i>E</i></span>
+        <p>Good design is generous.</p>
+      </li>
+    </ul>
+  </section>
+
+  <section id="mentoring">
+    <p class="kicker">Passing it on</p>
+    <div class="mentor">
+      <div>
+        <h2>Shipping products is great. Helping someone else ship theirs is <em>better</em>.</h2>
+        <p style="margin-top:22px">One to one mentorship through Topmate, for designers starting out and people switching into UX.</p>
+      </div>
+      <div class="tally">
+        <div><b>100+</b><span>designers mentored</span></div>
+        <div><b>80+</b><span>designers at JPMorgan Chase using my form patterns</span></div>
+        <div><b>9</b><span>years in the work</span></div>
+      </div>
+    </div>
+    <div class="talks">
+      <figure class="pin"><span class="ph" style="--rot:-1.2deg"><img src="img/panel.webp" alt="Ashita speaking on an industry panel" width="1000" height="697" loading="lazy"></span><figcaption style="--rot:-1.2deg">industry panel, with Monzo and Google</figcaption></figure>
+      <figure class="pin"><span class="ph" style="--rot:1.4deg"><img src="img/talk.webp" alt="Ashita presenting at a J.P.Morgan lectern" width="760" height="670" loading="lazy"></span><figcaption style="--rot:1.4deg">talking shop at J.P.Morgan</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="offclock">
+    <p class="kicker">When I am not designing</p>
+    <h2>Running marathons, practicing yoga, reading history, pointing a telescope at the moon.</h2>
+    <div class="wall">
+      <figure class="pin"><span class="ph" style="--rot:-2deg"><img src="img/run.webp" alt="At the finish of a Great Run race" width="800" height="800" loading="lazy"></span><figcaption style="--rot:-2deg">marathon no. 4</figcaption></figure>
+      <figure class="pin"><span class="ph" style="--rot:1.5deg"><img src="img/alps.webp" alt="Sitting on a hillside in the Alps" width="800" height="800" loading="lazy"></span><figcaption style="--rot:1.5deg">the Alps, last May</figcaption></figure>
+      <figure class="pin"><span class="ph" style="--rot:-1.2deg"><img src="img/books.webp" alt="Holding a book in a bookshop" width="720" height="720" loading="lazy"></span><figcaption style="--rot:-1.2deg">always a book</figcaption></figure>
+      <figure class="pin"><span class="ph" style="--rot:2deg"><img src="img/telescope.webp" alt="My telescope set up on a road at night" width="800" height="800" loading="lazy"></span><figcaption style="--rot:2deg">my telescope</figcaption></figure>
+      <figure class="pin"><span class="ph" style="--rot:-1.6deg"><img src="img/moon.webp" alt="The moon photographed through my telescope" width="800" height="800" loading="lazy"></span><figcaption style="--rot:-1.6deg">what it sees</figcaption></figure>
+      <figure class="pin"><span class="ph" style="--rot:1.1deg"><video src="img/trail.mp4" poster="img/trail.webp" muted loop playsinline autoplay preload="metadata" aria-label="Running up a stone path on a hill"></video></span><figcaption style="--rot:1.1deg">a hill run</figcaption></figure>
+      <figure class="pin"><span class="ph" style="--rot:1.8deg"><img src="img/loch.webp" alt="A loch with hills on both sides" width="760" height="421" loading="lazy"></span><figcaption style="--rot:1.8deg">walking weekend</figcaption></figure>
+      <figure class="pin"><span class="ph" style="--rot:-1.4deg"><img src="img/cliff.webp" alt="Green cliffs above the sea" width="760" height="447" loading="lazy"></span><figcaption style="--rot:-1.4deg">the coast</figcaption></figure>
+    </div>
+  </section>
+</div>
+
+</main>
+<div class="wrap">
+<footer class="ftr" id="contact">
+  <div class="ftr-stage">
+    <div class="ftr-canvas fcw">
+      <div class="fdeco" aria-hidden="true">
+        <i class="l" style="--c:2;--r:0"></i><i class="h" style="--c:20;--r:2"></i>
+        <i style="--c:0;--r:6"></i><i class="l" style="--c:21;--r:6"></i><i class="h" style="--c:16;--r:8"></i><i class="l" style="--c:14;--r:7"></i>
+        
+      </div>
+      <p class="fhand thanks">The answer<br>was here all along...
+        <svg viewBox="0 0 56 40" aria-hidden="true"><path d="M4 4 C 14 26, 30 34, 50 34"/><path d="M38 26 L 51 34 L 40 40"/></svg>
+      </p>
+      <h2 class="l1">Human <span class="em">behind this.</span></h2>
+      <div class="fside">
+      <div class="fw d " style="--c:-6;--r:2"><i>B</i><i>O</i><i>O</i><i>K</i><i>S</i></div>
+      <div class="fw " style="--c:7;--r:1"><i>R</i><i>U</i><i>N</i><i>N</i><i>I</i><i>N</i><i>G</i></div>
+      <div class="fw d " style="--c:11;--r:4"><i>H</i><i>I</i><i>K</i><i>E</i></div>
+      </div>
+      <div class="fw k" style="--c:0;--r:3"><i>A</i><i>S</i><i>H</i><i>I</i><i>T</i><i>A</i></div>
+      <div class="fcta">
+        <p class="lede">Every design problem starts as a puzzle <br>and I love solving them.</p>
+        <p class="ask">Want to solve something together?</p>
+        <div class="row" style="margin-left:-46px">
+          <svg class="arr" viewBox="0 0 34 34" aria-hidden="true"><path d="M6 4c1 12 8 20 22 22"/><path d="M22 20l6 6-7 4"/></svg>
+          <a class="flink mail" id="ftrMail" target="_blank" rel="noopener" href="mailto:ashitajain.work@gmail.com?subject=A%20puzzle%20for%20you&body=Hi%20Ashita%2C%0A%0AI%20found%20your%20portfolio%20and%20I%20have%20a%20design%20problem%20I%20would%20like%20to%20talk%20through.%0A%0AHere%20is%20the%20short%20version%3A%0A%0A"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Email me</a>
+          <a class="flink" href="https://www.linkedin.com/in/ashitajain06/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.5 3.5a2 2 0 110 4 2 2 0 010-4zM3 9h3v11H3zM10 9h2.8v1.6c.5-.9 1.7-1.9 3.6-1.9 3.4 0 4.1 2.2 4.1 5V20h-3v-5.4c0-1.3 0-3-1.9-3s-2.1 1.4-2.1 2.9V20h-3z"/></svg>LinkedIn</a>
+          <span class="fcopy" id="ftrCopy" role="status" aria-live="polite"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ftr-bar">
+    <span>&copy; 2026 Ashita Jain</span>
+    <span class="thanks">Thanks for being here.</span>
+    <a class="up" href="#" id="ftrUp">Back to top &uarr;</a>
+  </div>
+</footer>
+</div>
+
+<script>
+// the nav gains a hairline once the page has moved
+(() => {
+  const nav = document.getElementById('nav');
+  const check = () => nav.classList.toggle('stuck', scrollY > 8);
+  check(); addEventListener('scroll', check, { passive: true });
+})();
+
+document.getElementById('ftrUp')?.addEventListener('click', e => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
+
+// The email button: open the mail app, and always leave the address behind.
+(() => {
+  const a = document.getElementById('ftrMail'), note = document.getElementById('ftrCopy');
+  if (!a || !note) return;
+  const ADDR = 'ashitajain.work@gmail.com';
+  let t;
+  const say = msg => {
+    note.textContent = msg;
+    note.classList.add('on');
+    clearTimeout(t);
+    t = setTimeout(() => note.classList.remove('on'), 4000);
+  };
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    let opened = false;
+    try { opened = !!window.open(a.href, '_blank'); } catch (err) {}
+    if (!opened) { try { location.href = a.href; opened = true; } catch (err) {} }
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(ADDR).then(() => say('copied ' + ADDR), () => say(ADDR));
+    } else {
+      say(ADDR);
+    }
+  });
+})();
+
+// Fit the footer canvas to the viewport width.
+(() => {
+  const f = document.querySelector('.ftr'); if (!f) return;
+  const fit = () => {
+    const w = document.documentElement.clientWidth;
+    f.style.setProperty('--s', w <= 760 ? 1 : Math.min(1, (w - 32) / 1160).toFixed(4));
+  };
+  fit(); addEventListener('resize', fit);
+})();
+
+// The footer is a crossword until you scroll it open, cell by cell.
+(() => {
+  const sec = document.querySelector('.ftr');
+  if (!sec || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'ftrcw';
+  wrap.setAttribute('aria-hidden', 'true');
+  const U = 44;
+  let cells = [], shown = 0;
+  const build = () => {
+    const w = document.documentElement.clientWidth, h = sec.offsetHeight;
+    const cols = Math.max(4, Math.round(w / U)), rows = Math.max(3, Math.round(h / U));
+    wrap.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+    wrap.style.gridAutoRows = (h / rows) + 'px';
+    const list = [];
+    let html = '';
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        const r = Math.random();
+        const cls = r < 0.16 ? 'f' : r < 0.2 ? 'p1' : r < 0.235 ? 'p2' : r < 0.265 ? 'p3' : r < 0.285 ? 'p4' : '';
+        html += '<i class="' + cls + '"></i>';
+        list.push((y / rows) * 0.62 + (x / cols) * 0.3 + Math.random() * 0.12);
+      }
+    }
+    wrap.innerHTML = html;
+    cells = [...wrap.children].map((el, i) => [list[i], el]).sort((a, b) => a[0] - b[0]).map(p => p[1]);
+    shown = 0;
+  };
+  build();
+  sec.appendChild(wrap);
+  // the reveal is spread over as much scrolling as the page has left
+  let span = 500;
+  const measure = () => {
+    const startY = scrollY + sec.getBoundingClientRect().top - innerHeight * 0.92;
+    const runway = (document.documentElement.scrollHeight - innerHeight) - startY;
+    span = Math.max(420, Math.min(innerHeight * 1.5, runway - 24));
+  };
+  measure();
+  let queued = false;
+  const paint = () => {
+    queued = false;
+    const top = sec.getBoundingClientRect().top;
+    const atEnd = scrollY + innerHeight >= document.documentElement.scrollHeight - 2;
+    const raw = (innerHeight * 0.92 - top) / span;
+    const p = atEnd ? 1 : Math.pow(Math.max(0, raw), 1.5);
+    const want = Math.max(0, Math.min(cells.length, Math.round(p * cells.length)));
+    while (shown < want) cells[shown++].classList.add('off');
+    while (shown > want) cells[--shown].classList.remove('off');
+  };
+  const onScroll = () => { if (!queued) { queued = true; requestAnimationFrame(paint); } };
+  addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('resize', () => { build(); measure(); paint(); }, { passive: true });
+  paint();
+})();
+
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  document.querySelectorAll('video').forEach(v => { v.removeAttribute('autoplay'); v.pause(); });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,911 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>if("scrollRestoration" in history)history.scrollRestoration="manual";if(!location.hash)scrollTo(0,0);</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Case study: rebuilding the MITRE ATT&CK heat map inside ServiceNow Security Incident Response so analysts can read coverage at a glance.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23faf7f5'/%3E%3Crect x='3' y='3' width='11' height='11' fill='none' stroke='%2334303a' stroke-width='2'/%3E%3Crect x='18' y='3' width='11' height='11' fill='%2334303a'/%3E%3Crect x='3' y='18' width='11' height='11' fill='%2334303a'/%3E%3Crect x='18' y='18' width='11' height='11' fill='none' stroke='%2334303a' stroke-width='2'/%3E%3C/svg%3E">
+<title>ServiceNow ATT&amp;CK</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:wght@200;300;400;500;600;700&display=swap">
+<link rel="stylesheet" href="casestudy.css">
+<style>
+  :root {
+    /* ServiceNow brand: deep teal navy (#032d43) and their green (#63de50),
+       with the tints kept pastel. The neutrals are biased toward teal so the
+       page reads as one family. */
+    --accent: #0c5a74; --accent-soft: #cfe7ef; --tint: #e3f1f4;
+    --bg: #f7fafb; --ink: #0a2432; --mid: #47606b; --light: #557079;
+    --rule: #dde9ec; --cell-filled: #e9f4f6; --cell-border: #c8e0e6; --surface: #fcfeff;
+    --tile: #eaf3f5; --tile2: #ddecef; --tile-line: #cde1e6;
+    --dark: #032d43; --dark2: #0b3a53; --dark-rule: #1b4c64;
+    --dark-ink: #eef6f8; --dark-mid: #9dc0cd; --dark-lo: #6f97a0;
+    --mono: 'DM Sans', system-ui, sans-serif;
+  }
+  body { background: var(--bg); color: var(--ink); }
+  .em { font-style: normal; color: #476c7a; }
+
+  /* ---------- rhythm, same system as the MiDigi page ---------- */
+  section { padding-top: 0; }
+  .blk { padding: clamp(64px, 8vw, 112px) 0 0; scroll-margin-top: 84px; }
+  .kick { display: block; text-align: left; font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.02em; color: var(--light); margin-bottom: 18px; }
+  .big {
+    font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500;
+    font-size: clamp(28px, 3.6vw, 48px); line-height: 1.1; letter-spacing: -0.015em;
+    text-align: left; margin: 0; max-width: none; text-wrap: wrap; color: #071f2b;
+  }
+  .big .em { color: #000; }
+  .lead { font-size: 15.5px; font-weight: 300; line-height: 1.7; color: #3f5a64; }
+  .lead + .lead { margin-top: 14px; }
+  .lead b { font-weight: 500; color: var(--ink); }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(24px, 4vw, 56px); margin-top: clamp(32px, 4vw, 48px); }
+  @media (max-width: 780px) { .two-col { grid-template-columns: 1fr; } }
+  @keyframes tIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- tiles ---------- */
+  .t {
+    position: relative; background: var(--tile); border-radius: 22px; padding: clamp(24px, 2.6vw, 36px);
+    overflow: hidden;
+  }
+  .t.dark { background: var(--dark); color: var(--dark-ink); }
+  .t.dark .lbl { color: var(--dark-lo); }
+  .t.dark p { color: var(--dark-mid); }
+  .t.dark h3 { color: var(--dark-ink); }
+  .t .lbl { display: block; font-family: var(--mono); font-size: 11px; color: var(--light); margin-bottom: 16px; }
+  .t h3 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 400; font-size: clamp(22px, 2.2vw, 28px); line-height: 1.14; letter-spacing: -0.01em; margin-bottom: 12px; }
+  .t p { font-size: 14.5px; font-weight: 300; line-height: 1.6; color: #3f5a64; margin: 0; }
+
+  /* ---------- three-up statements, same as "Three problems learners had" ---------- */
+  .way { margin-top: clamp(38px, 4.4vw, 62px); }
+  .way > h3 {
+    font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 400;
+    font-size: clamp(26px, 3.2vw, 40px); line-height: 1.1; letter-spacing: -0.015em;
+    max-width: none; text-wrap: wrap; margin: 0 0 clamp(26px, 3vw, 40px);
+  }
+  .ways { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(20px, 2.4vw, 34px); margin: 0; padding: 0; }
+  .ways > li { list-style: none; }
+  .way.play .ways > li { animation: tIn 0.55s ease both; animation-delay: calc(var(--i) * 130ms + 0.1s); }
+  .ways .cell {
+    width: 22px; height: 22px; display: grid; place-items: center;
+    border: 1.2px solid var(--cell-border); border-radius: 2px; background: var(--cell-filled);
+    font-family: var(--mono); font-size: 10.5px; color: var(--ink); margin-bottom: 13px;
+  }
+  .ways b {
+    display: block; font-weight: 500; font-size: clamp(14.5px, 1.35vw, 17px);
+    line-height: 1.32; color: var(--ink); letter-spacing: -0.005em;
+    border-top: 1px solid var(--ink); padding-top: 16px; text-wrap: balance;
+  }
+  .ways p { margin: 6px 0 0; font-size: 15px; font-weight: 300; line-height: 1.55; color: #3f5a64; }
+  @media (max-width: 860px) {
+    .ways { grid-template-columns: 1fr; gap: 0; }
+    .ways > li { padding: 4px 0 20px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ways > li { opacity: 1 !important; transform: none !important; animation: none !important; }
+  }
+  .resnum {
+    font-size: clamp(30px, 3.2vw, 46px) !important; font-weight: 600 !important;
+    letter-spacing: -0.03em !important; color: var(--accent) !important; line-height: 1 !important;
+    padding-top: 18px !important; font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- big quote, same as the results quote on MiDigi ---------- */
+  .resquote {
+    margin: clamp(64px, 8vw, 110px) 0 0; max-width: none; text-align: left;
+    font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500;
+    font-size: clamp(27px, 3.6vw, 44px); line-height: 1.22; color: var(--ink);
+  }
+  .resquote + .resattr { margin: 18px 0 0; text-align: left; font-family: var(--mono); font-size: 10.5px; color: var(--light); }
+
+  /* ---------- dark band, same as "Final chat designs" ---------- */
+  .band { position: relative; color: var(--dark-ink); }
+  .band::before {
+    content: ''; position: absolute; top: 0; bottom: 0; left: 50%;
+    width: 250vw; transform: translateX(-50%); background: var(--dark); z-index: -1;
+  }
+  .band .kick { color: var(--dark-lo); }
+  .conshead {
+    font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 400; text-align: left;
+    font-size: clamp(26px, 3.2vw, 42px); line-height: 1.12; letter-spacing: -0.015em;
+    color: var(--dark-ink); margin: 0 0 clamp(26px, 3.2vw, 44px);
+  }
+  .conshead .em { color: var(--dark-mid); }
+  .band2 { padding-block: clamp(70px, 9vw, 130px); margin-block: clamp(56px, 7vw, 96px); }
+  .band .lead { color: var(--dark-mid); }
+  .band .lead b { color: var(--dark-ink); }
+  .band figcaption { color: var(--dark-lo); }
+
+  /* ---------- gradient band, from the ServiceNow card on the home page ---------- */
+  .dec { position: relative; padding-block: clamp(58px, 7.2vw, 104px); margin-block: clamp(44px, 5.5vw, 80px); }
+  .dec::before {
+    content: ''; position: absolute; top: 0; bottom: 0; left: 50%;
+    width: 100vw; transform: translateX(-50%); z-index: -1;
+    background:
+      radial-gradient(125% 105% at 86% 10%, color-mix(in srgb, #dcedf2 72%, #fff) 0%, transparent 60%),
+      radial-gradient(95% 130% at 4% 100%, color-mix(in srgb, #dcedf2 34%, #fff) 0%, transparent 58%),
+      linear-gradient(126deg, color-mix(in srgb, #dcedf2 30%, #fff) 0%, color-mix(in srgb, #dcedf2 11%, #fbfdfa) 55%, #fbfdfa 100%);
+  }
+  .dec .cell {
+    width: 26px; height: 26px; display: grid; place-items: center;
+    border: 1.2px solid var(--cell-border); border-radius: 2px; background: #fff;
+    font-family: var(--mono); font-size: 12px; color: var(--ink); margin-bottom: 16px;
+  }
+  .dec h3.dhead {
+    font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500;
+    font-size: clamp(26px, 3.2vw, 42px); line-height: 1.1; letter-spacing: -0.015em;
+    margin: 0 0 14px; color: #071f2b;
+  }
+  .dec .em { color: #476c7a; }
+  .ba li { color: #3f5a64; }
+
+  /* each decision opens like its own chapter */
+  .decmark {
+    display: flex; align-items: center; gap: 13px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+    color: var(--light); margin-bottom: 20px;
+  }
+  .decmark .cell { margin-bottom: 0; flex: none; }
+  .decmark .rule { flex: 1; height: 1px; background: var(--cell-border); max-width: 200px; }
+  .dec h3.dhead { font-size: clamp(28px, 3.8vw, 48px); margin-bottom: 20px; }
+
+  /* one sentence on its own between chapters */
+  .statement {
+    margin: clamp(76px, 9.5vw, 132px) 0 clamp(12px, 2vw, 28px);
+    font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500;
+    font-size: clamp(26px, 3.3vw, 40px); line-height: 1.2; letter-spacing: -0.015em;
+    color: var(--ink);
+  }
+  .statement .em { color: #476c7a; }
+
+  /* product moments get more room than the text column */
+  figure.wide .mockpanel { border-radius: 18px; padding: clamp(24px, 3.4vw, 52px); }
+
+  /* the rail crosses in and out of the dark chapters, so each link is coloured
+     by what is actually behind it rather than the whole rail at once */
+  .rail a.over-dark { color: rgba(255, 255, 255, 0.5); }
+  .rail a.over-dark:hover { color: rgba(255, 255, 255, 0.85); }
+  .rail a.over-dark.on { color: #fff; }
+  .rail a.over-dark.on::before { background: #fff; }
+
+  /* the middle decision runs dark, so the three chapters have a rhythm */
+  .dec.dark::before { background: var(--dark); }
+  .dec.dark { color: var(--dark-ink); }
+  .dec.dark .decmark { color: var(--dark-lo); }
+  .dec.dark .decmark .cell { background: rgba(255,255,255,0.06); border-color: var(--dark-rule); color: var(--dark-ink); }
+  .dec.dark .decmark .rule { background: var(--dark-rule); }
+  .dec.dark h3.dhead { color: var(--dark-ink); }
+  .dec.dark .dhead .em { color: var(--dark-mid); }
+  .dec.dark .lead { color: var(--dark-mid); }
+  .dec.dark .lead b { color: var(--dark-ink); }
+  .dec.dark figcaption { color: var(--dark-lo); }
+  .dec.dark .exverdict { color: var(--dark-mid); }
+  .dec.dark .ba > div { background: var(--dark2); border-color: var(--dark-rule); }
+  .dec.dark .ba .after { background: rgba(255,255,255,0.05); border-color: var(--dark-rule); }
+  .dec.dark .ba .tag { color: var(--dark-lo); }
+  .dec.dark .ba .after .tag { color: #8fd8a8; }
+  .dec.dark .ba li { color: var(--dark-mid); }
+  .dec.dark .ba li b { color: var(--dark-ink); }
+  /* the product panel keeps its own dark-on-light text inside a dark chapter */
+  .dec.dark .mockpanel { color: #26313c; }
+
+  /* the opener: a dark chapter, the product floating out of it */
+  .heroband { position: relative; padding-top: clamp(36px, 4.5vw, 64px); padding-bottom: clamp(130px, 16vw, 230px); }
+  .heroband::before {
+    content: ''; position: absolute; top: -120px; bottom: 0; left: 50%;
+    width: 250vw; transform: translateX(-50%); background: var(--dark); z-index: -1;
+  }
+  .heroband .kick { color: var(--dark-lo); text-align: center; }
+  .heroband .title { text-align: center; }
+  .heroband h1 { color: #fff; }
+  .heroband .hsub {
+    text-align: center; margin: 16px auto 0; max-width: 56ch;
+    font-size: clamp(15px, 1.4vw, 17.5px); font-weight: 300; line-height: 1.65; color: var(--dark-mid);
+  }
+  .heroshot { margin-top: calc(-1 * clamp(80px, 11vw, 165px)); }
+
+  /* verdict chips, same as the MiDigi explorations */
+  .vtag {
+    display: inline-block; font-size: 10.5px; font-weight: 600; letter-spacing: 0.02em;
+    padding: 3px 9px; border-radius: 5px; margin-right: 8px; vertical-align: 1px;
+  }
+  .vtag.no { background: #f9e9e7; color: #a03e35; }
+  .vtag.yes { background: #e7f2e9; color: #2e6b3f; }
+  .exlabel { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.03em; color: var(--light); margin: clamp(26px,3.4vw,44px) 0 10px; }
+  .exverdict { max-width: 68ch; font-size: 14.5px; font-weight: 300; line-height: 1.6; color: #3f5a64; margin: 12px 0 0; }
+
+  /* ---- rebuilt product components, in the shipped UI's own language ---- */
+  .mockpanel { background: #eef2f7; border: 1px solid #dfe6ee; border-radius: 14px; padding: clamp(20px, 2.8vw, 40px); }
+  .tcard { width: 200px; background: #fff; border-radius: 4px; box-shadow: 0 1px 4px rgba(24,39,58,0.16); font-size: 12px; color: #26313c; }
+  .tcard .tt { padding: 10px 12px 8px; color: #2e6d4e; font-weight: 600; line-height: 1.3; font-size: 12.5px; }
+  .tcard .meta { padding: 0 12px 6px; font-size: 11px; color: #4a5661; line-height: 1.5; }
+  .cbar { display: flex; justify-content: space-between; align-items: center; padding: 4.5px 9px; border-radius: 3px; font-weight: 500; font-size: 11px; color: #26313c; }
+  .tcard .cbar { margin: 0 10px 6px; }
+  .cbar i { font-style: normal; font-size: 12px; line-height: 1; }
+  .b-none { background: #cf8f85; } .b-poor { background: #ddb476; } .b-fair { background: #f3eec9; }
+  .b-good { background: #dfeaea; } .b-vgood { background: #cfe0f5; } .b-exc { background: #6f9fd8; color: #fff !important; }
+  .tcard .grip { height: 15px; background: #b9c2c8; border: 0; width: 100%; display: grid; place-items: center; color: #fff; font-size: 9px; line-height: 1; border-radius: 0 0 4px 4px; cursor: pointer; font-family: inherit; }
+  .tcard .subs { margin: 2px 10px 8px; }
+  .tsub { border: 1px solid #d7dee6; border-radius: 4px; padding: 7px 9px 4px; margin-bottom: 7px; }
+  .tsub .st { font-weight: 600; font-size: 11.5px; color: #2e6d4e; margin-bottom: 5px; }
+  .tsub .cbar { margin: 0 0 5px; }
+  .dm { display: inline-flex; gap: 3px; }
+  .dm i { width: 9px; height: 9px; border-radius: 50%; background: #d9dee3; }
+  .dm .c1 { background: #4c8c4a; } .dm .c2 { background: #5b9bd5; } .dm .c3 { background: #9a8fd0; }
+  .dm .c4 { background: #7fb3b5; } .dm .c5 { background: #ddb476; } .dm .c6 { background: #b6534b; }
+  .dlabel { font-size: 9px; font-weight: 600; letter-spacing: 0.06em; color: #5b6672; margin-bottom: 4px; }
+
+  /* the matrix, drawn small: tactics across, techniques down, one card opened */
+  .anat { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: clamp(22px, 3vw, 44px); align-items: start; }
+  .alabel { font-family: 'Patrick Hand', cursive; font-size: clamp(15.5px, 1.45vw, 19.5px); color: #3f5f6b; line-height: 1.2; }
+  .amx { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 9px; margin-top: 12px; }
+  .amx .ah { font-size: 10.5px; font-weight: 600; line-height: 1.25; color: #26313c; border-bottom: 2px solid #90a89b; padding: 0 8px 6px 0; overflow-wrap: anywhere; }
+  .amx .ah small { display: block; font-weight: 400; font-size: 9.5px; color: #5b6672; margin-top: 2px; }
+  .amx .ac { background: #fff; border: 1px solid #dbe3ea; border-radius: 3px; padding: 5px 6px; font-size: 9.5px; line-height: 1.3; color: #3a4a57; margin-top: 6px; }
+  .amx .ac.hi { border-color: #2e6d4e; box-shadow: 0 0 0 1.5px rgba(46,109,78,0.25); color: #2e6d4e; font-weight: 600; }
+  .asub .list { padding: 0 12px 8px; }
+  .asub .list span { display: block; font-size: 11.5px; padding: 4.5px 0; border-top: 1px solid #edf1f5; }
+  .asub .list span:first-child { border-top: 0; }
+  @media (max-width: 760px) { .anat { grid-template-columns: 1fr; } }
+
+  /* the notes from the internal security team, as they were written */
+  .wall { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(18px, 2.6vw, 34px); margin-top: clamp(30px, 4vw, 48px); }
+  .wall h3 { font-family: 'Patrick Hand', cursive; font-weight: 400; font-size: clamp(17px, 1.7vw, 22px); color: #3f5f6b; margin-bottom: 12px; }
+  .note { padding: 13px 15px; font-size: 13px; line-height: 1.45; color: #263832; border-radius: 2px; box-shadow: 0 8px 18px rgba(30, 42, 30, 0.10); margin-bottom: 13px; transform: rotate(var(--r, 0deg)); }
+  .n-y { background: #fdf6b2; } .n-p { background: #f7cfe2; } .n-v { background: #ddd3f5; } .n-t { background: #c9ece5; }
+  @media (max-width: 760px) { .wall { grid-template-columns: 1fr; } .note { transform: none; } }
+
+  /* before/after opening, rebuilt live */
+  .opendemo { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(22px, 3vw, 44px); align-items: start; }
+  .opendemo .olab { font-size: 12px; font-weight: 600; color: #26313c; margin-bottom: 10px; }
+  .opendemo .tcard .subs2 { overflow: hidden; transition: max-height 0.4s ease; max-height: 300px; }
+  .opendemo .tcard.closed .subs2 { max-height: 0; }
+  .subs2 span { display: block; font-size: 11.5px; padding: 5px 12px; border-top: 1px solid #edf1f5; }
+  .hsplit { display: grid; grid-template-columns: 1fr 13px 1.25fr; background: #fff; border: 1px solid #cfd7de; border-radius: 3px; font-size: 11.5px; overflow: hidden; }
+  .hsplit .hl { padding: 10px; color: #26313c; }
+  .hsplit .hl small { color: #5b6672; }
+  .hsplit .hg { background: #8f9aa3; color: #fff; display: grid; place-items: center; font-size: 9px; }
+  .hsplit .hr span { display: block; padding: 6.5px 10px; border-bottom: 1px solid #e2e8ee; }
+  .hsplit .hr span:last-child { border-bottom: 0; }
+  @media (max-width: 760px) { .opendemo { grid-template-columns: 1fr; } }
+
+  /* iteration 1: the dot-meter legend and cards */
+  .it1 { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(24px, 3.4vw, 52px); align-items: start; }
+  .lgd { width: 100%; border-collapse: collapse; }
+  .lgd th { text-align: left; font-size: 11px; letter-spacing: 0.05em; color: #5b6672; font-weight: 600; padding: 0 10px 10px 0; }
+  .lgd td { padding: 9px 10px 9px 0; border-top: 1px solid #dfe6ee; font-size: 12.5px; vertical-align: middle; }
+  .lgd td.pc { color: #5b6672; font-variant-numeric: tabular-nums; }
+  .lgd td.mn { font-size: 11.5px; color: #4a5661; line-height: 1.4; }
+  .itcards { display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
+  @media (max-width: 760px) { .it1 { grid-template-columns: 1fr; } }
+
+  /* the improved system: symbol plus colour */
+  .bands { max-width: 560px; }
+  .bands .brow { display: grid; grid-template-columns: 92px 74px minmax(0, 1fr); gap: 14px; align-items: center; padding: 8px 0; border-top: 1px solid var(--rule); }
+  .bands .brow:last-child { border-bottom: 1px solid var(--rule); }
+  .bands .nm { font-size: 13.5px; font-weight: 500; }
+  .bands .pc { font-size: 12.5px; color: var(--mid); font-variant-numeric: tabular-nums; }
+  .bands .swatch { display: flex; align-items: center; gap: 10px; border-radius: 3px; padding: 5px 10px; font-size: 13px; color: #26313c; }
+  .bands .swatch i { font-style: normal; line-height: 1; }
+
+  /* every state a cell can be in, drawn on the dark band */
+  .states { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(18px, 2.6vw, 34px); margin-top: clamp(26px, 3.4vw, 44px); }
+  .states .slab { font-size: 12.5px; color: var(--dark-mid); margin-bottom: 10px; min-height: 2.6em; }
+  @media (max-width: 760px) { .states { grid-template-columns: 1fr; } }
+
+  /* what customers report */
+  .adopt { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(18px, 2.6vw, 34px); margin-top: clamp(30px, 4vw, 48px); }
+  .adopt .t h3 { margin-bottom: 6px; }
+  .adopt .qq { font-size: 14.5px; font-weight: 300; line-height: 1.6; color: #3f5a64; margin: 10px 0 0; }
+  .adopt .who { display: block; margin-top: 10px; font-family: var(--mono); font-size: 10.5px; color: var(--light); }
+  .adopt ul { margin: 16px 0 0; padding: 14px 0 0; border-top: 1px solid var(--tile-line); list-style: none; }
+  .adopt li { font-size: 14px; font-weight: 300; color: #3f5a64; padding: 3px 0; }
+  .adopt li b { font-weight: 500; color: var(--ink); }
+  @media (max-width: 760px) { .adopt { grid-template-columns: 1fr; } }
+
+  /* ---- ATT&CK coverage matrix demo ---- */
+  .attack { width: 100%; }
+  .attack .legend { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 11px; letter-spacing: 0.08em; color: var(--light); margin-bottom: 16px; }
+  .attack .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .attack .legend i { width: 11px; height: 11px; border-radius: 2px; display: block; }
+  .agrid { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 6px; }
+  .col { flex: 1 0 74px; min-width: 74px; display: flex; flex-direction: column; gap: 3px; }
+  .col .th { font-size: 9px; font-weight: 600; letter-spacing: 0.04em; color: var(--mid); line-height: 1.25; min-height: 24px; margin-bottom: 3px; }
+  .col b { display: block; height: 13px; border-radius: 2px; transform-origin: top; }
+  .attack.play .col b { animation: cellin 0.4s cubic-bezier(0.3, 1.2, 0.5, 1) both; animation-delay: calc(var(--c) * 70ms + var(--r) * 26ms); }
+  @keyframes cellin { from { opacity: 0; transform: scaleY(0.3); } to { opacity: 1; transform: none; } }
+  .l0 { background: #d96a63; } .l1 { background: #e8a86a; } .l2 { background: #f0d582; }
+  .l3 { background: #cfe3ec; } .l4 { background: #8fb8d8; } .l5 { background: #4a7fb5; }
+
+  /* ---- coverage scale ---- */
+  .scale { width: 100%; max-width: 560px; }
+  .scale .row { display: grid; grid-template-columns: 82px 74px 1fr; gap: 14px; align-items: center; padding: 9px 0; border-top: 1px solid var(--rule); }
+  .sc.play .row { animation: rin 0.45s ease both; animation-delay: calc(var(--i) * 90ms); }
+  @keyframes rin { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
+  .scale .row:last-child { border-bottom: 1px solid var(--rule); }
+  .scale .nm { font-size: 13.5px; font-weight: 500; }
+  .scale .pc { font-size: 12.5px; color: var(--mid); font-variant-numeric: tabular-nums; }
+  .scale .chip { display: inline-flex; align-items: center; gap: 7px; border-radius: 5px; padding: 4px 10px; font-size: 11px; font-weight: 600; color: #24313d; }
+  .scale .chip i { font-style: normal; font-size: 12px; }
+
+  /* ---- dual encoding demo ---- */
+  .dual { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; width: 100%; }
+  .dual .card { padding: 14px 15px; border-radius: 10px; background: #fff; border: 1px solid var(--rule); }
+  .dl.play .card { animation: rin 0.5s ease both; animation-delay: calc(var(--i) * 130ms); }
+  .dual .card h4 { font-size: 12.5px; font-weight: 600; margin-bottom: 10px; }
+  .dual .card .cbar { margin: 0 0 6px; }
+  .dual .m { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+  .dual .m span { font-size: 9.5px; font-weight: 600; letter-spacing: 0.05em; color: var(--light); }
+  .dual .m .badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 4px; padding: 2px 8px; font-size: 10.5px; font-weight: 700; color: #24313d; }
+  .grey { filter: grayscale(1); }
+  .toggle { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 12.5px; color: var(--mid); cursor: pointer; user-select: none; }
+  .toggle input { accent-color: var(--accent); }
+  .skip { position: absolute; left: 16px; top: -48px; z-index: 100; padding: 8px 14px; background: #34303a; color: #fff; font-size: 14px; text-decoration: none; }
+  .skip:focus { top: 12px; outline: 2px solid #5b4fb8; outline-offset: 2px; }
+</style>
+</head>
+<body>
+<span id="pgtop" aria-hidden="true" style="position:absolute;top:0;left:0;width:1px;height:1px"></span>
+<script>
+(() => {
+  if (location.hash) return;
+  // This page is rendered inside the host's frame, and the scrollbar that moves
+  // belongs to the outer document — scrollTo() in here cannot reach it. Pulling a
+  // sentinel at the very top into view scrolls every ancestor frame instead, which
+  // works cross-origin because the browser, not script, does the scrolling.
+  const mark = document.getElementById('pgtop');
+  let touched = false;
+  const note = () => { touched = true; };
+  ['wheel', 'touchstart', 'keydown', 'pointerdown'].forEach(t => addEventListener(t, note, { passive: true, once: true }));
+  const go = () => {
+    if (touched) return;
+    try { mark.scrollIntoView({ block: 'start', behavior: 'instant' }); }
+    catch (e) { mark.scrollIntoView(true); }
+  };
+  go();
+  addEventListener('DOMContentLoaded', go);
+  addEventListener('load', go);
+})();
+</script>
+
+<div class="progress"></div>
+
+<a class="skip" href="#main">Skip to content</a>
+<nav>
+  <a class="nav-brand" href="./" aria-label="Ashita Jain, home">
+    <span class="monogram" aria-hidden="true"><i>A</i><i class="fill"></i><i class="fill"></i><i>J</i></span>
+    Ashita Jain
+  </a>
+  <a class="back" href="./#work">&larr; All work</a>
+</nav>
+
+<div class="frame">
+
+  <aside class="rail">
+    <ol>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#problem">The problem</a></li>
+      <li><a href="#analysts">Talking to analysts</a></li>
+      <li><a href="#process">Design process</a></li>
+      <li><a href="#finaldesigns">Final designs</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#reflection">Reflection</a></li>
+    </ol>
+  </aside>
+
+  <main id="main">
+
+    <div class="heroband band">
+    <span class="kick">ServiceNow &middot; Security Incident Response &middot; shipped</span>
+    <div class="title rise in">
+      <h1>Rebuilding the MITRE ATT&amp;CK heat map inside ServiceNow.</h1>
+    </div>
+    <p class="hsub">The heat map that shows a security team which attacks it can catch. Same matrix, easier to read.</p>
+    </div>
+    <figure class="bleed rise heroshot">
+      <div class="panel tight">
+        <div class="compare" style="--ar: 1237 / 491">
+          <img src="img/sn-ba-after.webp" alt="After: the matrix rebuilt on the ServiceNow design system" width="1237" height="491">
+          <img class="top" src="img/sn-ba-before.webp" alt="Before: the original ATT&CK navigator" width="1237" height="491">
+          <span class="lab l">Before</span><span class="lab r">After</span>
+          <div class="handle"></div><div class="knob">&#9664;&#9654;</div>
+          <input type="range" min="0" max="100" value="50" aria-label="Compare the matrix before and after">
+        </div>
+      </div>
+      <figcaption>drag the handle. the same top of the matrix, before and after</figcaption>
+    </figure>
+    <div class="facts rise">
+      <div><em>Role</em><b>Product Designer<small>ServiceNow, Security Incident Response</small></b></div>
+      <div><em>Team</em><b>1 Product manager<br>1 Tech lead<br>4 Engineers</b></div>
+      <div><em>Users</em><b>Security analysts<br>Threat intelligence teams</b></div>
+      <div><em>Skills</em><b>Visual design<br>Interaction design<br>Usability &amp; accessibility</b></div>
+    </div>
+
+    <!-- ===== OVERVIEW ===== -->
+    <section id="overview" class="blk rise">
+      <span class="kick">Overview</span>
+      <h2 class="big">I moved the MITRE ATT&amp;CK matrix into ServiceNow, <span class="em">and made it easier to read.</span></h2>
+      <p class="lead" style="margin-top:26px">The MITRE ATT&amp;CK heat map shows a security team which attacks it can catch, and which it cannot. My ticket asked me to rebuild it inside ServiceNow without changing how it worked.</p>
+      <p class="lead">A direct copy would have kept the old problems. The view was hard to read, hard to move through, and not built on the ServiceNow design system. So I proposed three extra goals: consistent components, better readability, and accessibility. The matrix itself did not change.</p>
+
+      <div class="way" data-play>
+        <h3>What changed after release</h3>
+        <ul class="ways">
+          <li style="--i:0">
+            <b class="resnum">~70%</b>
+            <p>Faster threat detection and incident response.</p>
+          </li>
+          <li style="--i:1">
+            <b>Adopted by Cisco and DNB Bank.</b>
+            <p>Later used by other Fortune 500 security teams.</p>
+          </li>
+          <li style="--i:2">
+            <b class="resnum">1</b>
+            <p>Place to view coverage and act on it, instead of switching to external references.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== THE PROBLEM ===== -->
+    <section id="problem" class="blk rise">
+      <span class="kick">The problem</span>
+      <h2 class="big">What the matrix is, <span class="em">and why it was hard to use.</span></h2>
+      <p class="lead" style="margin-top:26px">MITRE ATT&amp;CK is a public list of the ways attackers work. It has three levels: <b>tactics</b> (what the attacker wants), <b>techniques</b> (how they do it) and <b>sub-techniques</b> (the exact variations). Security teams use it for two tasks: to learn how an attack works, and to check their own defences against each behaviour.</p>
+      <p class="lead">Both are reading tasks. In the old view, both were slow.</p>
+      <figure class="bleed wide">
+        <div class="mockpanel">
+          <div class="anat">
+            <div>
+              <span class="alabel">tactics: what the attacker wants &darr;</span>
+              <div class="amx" aria-hidden="true">
+                <div><div class="ah">Reconnaissance<small>10 techniques</small></div>
+                  <div class="ac">Active Scanning</div><div class="ac">Gather Victim Host Information</div><div class="ac hi">Gather Victim Network Information</div><div class="ac">Phishing for Information</div></div>
+                <div><div class="ah">Resource Development<small>8 techniques</small></div>
+                  <div class="ac">Acquire Access</div><div class="ac">Acquire Infrastructure</div><div class="ac">Develop Capabilities</div><div class="ac">Establish Accounts</div></div>
+                <div><div class="ah">Initial Access<small>10 techniques</small></div>
+                  <div class="ac">Content Injection</div><div class="ac">Drive-by Compromise</div><div class="ac">External Remote Services</div><div class="ac">Hardware Additions</div></div>
+                <div><div class="ah">Execution<small>14 techniques</small></div>
+                  <div class="ac">Cloud Administration Command</div><div class="ac">Command and Scripting Interpreter</div><div class="ac">Deploy Container</div><div class="ac">Native API</div></div>
+                <div><div class="ah">Persistence<small>20 techniques</small></div>
+                  <div class="ac">Account Manipulation</div><div class="ac">BITS Jobs</div><div class="ac">Browser Extensions</div><div class="ac">Create Account</div></div>
+                <div><div class="ah">Privilege Escalation<small>14 techniques</small></div>
+                  <div class="ac">Abuse Elevation Control Mechanism</div><div class="ac">Access Token Manipulation</div><div class="ac">Debugger Evasion</div><div class="ac">Hijack Execution Flow</div></div>
+              </div>
+              <span class="alabel" style="display:block;margin-top:12px">&uarr; techniques: how they do it</span>
+            </div>
+            <div>
+              <span class="alabel">one technique, opened. sub-techniques: the specific variations &darr;</span>
+              <div class="tcard asub" style="margin-top:12px">
+                <div class="tt">Gather victim network information (6)</div>
+                <div class="list"><span>DNS</span><span>Domain properties</span><span>IP addresses</span><span>Network security appliances</span><span>Network topology</span><span>Network trust dependencies</span></div>
+                <div class="grip" aria-hidden="true">&#9650;</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption>the structure of the matrix: tactics across the top, techniques underneath, sub-techniques inside</figcaption>
+      </figure>
+
+      <div class="way" data-play>
+        <h3>Three problems made the old view hard to use</h3>
+        <ul class="ways">
+          <li style="--i:0">
+            <span class="cell" aria-hidden="true">1</span>
+            <b>Not on the design system.</b>
+            <p>The visualisation used custom components, so it was hard to update and did not match the rest of the security products.</p>
+          </li>
+          <li style="--i:1">
+            <span class="cell" aria-hidden="true">2</span>
+            <b>Hard to scan.</b>
+            <p>The layout was dense and text heavy, with long scrolling, inconsistent formatting and too many clicks to reach details.</p>
+          </li>
+          <li style="--i:2">
+            <span class="cell" aria-hidden="true">3</span>
+            <b>Coverage had only three levels.</b>
+            <p>Cells were red, yellow or green. A team that was making progress on a technique had no way to show it.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== TALKING TO ANALYSTS ===== -->
+    <section id="analysts" class="blk rise">
+      <p class="statement" style="margin-top:0">I could guess at what was slow, <span class="em">or I could go and watch someone use it.</span></p>
+      <span class="kick" style="margin-top:clamp(56px,7vw,96px)">Talking to analysts</span>
+      <h2 class="big">The first users were ServiceNow&rsquo;s <span class="em">own security team.</span></h2>
+      <p class="lead" style="margin-top:26px">ServiceNow has its own security team, so my first users sat in the same company. I met them to hear where the current tool failed, and we reviewed the standard ATT&amp;CK experience together with product and engineering.</p>
+      <p class="lead">The feedback repeated one point: <b>finding and reading techniques and coverage was the main pain</b>, and it slowed down every analysis.</p>
+      <figure class="bleed">
+        <div class="mockpanel">
+          <div class="wall">
+            <div>
+              <h3>hard to scan</h3>
+              <div class="note n-y" style="--r:-1.2deg">The text is dense, making it difficult to scan quickly.</div>
+              <div class="note n-v" style="--r:0.8deg">Equal visual weight is given to all elements, making it difficult to distinguish between them.</div>
+              <div class="note n-p" style="--r:-0.6deg">The small font size affects readability, especially on high-resolution screens.</div>
+              <div class="note n-t" style="--r:1.1deg">The text-heavy structure increases cognitive load.</div>
+            </div>
+            <div>
+              <h3>hard to navigate</h3>
+              <div class="note n-y" style="--r:0.9deg">The current layout requires extensive horizontal scrolling.</div>
+              <div class="note n-t" style="--r:-0.8deg">No visible search or filtering options to quickly locate techniques.</div>
+              <div class="note n-p" style="--r:0.7deg">Sub-techniques are collapsed by default but lack clear affordances for expansion.</div>
+              <div class="note n-v" style="--r:-1deg">No quick way to jump between categories without excessive scrolling.</div>
+            </div>
+            <div>
+              <h3>not accessible</h3>
+              <div class="note n-v" style="--r:1deg">Low contrast between text and background makes readability difficult.</div>
+              <div class="note n-y" style="--r:-0.9deg">The gray background with blue links and small font size may not be accessible.</div>
+              <div class="note n-p" style="--r:0.6deg">Users must rely on memory recall to track techniques, as no visual aids reinforce understanding.</div>
+              <div class="note n-t" style="--r:-0.7deg">No keyboard navigability.</div>
+            </div>
+          </div>
+        </div>
+        <figcaption>the team&rsquo;s notes from those sessions, clustered into three themes</figcaption>
+      </figure>
+
+      <div class="two-col">
+        <div class="t">
+          <span class="lbl">Job 1</span>
+          <h3>Explore attack techniques</h3>
+          <p>Analysts read tactics, techniques and sub-techniques, often several at once, to understand one threat.</p>
+        </div>
+        <div class="t">
+          <span class="lbl">Job 2</span>
+          <h3>Check security coverage</h3>
+          <p>Teams mark what they can defend on the matrix and look for the gaps.</p>
+        </div>
+      </div>
+      <p class="lead" style="margin-top:26px">Every screen in the redesign had to serve one of these two jobs. If it served neither, it did not ship.</p>
+    </section>
+
+    <!-- ===== DESIGN PROCESS ===== -->
+    <section id="process" class="blk rise">
+      <span class="kick">Design process &middot; how I approached it</span>
+      <h2 class="big">Three design decisions <span class="em">shaped the redesign.</span></h2>
+      <p class="lead" style="margin-top:26px">The finished navigator at the top of this page looks simple. These are the three decisions behind it, including the versions we tried and rejected.</p>
+
+      <!-- Decision 1 -->
+      <div class="dec">
+        <div class="decmark"><span class="cell" aria-hidden="true">1</span>Decision 1 of 3<span class="rule"></span></div>
+        <h3 class="dhead">Rebuild the technique card <span class="em">on the design system</span></h3>
+        <p class="lead">Job 1 lives in one component: the technique card. How it opens, what it shows, where sub-techniques sit. Iteration one changed the card from opening sideways to opening vertically, on ServiceNow components. Before showing anyone, we wrote down what was wrong with it ourselves.</p>
+        <figure>
+          <div class="mockpanel">
+            <div class="opendemo">
+              <div>
+                <div class="olab"><b class="vtag yes">Shipped</b>The card opens vertically. Click the grey bar.</div>
+                <div class="tcard" id="odCard" style="width:230px">
+                  <div class="tt">Gather victim network information (6)</div>
+                  <div class="subs2"><span>DNS</span><span>Domain properties</span><span>IP addresses</span><span>Network security appliances</span><span>Network topology</span><span>Network trust dependencies</span></div>
+                  <button class="grip" id="odGrip" aria-expanded="true" aria-label="Collapse or expand the technique card">&#9650;</button>
+                </div>
+              </div>
+              <div>
+                <div class="olab"><b class="vtag no">Replaced</b>Before, it opened sideways, into the next column.</div>
+                <div class="hsplit" style="max-width:360px">
+                  <div class="hl">Gather Victim Network Information <small>(0/6)</small></div>
+                  <div class="hg">&#10073;&#10073;</div>
+                  <div class="hr"><span>DNS</span><span>Domain Properties</span><span>IP Addresses</span><span>Network Security Appliances</span><span>Network Topology</span><span>Network Trust Dependencies</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <figcaption>the same technique, opening both ways. rebuilt, not screenshotted</figcaption>
+        </figure>
+        <div class="ba">
+          <div class="after"><span class="tag">Working well</span><ul><li><b>Vertical opening</b>: the open and close behaviour of the card makes it easier to move through a long list.</li><li><b>ServiceNow components</b>: the UI matches the rest of the security workflow.</li></ul></div>
+          <div class="before"><span class="tag">Needs work</span><ul><li><b>Weak separator between tactics</b>: when a category runs long, you lose track of where it ends.</li><li><b>Colour contrast fails</b>: the background and cell colours did not pass the accessibility check. A darker background fixes it.</li></ul></div>
+        </div>
+      </div>
+
+      <!-- Decision 2 -->
+      <div class="dec dark band">
+        <div class="decmark"><span class="cell" aria-hidden="true">2</span>Decision 2 of 3<span class="rule"></span></div>
+        <h3 class="dhead">Replace three colours <span class="em">with a 0 to 100 scale</span></h3>
+        <p class="lead"><b>Coverage</b> means: how well can a team detect or prevent each behaviour in the matrix. The original tool leaves the values to each team, and most teams used three colours: red, yellow, green. Three levels cannot show progress.</p>
+        <p class="lead" style="margin-top:14px">We replaced them with a 0 to 100 scale in six bands. A team can now show it is halfway there, instead of only pass or fail.</p>
+        <figure class="bleed wide">
+          <div class="mockpanel">
+            <div class="it1">
+              <table class="lgd">
+                <tr><th>Coverage</th><th>%</th><th>Representation</th><th>Meaning</th></tr>
+                <tr><td>Excellent</td><td class="pc">81&ndash;100%</td><td><span class="dm"><i class="c1"></i><i class="c1"></i><i class="c1"></i><i class="c1"></i><i class="c1"></i><i class="c1"></i></span></td><td class="mn">Coverage is comprehensive and effective</td></tr>
+                <tr><td>Very good</td><td class="pc">61&ndash;80%</td><td><span class="dm"><i class="c2"></i><i class="c2"></i><i class="c2"></i><i class="c2"></i><i class="c2"></i><i></i></span></td><td class="mn">Strong, but may have some minor gaps</td></tr>
+                <tr><td>Good</td><td class="pc">41&ndash;60%</td><td><span class="dm"><i class="c3"></i><i class="c3"></i><i class="c3"></i><i class="c3"></i><i></i><i></i></span></td><td class="mn">Requires supplemental detection or prevention</td></tr>
+                <tr><td>Fair</td><td class="pc">21&ndash;40%</td><td><span class="dm"><i class="c4"></i><i class="c4"></i><i class="c4"></i><i></i><i></i><i></i></span></td><td class="mn">Partial coverage, with notable gaps</td></tr>
+                <tr><td>Poor</td><td class="pc">1&ndash;20%</td><td><span class="dm"><i class="c5"></i><i class="c5"></i><i></i><i></i><i></i><i></i></span></td><td class="mn">Very limited coverage</td></tr>
+                <tr><td>None</td><td class="pc">0%</td><td><span class="dm"><i class="c6"></i><i></i><i></i><i></i><i></i><i></i></span></td><td class="mn">No coverage at all</td></tr>
+              </table>
+              <div class="itcards">
+                <div class="tcard">
+                  <div class="tt">Gather victim identity information (6)</div>
+                  <div class="meta" style="display:flex;gap:18px">
+                    <span><span class="dlabel">Detection</span><span class="dm"><i class="c2"></i><i class="c2"></i><i class="c2"></i><i class="c2"></i><i class="c2"></i><i></i></span></span>
+                    <span><span class="dlabel">Prevention</span><span class="dm"><i class="c6"></i><i></i><i></i><i></i><i></i><i></i></span></span>
+                  </div>
+                  <div class="grip" aria-hidden="true">&#9660;</div>
+                </div>
+                <div class="tcard" style="box-shadow: 0 0 0 2px #3b78c4, 0 1px 4px rgba(24,39,58,0.16)">
+                  <div class="tt">Gather Victim Identity Information</div>
+                  <div class="meta" style="display:flex;gap:18px">
+                    <span><span class="dlabel">Detection</span><span class="dm"><i class="c2"></i><i class="c2"></i><i class="c2"></i><i class="c2"></i><i class="c2"></i><i></i></span></span>
+                    <span><span class="dlabel">Prevention</span><span class="dm"><i class="c6"></i><i></i><i></i><i></i><i></i><i></i></span></span>
+                  </div>
+                  <div class="subs">
+                    <div class="tsub"><div class="st">Scheduled Task</div><div style="display:flex;gap:14px"><span><span class="dlabel">Detection</span><span class="dm"><i class="c2"></i><i class="c2"></i><i class="c2"></i><i class="c2"></i><i></i><i></i></span></span><span><span class="dlabel">Prevention</span><span class="dm"><i class="c6"></i><i></i><i></i><i></i><i></i><i></i></span></span></div></div>
+                    <div class="tsub"><div class="st">At Windows</div><div style="display:flex;gap:14px"><span><span class="dlabel">Detection</span><span class="dm"><i class="c2"></i><i class="c2"></i><i class="c2"></i><i class="c2"></i><i></i><i></i></span></span><span><span class="dlabel">Prevention</span><span class="dm"><i class="c6"></i><i></i><i></i><i></i><i></i><i></i></span></span></div></div>
+                    <div class="tsub"><div class="st">Domain Accounts</div><div style="display:flex;gap:14px"><span><span class="dlabel">Detection</span><span class="dm"><i class="c2"></i><i class="c2"></i><i class="c2"></i><i class="c2"></i><i></i><i></i></span></span><span><span class="dlabel">Prevention</span><span class="dm"><i class="c6"></i><i></i><i></i><i></i><i></i><i></i></span></span></div></div>
+                  </div>
+                  <div class="grip" style="background:#3b78c4" aria-hidden="true">&#9650;</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <figcaption>exploration: six bands drawn as dot meters, on the technique cards</figcaption>
+        </figure>
+        <p class="exverdict"><b class="vtag no">Not chosen</b>The meters read as a progress bar, which coverage is not. And the meaning lived in colour alone.</p>
+
+        <div class="ba" style="margin-top:28px">
+          <div class="after"><span class="tag">Working well</span><ul><li>A colour order that runs logically from excellent to none</li><li>A clean UI that stays readable despite many data points</li></ul></div>
+          <div class="before"><span class="tag">Needs work</span><ul><li>Dot meters look like a <b>linear progress indicator, which this is not</b></li><li>Some colours, blue, purple and teal, are too similar</li><li>Detection and Prevention dots are too small to tell apart quickly</li><li><b>Colour-only encoding is not accessible</b> to colourblind users</li><li>No fast way to scan for the techniques with missing coverage</li></ul></div>
+        </div>
+      </div>
+
+      <!-- Decision 3 -->
+      <div class="dec">
+        <div class="decmark"><span class="cell" aria-hidden="true">3</span>Decision 3 of 3<span class="rule"></span></div>
+        <h3 class="dhead">Give every colour <span class="em">a symbol</span></h3>
+        <p class="lead">The last two problems on that list had one cause: the design depended on colour alone. The fix: every band gets a symbol as well as a colour. The reading works without colour vision, and the empty symbol makes missing coverage easy to find.</p>
+        <p class="lead" style="margin-top:14px">Accessibility should have been a rule from iteration one, not a finding in iteration two. I had checked colour contrast on the background, but not on the data itself. Since this project, every encoding I design must work in greyscale first.</p>
+        <figure class="bleed wide">
+          <div class="mockpanel">
+            <div class="it1">
+              <div class="bands">
+                <div class="brow"><span class="nm">Excellent</span><span class="pc">81&ndash;100%</span><span class="swatch b-exc"><i>&#9679;</i> full symbol, darkest colour</span></div>
+                <div class="brow"><span class="nm">Very good</span><span class="pc">61&ndash;80%</span><span class="swatch b-vgood"><i>&#9685;</i> three quarters</span></div>
+                <div class="brow"><span class="nm">Good</span><span class="pc">41&ndash;60%</span><span class="swatch b-good"><i>&#9681;</i> half</span></div>
+                <div class="brow"><span class="nm">Fair</span><span class="pc">21&ndash;40%</span><span class="swatch b-fair"><i>&#9684;</i> one quarter</span></div>
+                <div class="brow"><span class="nm">Poor</span><span class="pc">1&ndash;20%</span><span class="swatch b-poor"><i>&#9675;</i> nearly empty</span></div>
+                <div class="brow"><span class="nm">None</span><span class="pc">0%</span><span class="swatch b-none"><i>&#8856;</i> no coverage, and it shows</span></div>
+              </div>
+              <div class="itcards">
+                <div class="tcard">
+                  <div class="tt">Gather Victim Host Information</div>
+                  <div class="cbar b-none"><span>Detection</span><i>&#8856;</i></div>
+                  <div class="cbar b-poor"><span>Prevention</span><i>&#9675;</i></div>
+                  <div class="grip" aria-hidden="true">&#9660;</div>
+                </div>
+                <div class="tcard">
+                  <div class="tt">Gather Victim Identity Information</div>
+                  <div class="cbar b-none"><span>Detection</span><i>&#8856;</i></div>
+                  <div class="cbar b-poor"><span>Prevention</span><i>&#9675;</i></div>
+                  <div class="subs">
+                    <div class="tsub"><div class="st">Scheduled Task</div><div class="cbar b-none"><span>Detection</span><i>&#8856;</i></div><div class="cbar b-poor"><span>Prevention</span><i>&#9675;</i></div></div>
+                  </div>
+                  <div class="grip" aria-hidden="true">&#9650;</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <figcaption>each band gets a symbol as well as a colour, and the cards carry both</figcaption>
+        </figure>
+        <p class="exverdict"><b class="vtag yes">Shipped</b>This is the version that went out. Every item on the critique list is answered by the symbol.</p>
+        <figure>
+          <div class="mockpanel">
+            <div class="dual dl" data-play id="dualDemo">
+              <div class="card" style="--i:0"><h4 style="color:#2e6d4e">Standard Layer Application Protocol</h4><div class="cbar b-exc"><span>Detection</span><i>&#9679; 92%</i></div><div class="cbar b-fair"><span>Prevention</span><i>&#9684; 34%</i></div></div>
+              <div class="card" style="--i:1"><h4 style="color:#2e6d4e">Active Scanning</h4><div class="cbar b-good"><span>Detection</span><i>&#9681; 55%</i></div><div class="cbar b-poor"><span>Prevention</span><i>&#9675; 12%</i></div></div>
+              <div class="card" style="--i:2"><h4 style="color:#2e6d4e">Domain Accounts</h4><div class="cbar b-none"><span>Detection</span><i>&#8856; 0%</i></div><div class="cbar b-none"><span>Prevention</span><i>&#8856; 0%</i></div></div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="greyToggle"> Try it without colour</label>
+          </div>
+          <figcaption>turn the colour off. the reading still works</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ===== FINAL DESIGNS ===== -->
+    <section id="finaldesigns" class="blk rise">
+      <div class="band band2">
+        <h3 class="conshead">Final <span class="em">designs</span></h3>
+        <p class="lead">The same matrix, the same names, the same data, now in one place with a clearer layout. Five decisions are marked on it.</p>
+        <figure class="bleed">
+          <div class="panel tight">
+            <div class="hot">
+              <img class="shot" src="img/sn-hero.webp" alt="The redesigned MITRE ATT&CK heatmap and navigator inside ServiceNow" width="1512" height="1157" loading="lazy">
+              <button class="pin" style="--x:30.9%; --y:8.0%; --i:0" aria-label="Note 1">1</button>
+              <div class="tip below"><b>One matrix, scoped</b>One dropdown switches between the ATT&amp;CK matrices. No separate views to maintain.</div>
+              <button class="pin" style="--x:32.1%; --y:16.2%; --i:1" aria-label="Note 2">2</button>
+              <div class="tip below"><b>Counts before you scroll</b>Every tactic header shows how many techniques sit under it. Persistence: 105.</div>
+              <button class="pin" style="--x:18.4%; --y:24.8%; --i:2" aria-label="Note 3">3</button>
+              <div class="tip"><b>Two readings, not one</b>Detection and Prevention get their own row on every technique. The old view merged them into one colour.</div>
+              <button class="pin" style="--x:39.9%; --y:21.3%; --i:3" aria-label="Note 4">4</button>
+              <div class="tip"><b>Gaps are easy to spot</b>Red plus an empty symbol means no coverage. These cells are what analysts look for, so they stand out the most.</div>
+              <button class="pin" style="--x:83.6%; --y:8.0%; --i:4" aria-label="Note 5">5</button>
+              <div class="tip left below"><b>Search by name or ID</b>If an analyst already knows the technique, search beats the grid.</div>
+            </div>
+            <p class="hotcap"><i>1</i> click the pins. each one is a decision</p>
+          </div>
+          <figcaption>the finished navigator, rebuilt on the ServiceNow design system</figcaption>
+        </figure>
+        <p class="lead" style="margin-top:clamp(30px,4vw,50px)">Every state a technique cell can be in, documented once, so engineering could build it once:</p>
+        <div class="states">
+          <div><div class="slab">Without detection and prevention</div>
+            <div class="tcard"><div class="tt">Gather Victim Org Information</div><div class="grip" aria-hidden="true">&#9660;</div></div></div>
+          <div><div class="slab">With prevention only</div>
+            <div class="tcard"><div class="tt">Gather Victim Host Information</div><div class="cbar b-none"><span>Prevention</span><i>&#8856;</i></div><div class="grip" aria-hidden="true">&#9660;</div></div></div>
+          <div><div class="slab">With detection only</div>
+            <div class="tcard"><div class="tt">Standard Layer Application Protocol</div><div class="cbar b-good"><span>Detection</span><i>&#9681;</i></div><div class="grip" aria-hidden="true">&#9660;</div></div></div>
+          <div><div class="slab">With detection and prevention</div>
+            <div class="tcard"><div class="tt">Active Scanning</div><div class="cbar b-none"><span>Detection</span><i>&#8856;</i></div><div class="cbar b-poor"><span>Prevention</span><i>&#9675;</i></div><div class="grip" aria-hidden="true">&#9660;</div></div></div>
+          <div><div class="slab">With other parameters</div>
+            <div class="tcard"><div class="tt">Active Scanning</div><div class="meta">T1078<br>Security Incidents: 01<br>Detection Rule: 01<br>CVEs Rule: 01</div><div class="cbar b-none"><span>Detection</span><i>&#8856;</i></div><div class="cbar b-poor"><span>Prevention</span><i>&#9675;</i></div><div class="grip" aria-hidden="true">&#9660;</div></div></div>
+          <div><div class="slab">With sub-technique coverage</div>
+            <div class="tcard"><div class="tt">Active Scanning</div><div class="cbar b-none"><span>Detection</span><i>&#8856;</i></div><div class="cbar b-poor"><span>Prevention</span><i>&#9675;</i></div>
+              <div class="subs"><div class="tsub"><div class="st">Emails</div><div class="cbar b-none"><span>Detection</span><i>&#8856;</i></div></div><div class="tsub"><div class="st">DNS</div><div class="cbar b-good"><span>Detection</span><i>&#9681;</i></div></div></div>
+              <div class="grip" aria-hidden="true">&#9650;</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== RESULTS ===== -->
+    <section id="results" class="blk rise">
+      <span class="kick">Results</span>
+      <div class="way" data-play>
+        <h3>What the numbers say after release</h3>
+        <ul class="ways">
+          <li style="--i:0">
+            <b class="resnum">~70%</b>
+            <p>Faster threat detection and incident response.</p>
+          </li>
+          <li style="--i:1">
+            <b>Adopted by Cisco and DNB Bank.</b>
+            <p>Later used by other Fortune 500 security teams.</p>
+          </li>
+          <li style="--i:2">
+            <b>Fewer external references.</b>
+            <p>Analysts stayed in the platform instead of opening external tools.</p>
+          </li>
+        </ul>
+      </div>
+
+      <figure>
+        <div class="panel">
+          <div class="attack" data-play>
+            <div class="legend"><span><i class="l0"></i> none</span><span><i class="l1"></i> poor</span><span><i class="l2"></i> fair</span><span><i class="l3"></i> good</span><span><i class="l4"></i> very good</span><span><i class="l5"></i> excellent</span></div>
+            <div class="agrid" id="attackGrid"></div>
+          </div>
+        </div>
+        <figcaption>coverage read as progress, not pass or fail (illustrative data, real tactics)</figcaption>
+      </figure>
+
+      <p class="resquote">Security is not binary, it is incremental.<br>The heat map helped us show progress, not just a pass or fail.</p>
+      <p class="resattr">Security analyst &middot; internal team at ServiceNow</p>
+
+      <p class="lead" style="margin-top:clamp(56px,7vw,90px)">Companies using ServiceNow Security Operations report the difference in their own numbers:</p>
+      <div class="adopt">
+        <div class="t">
+          <span class="lbl">SAS Scandinavian Airlines</span>
+          <p class="qq">&ldquo;We&rsquo;re a digital-first airline. Cybersecurity is foundational for our business.&rdquo;</p>
+          <span class="who">Thomas Widen &middot; Head of cybersecurity and compliance, SAS</span>
+          <ul>
+            <li>Under <b>1 minute</b> to identify a threat</li>
+            <li>Under <b>10 minutes</b> to contain it</li>
+            <li>Under <b>1 hour</b> to analyse future risk</li>
+          </ul>
+        </div>
+        <div class="t">
+          <span class="lbl">Yokogawa Electric</span>
+          <p class="qq">&ldquo;ServiceNow ITOM and Security Operations provide visibility of global IT asset management statuses, and automate security breach prevention from serious threats.&rdquo;</p>
+          <span class="who">Tetsuo Shiozaki &middot; Deputy head of digital strategy, Yokogawa</span>
+          <ul>
+            <li><b>35K</b> global IT assets visible</li>
+            <li><b>30%</b> efficiency gain by prioritising incidents</li>
+            <li><b>1 minute</b> from threat detection to response, from 1 to 3 weeks previously</li>
+          </ul>
+        </div>
+      </div>
+      <p class="sub" style="text-align:left;margin-top:14px;font-family:var(--mono);font-size:10.5px;color:var(--light)">From ServiceNow customer stories.</p>
+    </section>
+
+    <!-- ===== REFLECTION ===== -->
+    <section id="reflection" class="blk rise">
+      <span class="kick">Reflection</span>
+      <div class="way" data-play style="margin-top:0">
+        <h3>What this project taught me</h3>
+        <ul class="ways">
+          <li style="--i:0">
+            <span class="cell" aria-hidden="true">1</span>
+            <b>Keep the standard, change the reading.</b>
+            <p>ATT&amp;CK gave every security team a shared vocabulary. We kept its structure and names untouched, and changed only how people read them. That is what made the redesign safe to approve.</p>
+          </li>
+          <li style="--i:1">
+            <span class="cell" aria-hidden="true">2</span>
+            <b>Frame design work in engineering terms.</b>
+            <p>Better usability did not win the approval. Lower maintenance cost did. The same work, argued as an engineering saving.</p>
+          </li>
+          <li style="--i:2">
+            <span class="cell" aria-hidden="true">3</span>
+            <b>Show absence, not just presence.</b>
+            <p>A heat map shows what you have. Analysts needed to see what was missing, so the empty cells had to be the most visible thing on screen.</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="two-col" style="grid-template-columns: minmax(0,0.85fr) minmax(0,1.15fr)">
+        <div class="t">
+          <span class="lbl">What I would change</span>
+          <h3>Check greyscale <span class="em">first.</span></h3>
+          <p>The symbol-and-colour system is the right answer. I would have reached it a sprint earlier if accessibility had been a rule from the start.</p>
+        </div>
+        <div class="t dark" style="display:flex;flex-direction:column;justify-content:center">
+          <p style="font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(21px,2.3vw,28px);line-height:1.3;color:var(--dark-ink)">&ldquo;This redesign transforms MITRE ATT&amp;CK from a static reference tool into a dynamic, adaptable experience that helps security professionals act with speed and clarity.&rdquo;</p>
+        </div>
+      </div>
+
+      <div class="next">
+        <span class="lbl">Next case study</span>
+        <a href="connectlab.html">MiDigi World: a skill learning app, designed end to end &rarr;</a>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="casestudy.js"></script>
+<script>
+// The rail rides the middle of the screen and crosses in and out of the dark
+// chapters, so a single class for the whole rail leaves some links white on a
+// light background at every boundary. Measure each link against the dark bands
+// instead. Registered after the shared listener so this runs last on each tick.
+(() => {
+  if (typeof view === 'undefined') return;
+  const links = [...document.querySelectorAll('.rail a')];
+  const bands = [...document.querySelectorAll('.band')];
+  if (!links.length || !bands.length) return;
+  view.on(() => {
+    const boxes = bands.map(b => {
+      const r = b.getBoundingClientRect();
+      const t = r.top + scrollY;
+      return [t, t + r.height];
+    });
+    links.forEach(a => {
+      const r = a.getBoundingClientRect();
+      const mid = r.top + scrollY + r.height / 2;
+      a.classList.toggle('over-dark', boxes.some(([t, b]) => mid >= t && mid <= b));
+    });
+  });
+})();
+
+(() => {
+  const card = document.getElementById('odCard');
+  const grip = document.getElementById('odGrip');
+  grip.addEventListener('click', () => {
+    const closed = card.classList.toggle('closed');
+    grip.innerHTML = closed ? '&#9660;' : '&#9650;';
+    grip.setAttribute('aria-expanded', String(!closed));
+  });
+})();
+document.getElementById('greyToggle').addEventListener('change', e => {
+  document.getElementById('dualDemo').classList.toggle('grey', e.target.checked);
+});
+const TACTICS = [
+  ['Reconnaissance',[5,4,3,1,4,5]],['Resource Dev.',[4,3,5,2,1,3]],['Initial Access',[5,5,4,3,2,5]],
+  ['Execution',[4,3,1,2,4,2]],['Persistence',[3,2,0,1,3,1]],['Priv. Escalation',[3,4,2,0,1,2]],
+  ['Defense Evasion',[2,1,2,0,2,1]],['Credential Access',[1,0,2,0,0,1]],['Discovery',[5,4,3,5,2,4]],
+  ['Lateral Movement',[3,2,1,0,3,2]],['Collection',[2,3,1,2,1,0]],['Command & Control',[5,4,3,2,4,3]],
+  ['Exfiltration',[1,0,2,1,0,2]],['Impact',[3,2,4,1,2,1]]
+];
+const grid = document.getElementById('attackGrid');
+TACTICS.forEach(([name, cells], c) => {
+  const col = document.createElement('div'); col.className = 'col';
+  const t = document.createElement('div'); t.className = 'th'; t.textContent = name; col.appendChild(t);
+  cells.forEach((lvl, r) => { const b = document.createElement('b'); b.className = 'l' + lvl; b.style.setProperty('--c', c); b.style.setProperty('--r', r); col.appendChild(b); });
+  grid.appendChild(col);
+});
+</script>
+</body>
+</html>

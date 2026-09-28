@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Case study: AI review tools for private client bankers at JPMorgan Chase. Details on request.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23faf7f5'/%3E%3Crect x='3' y='3' width='11' height='11' fill='none' stroke='%2334303a' stroke-width='2'/%3E%3Crect x='18' y='3' width='11' height='11' fill='%2334303a'/%3E%3Crect x='3' y='18' width='11' height='11' fill='%2334303a'/%3E%3Crect x='18' y='18' width='11' height='11' fill='none' stroke='%2334303a' stroke-width='2'/%3E%3C/svg%3E">
+<title>Onboarding Anomalies</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@200;300;400;500;600;700&display=swap">
+<style>
+  :root {
+    --lavender-mist: #eae4e9; --soft-blush: #fde2e4; --petal-frost: #fad2e1;
+    --mint-cream: #e2ece9; --light-blue: #bee1e6; --lavender: #dfe7fd; --periwinkle: #cddafd;
+    --bg: #faf7f5; --ink: #34303a; --mid: #6b6571; --light: #736d79;
+    --border: var(--lavender-mist); --cell-filled: #f7f5f7; --cell-border: #ddd5dd;
+    --highlight: var(--mint-cream); --highlight-border: #8fbdc4; --teal: #4a7c80; --wrong: var(--petal-frost);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { color-scheme: light; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: 'DM Sans', system-ui, sans-serif;
+    min-height: 100vh; padding-inline: clamp(20px, 9vw, 140px);
+  }
+
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; justify-content: space-between; align-items: center;
+    padding-block: 22px; margin-inline: calc(-1 * clamp(20px, 9vw, 140px)); padding-inline: clamp(20px, 9vw, 140px);
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .nav-brand {
+    display: flex; align-items: center; gap: 10px; text-decoration: none;
+    font-weight: 500; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--light);
+    transition: color 0.25s;
+  }
+  .nav-brand:hover { color: var(--mid); }
+  .monogram { display: grid; grid-template-columns: repeat(2, 14px); grid-auto-rows: 14px; gap: 1.5px; }
+  .monogram i {
+    display: flex; align-items: center; justify-content: center;
+    border: 1.2px solid var(--cell-border); background: var(--cell-filled);
+    font-style: normal; font-size: 9.5px; font-weight: 700; color: var(--ink);
+  }
+  .monogram i.fill { background: var(--ink); border-color: var(--ink); }
+  .back { font-size: 14px; color: var(--mid); text-decoration: none; transition: color 0.2s; }
+  .back:hover { color: var(--ink); }
+
+  /* ---------- the lock ---------- */
+  .gate {
+    min-height: calc(100vh - 90px);
+    display: grid; place-items: center; text-align: center;
+    padding-block: 40px 80px;
+  }
+  .gate-inner { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .gate h1 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 400; font-size: clamp(30px, 4vw, 44px); letter-spacing: -0.015em; line-height: 1.15;
+    text-wrap: balance;
+  }
+  .gate p.lede { font-size: 15px; font-weight: 300; color: var(--mid); max-width: 44ch; line-height: 1.6; }
+  .gate .clue {
+    font-family: 'Patrick Hand', cursive; font-size: 16.5px; color: var(--light); transform: rotate(-1deg);
+    margin-top: 4px;
+  }
+  .cells { display: flex; gap: 6px; margin-top: 12px; cursor: text; }
+  .cell {
+    width: 52px; height: 52px; border: 2px solid var(--ink); background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 24px; letter-spacing: 0.04em;
+    transition: background 0.25s, border-color 0.25s, transform 0.2s;
+    user-select: none;
+  }
+  .cell.active { border-color: var(--highlight-border); background: #eef7f8; box-shadow: 0 0 0 3px rgba(143,189,196,0.35); }
+  .cell.dot { color: var(--mid); font-size: 30px; }
+  .cell.correct { background: var(--highlight); border-color: var(--highlight-border); color: var(--teal); animation: pop 0.35s ease; }
+  .cell.wrong { background: var(--wrong); border-color: #e3a7bd; animation: shake 0.4s ease; }
+  @keyframes pop { 50% { transform: scale(1.14); } }
+  @keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+  .hint-line { font-size: 12.5px; color: var(--light); margin-top: 6px; }
+  .hint-line a { color: var(--mid); }
+  .gate input { position: absolute; opacity: 0; width: 1px; height: 1px; border: 0; padding: 0; }
+  .unlocked-msg { font-family: 'Patrick Hand', cursive; font-size: 20.5px; color: var(--teal); opacity: 0; transition: opacity 0.4s; }
+  .unlocked-msg.show { opacity: 1; }
+
+  /* ---------- the case study ---------- */
+  .study { display: none; padding-block: 40px 120px; max-width: 760px; margin-inline: auto; }
+  .study.open { display: block; animation: rise 0.6s ease; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--light); margin-bottom: 16px; }
+  .study h1 {
+    font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 400;
+    font-size: clamp(30px, 3.6vw, 44px); line-height: 1.18; letter-spacing: -0.015em; margin-bottom: 18px; text-wrap: balance;
+  }
+  .meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 13px; font-weight: 300; color: var(--mid); margin-bottom: 48px; }
+  .meta span { color: var(--light); }
+  .study h2 {
+    font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 24px; margin: 44px 0 12px;
+  }
+  .study p { font-size: 16px; font-weight: 300; line-height: 1.75; color: #56505e; max-width: 62ch; }
+  .study p + p { margin-top: 12px; }
+  .callout {
+    margin: 32px 0; padding: 20px 24px; border-left: 3px solid var(--highlight-border); background: var(--mint-cream);
+    border-radius: 0 6px 6px 0; font-size: 15px; line-height: 1.6; color: #35706f;
+  }
+  .callout b { font-weight: 600; }
+  .figure {
+    margin: 32px 0; aspect-ratio: 16 / 9; border-radius: 8px;
+    background:
+      repeating-linear-gradient(0deg, rgba(52,48,58,0.045) 0 1px, transparent 1px 34px),
+      repeating-linear-gradient(90deg, rgba(52,48,58,0.045) 0 1px, transparent 1px 34px),
+      var(--mint-cream);
+    display: grid; place-items: center; position: relative;
+  }
+  .figure .cap { position: absolute; left: 18px; bottom: 14px; font-family: 'Patrick Hand', cursive; font-size: 14.5px; color: var(--mid); }
+  .placeholder { font-family: 'Patrick Hand', cursive; font-size: 17px; color: var(--light); transform: rotate(-1.5deg); }
+  .draft {
+    display: inline-block; font-family: 'Patrick Hand', cursive; font-size: 12.5px; font-weight: 400;
+    color: #6a4f9c; background: #ece7f7; border: 1.5px dashed #bda9dd; border-radius: 3px; padding: 1px 9px;
+    transform: rotate(-1.5deg); margin-left: 8px; vertical-align: middle;
+  }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  .skip { position: absolute; left: 16px; top: -48px; z-index: 100; padding: 8px 14px; background: #34303a; color: #fff; font-size: 14px; text-decoration: none; }
+  .skip:focus { top: 12px; outline: 2px solid #5b4fb8; outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+<nav>
+  <a class="nav-brand" href="./" aria-label="Ashita Jain, home">
+    <span class="monogram" aria-hidden="true"><i>A</i><i class="fill"></i><i class="fill"></i><i>J</i></span>
+    Ashita Jain
+  </a>
+  <a class="back" href="./#work">&larr; All work</a>
+</nav>
+
+<main id="main">
+<section class="gate" id="gate">
+  <div class="gate-inner">
+    <h1>This one&rsquo;s under wraps.</h1>
+    <p class="lede">JPMorgan Chase asked me to keep the details private. If you have the word, fill it in below.</p>
+    <div class="cells" id="cells" aria-hidden="true"></div>
+    <input id="pw" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Password">
+    <p class="clue">&uarr; don&rsquo;t have the word? just ask me.</p>
+    <p class="hint-line"><a href="mailto:ashitajain.work@gmail.com?subject=Case%20study%20access">&rarr; ashitajain.work@gmail.com</a></p>
+    <p class="unlocked-msg" id="unlockedMsg">Solved. Come on in.</p>
+  </div>
+</section>
+
+<article class="study" id="study">
+  <div class="eyebrow">JPMorgan Chase &middot; 2022 to now <span class="draft">draft copy</span></div>
+  <h1>I designed AI review tools at <b>JPMorgan Chase</b> that help private bankers approve client data they can actually trust.</h1>
+  <div class="meta">Senior UX Designer <span>|</span> Enterprise design, Fintech <span>|</span> 8 months</div>
+
+  <div class="callout"><b>Impact:</b> onboarding time down 45%, cases needing manual review down 70%. Reviewers went from reading every document to reading the three the system wasn&rsquo;t sure about.</div>
+
+  <h2>Context</h2>
+  <p>Private-client onboarding meant a human reading nine document types per client, cross-checking them against each other and against policy. Most of that reading confirmed nothing was wrong. The time went into the reading, not the deciding.</p>
+
+  <h2>The problem</h2>
+  <p>The team wanted automation but did not trust a model to decide alone, and compliance would not accept a black box. The design problem was not &ldquo;how do we detect anomalies&rdquo; but &ldquo;how does a reviewer stay in charge of a system that reads faster than they do.&rdquo;</p>
+
+  <div class="figure"><span class="placeholder">re-enactment of the review flow goes here</span><span class="cap">scan &rarr; flag &rarr; decide</span></div>
+
+  <h2>What I designed</h2>
+  <p>An agent that reads the packet first and surfaces only what it cannot reconcile, each flag carrying the two pieces of evidence that disagree. Reviewers confirm or dismiss with one action, and every dismissal teaches the system what a false positive looks like for that client segment.</p>
+  <p>The interface is built around one question at a time. No dashboard, no scores to interpret. Just: here is what looks off, here is why, what do you want to do.</p>
+
+  <h2>What changed</h2>
+  <p>Median onboarding time fell 45%. Reviewer confidence, measured by how often they overrode the system, settled at a level compliance was comfortable with. The pattern was picked up by two adjacent teams.</p>
+
+  <div class="figure"><span class="placeholder">before / after screens go here</span><span class="cap">nine screens &rarr; one call</span></div>
+</article>
+
+</main>
+<script>
+// Prototype gate. Only the SHA-256 of the word ships in this file, so the word
+// itself is not readable in the source. It is still a client-side check: a short
+// secret can be brute-forced offline. For real protection wrap this page with
+// StatiCrypt (client-side AES) or host-level password protection, and let these
+// cells drive that instead.
+const GATE_HASH = 'c7651f4560224a0021c9a2f79ca151e021164d37f3fdeeda2be8825e30e13289';
+const GATE_LEN = 5;
+
+const cells = document.getElementById('cells');
+const input = document.getElementById('pw');
+const els = Array.from({ length: GATE_LEN }, () => {
+  const c = document.createElement('div');
+  c.className = 'cell';
+  cells.appendChild(c);
+  return c;
+});
+let typed = [], solved = false, checking = false, revealTimer = null;
+
+let audioCtx = null;
+function tone(freq, dur, gain, type) {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const t = audioCtx.currentTime, o = audioCtx.createOscillator(), a = audioCtx.createGain();
+    o.type = type || 'triangle'; o.frequency.setValueAtTime(freq, t);
+    a.gain.setValueAtTime(0, t); a.gain.linearRampToValueAtTime(gain, t + 0.005);
+    a.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(a).connect(audioCtx.destination); o.start(t); o.stop(t + dur);
+  } catch (e) {}
+}
+
+const sha256 = async str => {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
+function paint(reveal) {
+  els.forEach((c, i) => {
+    const ch = typed[i];
+    c.textContent = ch === undefined ? '' : (i === reveal ? ch : '•');
+    c.classList.toggle('dot', ch !== undefined && i !== reveal);
+    c.classList.toggle('active', i === typed.length && !solved);
+  });
+}
+
+function reset() {
+  typed = [];
+  els.forEach(c => { c.textContent = ''; c.className = 'cell'; });
+  paint(-1);
+}
+
+function unlock() {
+  solved = true;
+  els.forEach((c, i) => {
+    c.classList.remove('active');
+    setTimeout(() => c.classList.add('correct'), i * 55);
+  });
+  [784, 988, 1175].forEach((f, i) => setTimeout(() => tone(f, 0.45, 0.05, 'sine'), 120 + i * 110));
+  document.getElementById('unlockedMsg').classList.add('show');
+  try { sessionStorage.setItem('jpm-unlocked', '1'); } catch (e) {}
+  setTimeout(() => {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('study').classList.add('open');
+    window.scrollTo({ top: 0 });
+  }, 1100);
+}
+
+function reject() {
+  els.forEach(c => c.classList.add('wrong'));
+  tone(150, 0.12, 0.04, 'sine');
+  setTimeout(() => { reset(); checking = false; }, 520);
+}
+
+async function submit() {
+  checking = true;
+  try {
+    if (await sha256(typed.join('')) === GATE_HASH) unlock();
+    else reject();
+  } catch (e) {
+    reject();
+  }
+}
+
+function typeChar(ch) {
+  if (solved || checking || typed.length >= GATE_LEN) return;
+  typed.push(ch);
+  const at = typed.length - 1;
+  paint(at);
+  tone(500 + at * 22, 0.05, 0.05);
+  clearTimeout(revealTimer);
+  revealTimer = setTimeout(() => paint(-1), 420);
+  if (typed.length === GATE_LEN) submit();
+}
+
+function backspace() {
+  if (solved || checking || !typed.length) return;
+  typed.pop();
+  paint(-1);
+}
+
+input.addEventListener('keydown', e => {
+  if (e.key === 'Backspace') { e.preventDefault(); backspace(); }
+  else if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
+    e.preventDefault(); typeChar(e.key);
+  }
+});
+input.addEventListener('input', () => {
+  const v = input.value; input.value = '';
+  [...v].forEach(typeChar);
+});
+input.addEventListener('blur', () => els.forEach(c => c.classList.remove('active')));
+input.addEventListener('focus', () => paint(-1));
+cells.addEventListener('click', () => input.focus({ preventScroll: true }));
+
+// Already solved this session? Skip the gate.
+try {
+  if (sessionStorage.getItem('jpm-unlocked') === '1') {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('study').classList.add('open');
+  } else {
+    setTimeout(() => input.focus({ preventScroll: true }), 500);
+  }
+} catch (e) { setTimeout(() => input.focus({ preventScroll: true }), 500); }
+</script>
+</body>
+</html>
