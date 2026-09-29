@@ -431,12 +431,6 @@
   .fill-go i { animation: fillIn .46s cubic-bezier(.3,1.5,.5,1) var(--fd, 0ms) backwards; }
   @keyframes fillIn { from { color: transparent; transform: scale(.5) rotate(-10deg); } 60% { transform: scale(1.12); } }
 
-  /* after the name, one more tile: her face, which turns over once the letters are in */
-  .fw.k i.me { padding: 0; overflow: hidden; background: var(--pur-pale); margin-left: 9px; }
-  .fw.k i.me img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .fill-wait i.me img { opacity: 0; }
-  .fill-go i.me img { animation: faceIn .6s cubic-bezier(.3,1.4,.5,1) calc(var(--fd, 0ms) + 120ms) backwards; }
-  @keyframes faceIn { from { opacity: 0; transform: rotateY(90deg) scale(.8); } }
   .route.line-wait svg.line { clip-path: inset(0 100% 0 0); }
   .route.line-go svg.line { animation: lineDraw 1.6s cubic-bezier(.4,0,.2,1) backwards; }
   @keyframes lineDraw { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
@@ -606,7 +600,7 @@
       <div class="fw " style="--c:7;--r:1"><i>R</i><i>U</i><i>N</i><i>N</i><i>I</i><i>N</i><i>G</i></div>
       <div class="fw d " style="--c:11;--r:4"><i>H</i><i>I</i><i>K</i><i>E</i></div>
       </div>
-      <div class="fw k" data-fill="0" style="--c:0;--r:3"><i>A</i><i>S</i><i>H</i><i>I</i><i>T</i><i>A</i><i class="me"><img src="img/me-face.webp" alt="Ashita" width="160" height="160"></i></div>
+      <div class="fw k" data-fill="0" style="--c:0;--r:3"><i>A</i><i>S</i><i>H</i><i>I</i><i>T</i><i>A</i></div>
       <div class="fcta">
         <p class="lede">Every design problem starts as a puzzle <br>and I love solving them.</p>
         <p class="ask">Want to solve something together?</p>
@@ -663,7 +657,12 @@ const VP = (() => {
     else { vp.top = scrollY; vp.height = innerHeight; vp.bottom = vp.top + innerHeight; }
   };
   const build = () => {
-    const h = document.documentElement.scrollHeight - 2, n = Math.ceil(h / STEP);
+    const de = document.documentElement;
+    if (!(window.top !== window.self && de.scrollHeight <= innerHeight + 4)) {
+      if (io) { io.disconnect(); io = null; rail.innerHTML = ''; vis = new Uint8Array(0); }
+      return;
+    }
+    const h = de.scrollHeight - 2, n = Math.ceil(h / STEP);
     if (n === vis.length) return;
     if (io) io.disconnect();
     rail.style.height = n * STEP + 'px';
@@ -677,7 +676,7 @@ const VP = (() => {
     idx.forEach((i, c) => io.observe(c));
   };
   const refresh = () => { build(); mode(); kick(); };
-  addEventListener('scroll', () => { if (!vp.framed) { mode(); kick(); } }, { passive: true });
+  addEventListener('scroll', () => { if (!vp.framed) { vp.top = scrollY; vp.bottom = vp.top + vp.height; kick(); } }, { passive: true });
   addEventListener('resize', refresh);
   addEventListener('load', refresh);
   if ('ResizeObserver' in window) new ResizeObserver(refresh).observe(document.body);
@@ -790,23 +789,28 @@ document.getElementById('ftrUp')?.addEventListener('click', e => { e.preventDefa
   sec.appendChild(wrap);
   // the reveal is spread over as much scrolling as the page has left
   let span = 500;
-  const secTop = () => sec.getBoundingClientRect().top + scrollY;
+  let secY = 0, docH = 0, lastVH = -1;
   const measure = () => {
-    const startY = secTop() - VP.height * 0.92;
-    const runway = (document.documentElement.scrollHeight - VP.height) - startY;
+    secY = sec.getBoundingClientRect().top + scrollY;
+    docH = document.documentElement.scrollHeight;
+    lastVH = VP.height;
+    const startY = secY - VP.height * 0.92;
+    const runway = (docH - VP.height) - startY;
     span = Math.max(420, Math.min(VP.height * 1.5, runway - 24));
   };
   measure();
+  addEventListener('load', measure);
+  if ('ResizeObserver' in window) new ResizeObserver(() => requestAnimationFrame(measure)).observe(document.body);
   const paint = () => {
-    const top = secTop() - VP.top;
-    const atEnd = VP.bottom >= document.documentElement.scrollHeight - 10;
+    const top = secY - VP.top;
+    const atEnd = VP.bottom >= docH - 10;
     const raw = (VP.height * 0.92 - top) / span;
     const p = atEnd ? 1 : Math.pow(Math.max(0, raw), 1.5);
     const want = Math.max(0, Math.min(cells.length, Math.round(p * cells.length)));
     while (shown < want) cells[shown++].classList.add('off');
     while (shown > want) cells[--shown].classList.remove('off');
   };
-  VP.on(() => { measure(); paint(); });
+  VP.on(() => { if (VP.height !== lastVH) measure(); paint(); });
   addEventListener('resize', () => { build(); measure(); paint(); }, { passive: true });
   paint();
 })();

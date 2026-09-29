@@ -2174,12 +2174,6 @@
   .fill-go i { animation: fillIn .46s cubic-bezier(.3,1.5,.5,1) var(--fd, 0ms) backwards; }
   @keyframes fillIn { from { color: transparent; transform: scale(.5) rotate(-10deg); } 60% { transform: scale(1.12); } }
 
-  /* after the name, one more tile: her face, which turns over once the letters are in */
-  .fw.k i.me { padding: 0; overflow: hidden; background: var(--pur-pale); margin-left: 9px; }
-  .fw.k i.me img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .fill-wait i.me img { opacity: 0; }
-  .fill-go i.me img { animation: faceIn .6s cubic-bezier(.3,1.4,.5,1) calc(var(--fd, 0ms) + 120ms) backwards; }
-  @keyframes faceIn { from { opacity: 0; transform: rotateY(90deg) scale(.8); } }
 
   .skip { position: absolute; left: 16px; top: -48px; z-index: 100; padding: 8px 14px; background: #34303a; color: #fff; font-size: 14px; text-decoration: none; }
   .skip:focus { top: 12px; outline: 2px solid #5b4fb8; outline-offset: 2px; }
@@ -2475,7 +2469,7 @@
       <div class="fw " style="--c:7;--r:1"><i>R</i><i>U</i><i>N</i><i>N</i><i>I</i><i>N</i><i>G</i></div>
       <div class="fw d " style="--c:11;--r:4"><i>H</i><i>I</i><i>K</i><i>E</i></div>
       </div>
-      <div class="fw k" data-fill="0" style="--c:0;--r:3"><i>A</i><i>S</i><i>H</i><i>I</i><i>T</i><i>A</i><i class="me"><img src="img/me-face.webp" alt="Ashita" width="160" height="160"></i></div>
+      <div class="fw k" data-fill="0" style="--c:0;--r:3"><i>A</i><i>S</i><i>H</i><i>I</i><i>T</i><i>A</i></div>
       <div class="fcta">
         <p class="lede">Every design problem starts as a puzzle <br>and I love solving them.</p>
         <p class="ask">Want to solve something together?</p>
@@ -2663,6 +2657,60 @@ const MOCKS = {
     </div>`,
 };
 
+// Where the visible part of the page is. Inside the host's frame, the frame grows
+// to fit the page and the outer page does the scrolling, so this document never
+// scrolls and scroll events and innerHeight say nothing. Thin strips down the page,
+// watched by IntersectionObserver, report which part is on screen in either case.
+const VP = (() => {
+  const STEP = 8, subs = [];
+  const vp = { top: 0, height: innerHeight, bottom: innerHeight, framed: false, on: f => subs.push(f) };
+  const rail = document.createElement('div');
+  rail.setAttribute('aria-hidden', 'true');
+  rail.style.cssText = 'position:absolute;left:0;top:0;width:1px;opacity:0;pointer-events:none;overflow:hidden';
+  document.body.appendChild(rail);
+  let vis = new Uint8Array(0), io = null, queued = false;
+  const emit = () => { queued = false; subs.forEach(f => f(vp)); };
+  const kick = () => { if (!queued) { queued = true; requestAnimationFrame(emit); } };
+  const fromRail = () => {
+    let a = -1, b = -1;
+    for (let i = 0; i < vis.length; i++) if (vis[i]) { if (a < 0) a = i; b = i; }
+    if (a < 0) return;
+    vp.top = a * STEP; vp.bottom = (b + 1) * STEP; vp.height = vp.bottom - vp.top;
+  };
+  const mode = () => {
+    const de = document.documentElement;
+    vp.framed = window.top !== window.self && de.scrollHeight <= innerHeight + 4;
+    if (vp.framed) fromRail();
+    else { vp.top = scrollY; vp.height = innerHeight; vp.bottom = vp.top + innerHeight; }
+  };
+  const build = () => {
+    const de = document.documentElement;
+    if (!(window.top !== window.self && de.scrollHeight <= innerHeight + 4)) {
+      if (io) { io.disconnect(); io = null; rail.innerHTML = ''; vis = new Uint8Array(0); }
+      return;
+    }
+    const h = de.scrollHeight - 2, n = Math.ceil(h / STEP);
+    if (n === vis.length) return;
+    if (io) io.disconnect();
+    rail.style.height = n * STEP + 'px';
+    rail.innerHTML = '<i style="display:block;height:' + STEP + 'px"></i>'.repeat(n);
+    vis = new Uint8Array(n);
+    const idx = new Map([...rail.children].map((c, i) => [c, i]));
+    io = new IntersectionObserver(es => {
+      es.forEach(e => { vis[idx.get(e.target)] = e.isIntersecting ? 1 : 0; });
+      if (vp.framed) { fromRail(); kick(); }
+    });
+    idx.forEach((i, c) => io.observe(c));
+  };
+  const refresh = () => { build(); mode(); kick(); };
+  addEventListener('scroll', () => { if (!vp.framed) { vp.top = scrollY; vp.bottom = vp.top + vp.height; kick(); } }, { passive: true });
+  addEventListener('resize', refresh);
+  addEventListener('load', refresh);
+  if ('ResizeObserver' in window) new ResizeObserver(refresh).observe(document.body);
+  refresh();
+  return vp;
+})();
+
 // how fast the page is moving, so a quick scroll does not sit on the brand card
 let scrollSpeed = 0;
 (() => {
@@ -2790,9 +2838,10 @@ document.querySelectorAll(':is(.proj.locked, .proj.peek) > a').forEach(a => {
   let queued = false;
   const update = () => {
     queued = false;
-    const vh = window.innerHeight;
+    const vh = VP.height, sy = VP.top;
     projs.forEach(pr => {
-      const r = pr.getBoundingClientRect();
+      if (pr._vtop === undefined) return;
+      const r = { top: pr._vtop - sy, height: pr._h, bottom: pr._vtop - sy + pr._h };
       if (r.bottom < -200 || r.top > vh + 200) return;
       const mid = (r.top + r.height / 2) / vh;          // 0 = top of screen, 1 = bottom
       const p = Math.max(0, Math.min(1, 1 - Math.abs(mid - 0.5) * 2));
@@ -2851,11 +2900,17 @@ document.getElementById('sxLead')?.addEventListener('click', () => {
     return;
   }
   let queued = false;
+  // where each arrow sits on the page, measured on load and resize only
+  const place = () => arrows.forEach(a => { a.y = a.svg.getBoundingClientRect().top + scrollY; });
+  place();
+  addEventListener('load', place);
+  addEventListener('resize', place);
+  if ('ResizeObserver' in window) new ResizeObserver(() => requestAnimationFrame(place)).observe(document.body);
   const draw = () => {
     queued = false;
-    const vh = window.innerHeight;
-    arrows.forEach(({ svg, path }) => {
-      const r = svg.getBoundingClientRect();
+    const vh = VP.height;
+    arrows.forEach(({ svg, path, y }) => {
+      const r = { top: y - VP.top };
       // starts inking when the arrow's top is 95% down the screen, finishes at 42%
       const t = (vh * 0.95 - r.top) / (vh * 0.53);
       path.style.setProperty('--draw', Math.max(0, Math.min(1, t)).toFixed(3));
@@ -3505,54 +3560,6 @@ document.querySelectorAll('.nav-links a[href^="#"]').forEach(a => {
 
 document.getElementById('brandTop')?.addEventListener('click', e => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
 
-// Where the visible part of the page is. Inside the host's frame, the frame grows
-// to fit the page and the outer page does the scrolling, so this document never
-// scrolls and scroll events and innerHeight say nothing. Thin strips down the page,
-// watched by IntersectionObserver, report which part is on screen in either case.
-const VP = (() => {
-  const STEP = 8, subs = [];
-  const vp = { top: 0, height: innerHeight, bottom: innerHeight, framed: false, on: f => subs.push(f) };
-  const rail = document.createElement('div');
-  rail.setAttribute('aria-hidden', 'true');
-  rail.style.cssText = 'position:absolute;left:0;top:0;width:1px;opacity:0;pointer-events:none;overflow:hidden';
-  document.body.appendChild(rail);
-  let vis = new Uint8Array(0), io = null, queued = false;
-  const emit = () => { queued = false; subs.forEach(f => f(vp)); };
-  const kick = () => { if (!queued) { queued = true; requestAnimationFrame(emit); } };
-  const fromRail = () => {
-    let a = -1, b = -1;
-    for (let i = 0; i < vis.length; i++) if (vis[i]) { if (a < 0) a = i; b = i; }
-    if (a < 0) return;
-    vp.top = a * STEP; vp.bottom = (b + 1) * STEP; vp.height = vp.bottom - vp.top;
-  };
-  const mode = () => {
-    const de = document.documentElement;
-    vp.framed = window.top !== window.self && de.scrollHeight <= innerHeight + 4;
-    if (vp.framed) fromRail();
-    else { vp.top = scrollY; vp.height = innerHeight; vp.bottom = vp.top + innerHeight; }
-  };
-  const build = () => {
-    const h = document.documentElement.scrollHeight - 2, n = Math.ceil(h / STEP);
-    if (n === vis.length) return;
-    if (io) io.disconnect();
-    rail.style.height = n * STEP + 'px';
-    rail.innerHTML = '<i style="display:block;height:' + STEP + 'px"></i>'.repeat(n);
-    vis = new Uint8Array(n);
-    const idx = new Map([...rail.children].map((c, i) => [c, i]));
-    io = new IntersectionObserver(es => {
-      es.forEach(e => { vis[idx.get(e.target)] = e.isIntersecting ? 1 : 0; });
-      if (vp.framed) { fromRail(); kick(); }
-    });
-    idx.forEach((i, c) => io.observe(c));
-  };
-  const refresh = () => { build(); mode(); kick(); };
-  addEventListener('scroll', () => { if (!vp.framed) { mode(); kick(); } }, { passive: true });
-  addEventListener('resize', refresh);
-  addEventListener('load', refresh);
-  if ('ResizeObserver' in window) new ResizeObserver(refresh).observe(document.body);
-  refresh();
-  return vp;
-})();
 
 // Crossword answers fill in, letter by letter, the first time they come into view.
 // Anything already on screen, or any viewer who prefers less motion, sees them filled.
@@ -3700,11 +3707,18 @@ const VP = (() => {
     p = (p - 0.1) / 0.9;
     if (c._reveal) c._reveal();
     if (c.dataset.mock === 'matrix') { c.style.setProperty('--pan', p.toFixed(3)); return; }
-    const v = c.querySelector('.proj-visual');
-    const anims = v.getAnimations({ subtree: true }).filter(a => a instanceof CSSAnimation);
-    if (!anims.length) return;
-    const T = CAP[c.dataset.mock] || 8000;
-    anims.forEach(a => { if (a.playState !== 'paused') a.pause(); a.currentTime = p * T; });
+    // the list of animations is collected once per screen, not on every frame
+    const v = c.querySelector('.proj-visual'), stage = v.querySelector('.mock-scale');
+    if (!c._anims || c._stageKid !== stage.firstElementChild) {
+      c._stageKid = stage.firstElementChild;
+      c._anims = v.getAnimations({ subtree: true }).filter(a => a instanceof CSSAnimation);
+      c._anims.forEach(a => a.pause());
+      c._t = -1;
+    }
+    const time = Math.round(p * (CAP[c.dataset.mock] || 8000));
+    if (time === c._t) return;
+    c._t = time;
+    c._anims.forEach(a => { a.currentTime = time; });
   };
   const paint = vp => {
     if (!geo) measure();
@@ -3722,6 +3736,7 @@ const VP = (() => {
       if (n && offs[k] > 0) q = clamp((top + g.h - (n.top + offs[k + 1])) / (g.h * 0.8));
       const t = clamp((top - vp.top - vp.height * 0.22) / (vp.height * 0.62));
       c.style.transform = offs[k] ? 'translateY(' + offs[k].toFixed(1) + 'px) scale(' + (1 - q * 0.055).toFixed(4) + ')' : '';
+      c._vtop = top; c._h = g.h;
       c.style.setProperty('--q', q.toFixed(3));
       c.style.setProperty('--t', t.toFixed(3));
       if (on) {
@@ -3762,6 +3777,37 @@ const VP = (() => {
     }, { threshold: [0, 0.5] });
     io.observe(c);
   });
+})();
+
+// Wheel scrolling glides to a stop instead of jumping in steps. Touch, keys and
+// trackpad momentum are left to the browser; so is anyone who prefers less motion.
+(() => {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !matchMedia('(pointer: fine)').matches) return;
+  let target = scrollY, cur = scrollY, raf = 0, mine = false;
+  const max = () => document.documentElement.scrollHeight - innerHeight;
+  const step = () => {
+    cur += (target - cur) * 0.14;
+    if (Math.abs(target - cur) < 0.6) cur = target;
+    mine = true;
+    scrollTo(0, cur);
+    raf = cur !== target ? requestAnimationFrame(step) : 0;
+  };
+  addEventListener('wheel', e => {
+    if (e.ctrlKey || e.defaultPrevented || VP.framed || max() <= 0) return;
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+    // a trackpad already glides: small, frequent deltas are left alone
+    if (e.deltaMode === 0 && Math.abs(e.deltaY) < 40) { if (!raf) target = cur = scrollY; return; }
+    if (e.target.closest && e.target.closest('.gatewrap, [data-native-scroll]')) return;
+    e.preventDefault();
+    if (!raf) target = cur = scrollY;
+    target = Math.max(0, Math.min(max(), target + e.deltaY * (e.deltaMode === 1 ? 36 : 1)));
+    if (!raf) raf = requestAnimationFrame(step);
+  }, { passive: false });
+  addEventListener('scroll', () => {
+    if (mine) { mine = false; return; }
+    if (raf) { cancelAnimationFrame(raf); raf = 0; }
+    target = cur = scrollY;
+  }, { passive: true });
 })();
 
 document.getElementById('ftrUp')?.addEventListener('click', e => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
@@ -3833,23 +3879,28 @@ document.getElementById('ftrUp')?.addEventListener('click', e => { e.preventDefa
   sec.appendChild(wrap);
   // the reveal is spread over as much scrolling as the page has left
   let span = 500;
-  const secTop = () => sec.getBoundingClientRect().top + scrollY;
+  let secY = 0, docH = 0, lastVH = -1;
   const measure = () => {
-    const startY = secTop() - VP.height * 0.92;
-    const runway = (document.documentElement.scrollHeight - VP.height) - startY;
+    secY = sec.getBoundingClientRect().top + scrollY;
+    docH = document.documentElement.scrollHeight;
+    lastVH = VP.height;
+    const startY = secY - VP.height * 0.92;
+    const runway = (docH - VP.height) - startY;
     span = Math.max(420, Math.min(VP.height * 1.5, runway - 24));
   };
   measure();
+  addEventListener('load', measure);
+  if ('ResizeObserver' in window) new ResizeObserver(() => requestAnimationFrame(measure)).observe(document.body);
   const paint = () => {
-    const top = secTop() - VP.top;
-    const atEnd = VP.bottom >= document.documentElement.scrollHeight - 10;
+    const top = secY - VP.top;
+    const atEnd = VP.bottom >= docH - 10;
     const raw = (VP.height * 0.92 - top) / span;
     const p = atEnd ? 1 : Math.pow(Math.max(0, raw), 1.5);
     const want = Math.max(0, Math.min(cells.length, Math.round(p * cells.length)));
     while (shown < want) cells[shown++].classList.add('off');
     while (shown > want) cells[--shown].classList.remove('off');
   };
-  VP.on(() => { measure(); paint(); });
+  VP.on(() => { if (VP.height !== lastVH) measure(); paint(); });
   addEventListener('resize', () => { build(); measure(); paint(); }, { passive: true });
   paint();
 })();
