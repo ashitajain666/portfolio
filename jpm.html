@@ -43,6 +43,12 @@
     font-style: normal; font-size: 9.5px; font-weight: 700; color: var(--ink);
   }
   .monogram i.fill { background: var(--ink); border-color: var(--ink); }
+
+  /* the monogram turns a quarter when you point at it */
+  .monogram, .monogram i { transition: transform .5s cubic-bezier(.3,1.5,.5,1); }
+  a.nav-brand:hover .monogram, a.nav-brand:focus-visible .monogram { transform: rotate(90deg); }
+  a.nav-brand:hover .monogram i, a.nav-brand:focus-visible .monogram i { transform: rotate(-90deg); }
+  @media (prefers-reduced-motion: reduce) { .monogram, .monogram i { transition: none; } }
   .back { font-size: 14px; color: var(--mid); text-decoration: none; transition: color 0.2s; }
   .back:hover { color: var(--ink); }
 

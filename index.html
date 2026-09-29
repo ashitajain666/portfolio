@@ -101,6 +101,12 @@
     background: var(--ink);
     border-color: var(--ink);
   }
+
+  /* the monogram turns a quarter when you point at it */
+  .monogram, .monogram i { transition: transform .5s cubic-bezier(.3,1.5,.5,1); }
+  a.nav-brand:hover .monogram, a.nav-brand:focus-visible .monogram { transform: rotate(90deg); }
+  a.nav-brand:hover .monogram i, a.nav-brand:focus-visible .monogram i { transform: rotate(-90deg); }
+  @media (prefers-reduced-motion: reduce) { .monogram, .monogram i { transition: none; } }
   .nav-links {
     display: flex;
     gap: 36px;
@@ -1431,6 +1437,12 @@
     color: var(--ink);
   }
 
+  /* on arrival the tiles are laid down one at a time, in reading order */
+  .cw-intro .cw-cell { animation: tileIn .5s cubic-bezier(.3,1.45,.5,1) calc(120ms + var(--i, 0) * 55ms) backwards; }
+  .cw-intro .cw-note, .cw-intro .cw-heart { animation: noteIn .5s ease 1.15s backwards; }
+  @keyframes tileIn { from { opacity: 0; transform: translateY(-18px) rotate(-8deg) scale(.85); } }
+  @keyframes noteIn { from { opacity: 0; } }
+
   @keyframes pop {
     0% { transform: scale(1); }
     50% { transform: scale(1.15); }
@@ -2071,6 +2083,12 @@
   .ftrcw i.off { opacity: 0; transform: scale(0.66); }
 
   @media (prefers-reduced-motion: reduce) { .fmail i b { transition: none; } }
+
+  /* crossword answers fill in, letter by letter, the first time they come into view */
+  .fill-wait i { color: transparent !important; }
+  .fill-go i { animation: fillIn .46s cubic-bezier(.3,1.5,.5,1) var(--fd, 0ms) backwards; }
+  @keyframes fillIn { from { color: transparent; transform: scale(.5) rotate(-10deg); } 60% { transform: scale(1.12); } }
+
   .skip { position: absolute; left: 16px; top: -48px; z-index: 100; padding: 8px 14px; background: #34303a; color: #fff; font-size: 14px; text-decoration: none; }
   .skip:focus { top: 12px; outline: 2px solid #5b4fb8; outline-offset: 2px; }
 </style>
@@ -2079,12 +2097,12 @@
 
 <a class="skip" href="#main">Skip to content</a>
 <nav>
-  <div class="nav-brand">
+  <a class="nav-brand" href="#" id="brandTop" aria-label="Ashita Jain, back to top">
     <div class="monogram" aria-hidden="true">
       <i>A</i><i class="fill"></i><i class="fill"></i><i>J</i>
     </div>
     Ashita Jain
-  </div>
+  </a>
   <ul class="nav-links">
     <li><a href="#work">Work</a></li>
     <li><a href="about.html">About</a></li>
@@ -2365,7 +2383,7 @@
       <div class="fw " style="--c:7;--r:1"><i>R</i><i>U</i><i>N</i><i>N</i><i>I</i><i>N</i><i>G</i></div>
       <div class="fw d " style="--c:11;--r:4"><i>H</i><i>I</i><i>K</i><i>E</i></div>
       </div>
-      <div class="fw k" style="--c:0;--r:3"><i>A</i><i>S</i><i>H</i><i>I</i><i>T</i><i>A</i></div>
+      <div class="fw k" data-fill="0" style="--c:0;--r:3"><i>A</i><i>S</i><i>H</i><i>I</i><i>T</i><i>A</i></div>
       <div class="fcta">
         <p class="lede">Every design problem starts as a puzzle <br>and I love solving them.</p>
         <p class="ask">Want to solve something together?</p>
@@ -2804,6 +2822,11 @@ const cellMap = {};
 const cellEls = [];
 const emptyCells = [];
 
+if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  area.classList.add('cw-intro');
+  setTimeout(() => area.classList.remove('cw-intro'), 2200);
+}
+
 // Filled words first so HUMAN's shared cell inherits the letter as a hint
 [...words.filter(w => !w.solve), human].forEach(word => {
   word.letters.forEach(lt => {
@@ -2817,6 +2840,7 @@ const emptyCells = [];
     }
     const el = document.createElement('div');
     el.className = 'cw-cell';
+    el.style.setProperty('--i', cellEls.length);
     el.dataset.col = lt.col; el.dataset.row = lt.row;
     el.style.left = lt.col * STEP + 'px';
     el.style.top = lt.row * STEP + 'px';
@@ -3346,6 +3370,29 @@ document.querySelectorAll('.nav-links a[href^="#"]').forEach(a => {
     scrollTo({ top: Math.max(0, top), behavior: soft ? 'auto' : 'smooth' });
   });
 });
+
+document.getElementById('brandTop')?.addEventListener('click', e => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
+
+// Crossword answers fill in, letter by letter, the first time they come into view.
+// Anything already on screen, or any viewer who prefers less motion, sees them filled.
+(() => {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
+  document.querySelectorAll('[data-fill]').forEach(g => {
+    if (g.getBoundingClientRect().top < innerHeight * 0.7) return;
+    const base = +g.dataset.fill || 0;
+    const cells = [...g.querySelectorAll('i')];
+    cells.forEach((c, i) => c.style.setProperty('--fd', (base + i * 110) + 'ms'));
+    g.classList.add('fill-wait');
+    const io = new IntersectionObserver(es => {
+      if (!es.some(e => e.isIntersecting)) return;
+      io.disconnect();
+      g.classList.replace('fill-wait', 'fill-go');
+      g.dispatchEvent(new CustomEvent('filling'));
+      setTimeout(() => g.classList.remove('fill-go'), base + cells.length * 110 + 700);
+    }, { rootMargin: '0px 0px -30% 0px' });
+    io.observe(g);
+  });
+})();
 
 document.getElementById('ftrUp')?.addEventListener('click', e => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
 
