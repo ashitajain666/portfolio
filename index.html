@@ -1698,6 +1698,32 @@
   .sxplay .wig path { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
   @media (max-width: 1000px) { .sxplay { display: none; } }
 
+  /* her own drawing opens the section: the ink half and the colour half */
+  .sxbrain {
+    position: relative; margin: -110px auto 44px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .sxbrain img {
+    width: 214px; height: auto; mix-blend-mode: multiply;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent), linear-gradient(to right, #000 82%, transparent);
+    -webkit-mask-composite: source-in;
+            mask-image: linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent), linear-gradient(to right, #000 82%, transparent);
+            mask-composite: intersect;
+  }
+  .sxbrain .lab { display: flex; align-items: center; gap: 6px; font-family: 'Patrick Hand', cursive; font-size: 18px; color: var(--ink); }
+  .sxbrain .lab.l { margin-right: -46px; transform: translateY(-34px) rotate(-3deg); }
+  .sxbrain .lab.r { margin-left: -34px; transform: translateY(26px) rotate(2deg); }
+  .sxbrain svg { width: 40px; height: 16px; flex: none; }
+  .sxbrain svg path { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  @media (max-width: 1000px) { .sxbrain { margin-top: -60px; } }
+  @media (max-width: 620px) {
+    .sxbrain img { width: 150px; }
+    .sxbrain .lab { font-size: 15px; }
+    .sxbrain .lab.l { margin-right: -30px; }
+    .sxbrain .lab.r { margin-left: 8px; }
+    .sxbrain svg { width: 28px; }
+  }
+
   .sxrow {
     position: relative;
     z-index: 1;
@@ -1964,7 +1990,7 @@
     content: "";
     position: absolute; inset: 0;
     left: calc(50% - 50vw); right: calc(50% - 50vw);
-    background: #e3e7fb url(img/sky.webp) center / cover no-repeat;
+    background: #fbf9f7 url(img/wash.webp) center / 100% 100% no-repeat;
     pointer-events: none;
     /* the page colour runs into the sky; there is no edge */
     -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 280px);
@@ -2354,6 +2380,12 @@
     <span class="grid2" style="--sq-c:#e2ece9; bottom:104px; left:250px; width:52px; height:52px; transform:rotate(6deg)"><i></i><i></i><i></i><i></i></span>
     <span class="cir" style="--sq-c:#cddafd; top:160px; left:64px; width:24px; height:24px"></span>
   </div>
+
+  <figure class="sxbrain">
+    <span class="lab l">the engineer<svg viewBox="0 0 44 18" aria-hidden="true"><path d="M2 9 C 14 3, 28 3, 40 9 M33 4 L40 9 L33 14"/></svg></span>
+    <img src="img/brain.webp" alt="My watercolour of a brain: one half in ink outline, the other in colour" width="712" height="794" loading="lazy">
+    <span class="lab r"><svg viewBox="0 0 44 18" aria-hidden="true"><path d="M42 9 C 30 15, 16 15, 4 9 M11 4 L4 9 L11 14"/></svg>the designer</span>
+  </figure>
 
   <div class="sxrow">
     <figure class="sxsketch">
@@ -3606,7 +3638,7 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
   bg.innerHTML = '<i class="tint"></i><i class="grid"></i><div class="bits"></div>';
   document.body.prepend(bg);
   const [tint, grid, sqs] = bg.children;
-  const U = 52, TINTS = ['#f7f0e8', '#f1eefc', '#edf7ea'], SKY = '#dde4fa', CALM = '#f8f7fa';
+  const U = 52, TINTS = ['#f7f0e8', '#f1eefc', '#edf7ea'], SKY = '#f8f5f4', CALM = '#f8f7fa';
   const absTop = el => { let y = 0; while (el) { y += el.offsetTop; el = el.offsetParent; } return y; };
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let io = null, lastKey = '';
