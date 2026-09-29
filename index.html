@@ -796,6 +796,36 @@
     .proj-visual { opacity: 1; transform: none; transition: none; }
   }
 
+  /* The case studies stack like sheets of paper. Each card pins a little lower
+     than the one before, so the top edges of the earlier ones stay visible, and
+     the card underneath sinks back as the next one slides over it. */
+  @media (min-width: 941px) and (min-height: 760px) {
+    .projects .proj {
+      position: sticky;
+      top: calc(84px + var(--k, 0) * 18px);
+      transform: scale(calc(1 - var(--q, 0) * 0.055));
+      transform-origin: 50% 0;
+    }
+    .projects .proj::after {
+      content: ""; position: absolute; inset: 0; border-radius: 22px;
+      background: #34303a; opacity: calc(var(--q, 0) * 0.07);
+      pointer-events: none;
+    }
+    .projects { gap: 64px; }
+  }
+  /* the artwork arrives tilted back and lands flat as the card reaches its place */
+  .proj > a { perspective: 1600px; }
+  .proj-visual {
+    rotate: x calc(var(--t, 0) * 11deg);
+    translate: 0 calc(var(--t, 0) * 40px);
+    transform-origin: 50% 100%;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .projects .proj { transform: none; }
+    .projects .proj::after { display: none; }
+    .proj-visual { rotate: none; translate: none; }
+  }
+
   @media (max-width: 940px) {
     .proj > a,
     .proj:nth-child(even) > a {
@@ -2153,7 +2183,7 @@
           <h2 class="proj-line">I designed AI tools for private client bankers at <b>JPMorgan Chase</b> to review client onboarding data they can actually trust.</h2>
           <div class="proj-meta">JPMorgan Chase &middot; 2022 to now <span>|</span> Enterprise design, Fintech</div>
           <div class="proj-impact"><i>Impact</i><span>Onboarding time down <b>45%</b> &middot; manual reviews down <b>70%</b></span></div>
-          <div class="pair" role="img" aria-label="Human times AI">
+          <div class="pair" data-fill="200" role="img" aria-label="Human times AI">
             <span class="pcells"><i style="--i:0">H</i><i style="--i:1">U</i><i style="--i:2">M</i><i style="--i:3">A</i><i style="--i:4">N</i></span>
             <span class="px">&times;</span>
             <span class="pcells"><i style="--i:5">A</i><i style="--i:6">I</i></span>
@@ -2181,7 +2211,7 @@
           <h2 class="proj-line">I designed the entire <b>MiDigiWorld</b> skill learning app end to end and the chat experience solved the core problem.</h2>
           <div class="proj-meta">ConnectLab.ai &middot; 2020 <span>|</span> iOS, Android, Web app</div>
           <div class="proj-impact"><i>Impact</i><span><b>2M+</b> registered learners &middot; MVP shipped in weeks</span></div>
-          <div class="pair" role="img" aria-label="Zero to one">
+          <div class="pair" data-fill="200" role="img" aria-label="Zero to one">
             <span class="pcells"><i style="--i:0">0</i></span>
             <span class="px">&rarr;</span>
             <span class="pcells"><i style="--i:1">1</i></span>
@@ -3391,6 +3421,62 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
       setTimeout(() => g.classList.remove('fill-go'), base + cells.length * 110 + 700);
     }, { rootMargin: '0px 0px -30% 0px' });
     io.observe(g);
+  });
+})();
+
+
+// Case study cards: they stack as you scroll, the artwork lands flat, and the
+// impact figures count up the first time a card arrives.
+(() => {
+  const cards = [...document.querySelectorAll('.projects .proj')];
+  if (!cards.length || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  cards.forEach((c, k) => c.style.setProperty('--k', k));
+  let stacked = false;
+  const check = () => { stacked = getComputedStyle(cards[0]).position === 'sticky'; };
+  check();
+  let queued = false;
+  const paint = () => {
+    queued = false;
+    const vh = innerHeight;
+    cards.forEach((c, k) => {
+      const r = c.getBoundingClientRect();
+      const t = Math.min(1, Math.max(0, (r.top - vh * 0.22) / (vh * 0.62)));
+      c.style.setProperty('--t', t.toFixed(3));
+      let q = 0;
+      const next = cards[k + 1];
+      if (stacked && next) {
+        const overlap = r.bottom - next.getBoundingClientRect().top;
+        q = Math.min(1, Math.max(0, overlap / (r.height * 0.8)));
+      }
+      c.style.setProperty('--q', q.toFixed(3));
+    });
+  };
+  const onScroll = () => { if (!queued) { queued = true; requestAnimationFrame(paint); } };
+  addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('resize', () => { check(); onScroll(); }, { passive: true });
+  paint();
+
+  // count the figures up from zero, once, when the card is well into view
+  const ease = x => 1 - Math.pow(1 - x, 3);
+  cards.forEach(c => {
+    if (c.getBoundingClientRect().top < innerHeight * 0.7) return;
+    const nums = [...c.querySelectorAll('.proj-impact b')].map(b => {
+      const m = b.textContent.match(/^([^\d]*)([\d.]+)(.*)$/);
+      return m && { b, pre: m[1], n: +m[2], post: m[3], final: b.textContent };
+    }).filter(Boolean);
+    if (!nums.length) return;
+    const io = new IntersectionObserver(es => {
+      if (!es.some(e => e.isIntersecting)) return;
+      io.disconnect();
+      const t0 = performance.now(), dur = 1100;
+      const step = now => {
+        const x = Math.min(1, (now - t0) / dur);
+        nums.forEach(o => { o.b.textContent = x < 1 ? o.pre + Math.round(o.n * ease(x)) + o.post : o.final; });
+        if (x < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }, { rootMargin: '0px 0px -35% 0px' });
+    io.observe(c);
   });
 })();
 
