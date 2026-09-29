@@ -1495,13 +1495,27 @@
 
   /* Ashita, drawn, looking down at the puzzle. She nods at a right letter,
      shakes her head at a wrong one, and blushes when HUMAN is solved. */
-  .cw-me { position: absolute; z-index: 0; pointer-events: none; transform-origin: 53% 56%; }
-  .cw-me img { display: block; width: 100%; height: auto; }
+  .cw-me {
+    position: absolute; z-index: 0; pointer-events: none; transform-origin: 53% 56%;
+    rotate: var(--lean, 0deg); translate: var(--shift, 0px) 0;
+    transition: rotate .7s cubic-bezier(.3,1.2,.5,1), translate .7s cubic-bezier(.3,1.2,.5,1);
+  }
+  .cw-me img { display: block; width: 100%; height: auto; pointer-events: auto; cursor: pointer; -webkit-user-drag: none; user-select: none; }
+  .cw-me .say {
+    position: absolute; left: -34%; top: 14%; padding: 7px 12px 8px;
+    font-family: 'Patrick Hand', cursive; font-size: 17px; line-height: 1.2; color: var(--ink);
+    background: #fff; border: 1.5px solid var(--ink); border-radius: 14px 14px 3px 14px;
+    white-space: nowrap; opacity: 0; transform: translateY(6px) scale(.9); transform-origin: 100% 100%;
+    transition: opacity .3s ease, transform .4s cubic-bezier(.3,1.5,.5,1);
+  }
+  .cw-me .say.on { opacity: 1; transform: none; }
   .cw-me.nod { animation: meNod .5s ease; }
   .cw-me.shake { animation: meShake .45s ease; }
   .cw-me.yay { animation: meYay .8s cubic-bezier(.3,1.6,.5,1); }
-  @keyframes meNod { 35% { transform: rotate(-3.5deg) translateY(2px); } }
-  @keyframes meShake { 20% { transform: rotate(2.5deg); } 45% { transform: rotate(-2.5deg); } 70% { transform: rotate(1.5deg); } }
+  .cw-me.hop { animation: meHop .6s cubic-bezier(.3,1.6,.5,1); }
+  @keyframes meNod { 30% { transform: rotate(-7deg) translateY(5px); } 65% { transform: rotate(1.5deg); } }
+  @keyframes meShake { 15% { transform: rotate(5deg); } 40% { transform: rotate(-5deg); } 65% { transform: rotate(3deg); } 85% { transform: rotate(-1.5deg); } }
+  @keyframes meHop { 40% { transform: translateY(-10px); } }
   @keyframes meYay { 35% { transform: translateY(-12px) rotate(-2deg); } 65% { transform: translateY(0) rotate(1deg); } }
   .cw-me .blush {
     position: absolute; top: 39%; width: 11%; height: 5.5%; border-radius: 50%;
@@ -2966,17 +2980,22 @@ function note(cls, text, col, row, rot) {
 const me = document.createElement('div');
 me.className = 'cw-me';
 me.setAttribute('aria-hidden', 'true');
-me.innerHTML = '<img src="img/me-line.webp" alt="" width="564" height="504"><i class="blush l"></i><i class="blush r"></i>';
+me.innerHTML = '<img src="img/me-line.webp" alt="" width="564" height="504" draggable="false"><i class="blush l"></i><i class="blush r"></i><span class="say"></span>';
 area.prepend(me);
 const ME_RATIO = 504 / 564;
 function meReact(kind) {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches && kind !== 'yay') return;
-  me.classList.remove('nod', 'shake', 'yay');
+  me.classList.remove('nod', 'shake', 'yay', 'hop');
   void me.offsetWidth;
   me.classList.add(kind);
+  if (kind === 'hop') { floatHeart(0); return; }
   if (kind !== 'yay') return;
   me.classList.add('happy');
-  [0, 1, 2, 3].forEach(i => setTimeout(() => {
+  meSay('');
+  [0, 1, 2, 3].forEach(i => floatHeart(250 + i * 180));
+}
+function floatHeart(delay) {
+  setTimeout(() => {
     const h = document.createElement('i');
     h.className = 'luv';
     h.textContent = '\u2665';
@@ -2986,8 +3005,39 @@ function meReact(kind) {
     h.style.setProperty('--r', (Math.random() * 30 - 15) + 'deg');
     me.appendChild(h);
     setTimeout(() => h.remove(), 1800);
-  }, 250 + i * 180));
+  }, delay);
 }
+const meBubble = me.querySelector('.say');
+let sayTimer = null;
+function meSay(text, ms = 3200) {
+  clearTimeout(sayTimer);
+  if (!text) { meBubble.classList.remove('on'); return; }
+  meBubble.textContent = text;
+  meBubble.classList.add('on');
+  sayTimer = setTimeout(() => meBubble.classList.remove('on'), ms);
+}
+// she leans toward the pointer while it is over the hero
+(() => {
+  if (!matchMedia('(hover: hover)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const hero = document.querySelector('.hero');
+  hero.addEventListener('pointermove', e => {
+    const r = me.getBoundingClientRect();
+    const dx = Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / (innerWidth / 2)));
+    me.style.setProperty('--lean', (dx * 6).toFixed(2) + 'deg');
+    me.style.setProperty('--shift', (dx * 6).toFixed(1) + 'px');
+  });
+  hero.addEventListener('pointerleave', () => { me.style.setProperty('--lean', '0deg'); me.style.setProperty('--shift', '0px'); });
+})();
+// tap her and she hops
+me.querySelector('img').addEventListener('click', e => {
+  e.stopPropagation();
+  meReact('hop');
+  if (!solved) meSay('Hi! Can you fill in the blanks?', 2600);
+});
+// if nobody has typed after a few seconds, she asks
+let meTyped = false;
+setTimeout(() => { if (!meTyped && !solved) { meSay('Go on, type it.'); meReact('nod'); } }, 4200);
+setTimeout(() => { if (!meTyped && !solved) meSay('Five letters. Starts with H.', 3600); }, 14000);
 
 const CLUE_L = '← I design for them,\n    with them. Who?\n    Type it in.';
 const CLUE_U = '↑ I design for them,\n    with them. Who?\n    Type it in.';
@@ -3120,6 +3170,8 @@ if (matchMedia('(hover: hover)').matches) {
 
 function typeLetter(letter) {
   if (solved) return;
+  meTyped = true;
+  meSay('');
   showWord(null);
   const cur = emptyCells[active];
   if (cur.done) { const n = nextOpen(active); if (n === -1) return; setActive(n); return typeLetter(letter); }
