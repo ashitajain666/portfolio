@@ -430,6 +430,13 @@
   .fill-wait i { color: transparent !important; }
   .fill-go i { animation: fillIn .46s cubic-bezier(.3,1.5,.5,1) var(--fd, 0ms) backwards; }
   @keyframes fillIn { from { color: transparent; transform: scale(.5) rotate(-10deg); } 60% { transform: scale(1.12); } }
+
+  /* after the name, one more tile: her face, which turns over once the letters are in */
+  .fw.k i.me { padding: 0; overflow: hidden; background: var(--pur-pale); margin-left: 9px; }
+  .fw.k i.me img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .fill-wait i.me img { opacity: 0; }
+  .fill-go i.me img { animation: faceIn .6s cubic-bezier(.3,1.4,.5,1) calc(var(--fd, 0ms) + 120ms) backwards; }
+  @keyframes faceIn { from { opacity: 0; transform: rotateY(90deg) scale(.8); } }
   .route.line-wait svg.line { clip-path: inset(0 100% 0 0); }
   .route.line-go svg.line { animation: lineDraw 1.6s cubic-bezier(.4,0,.2,1) backwards; }
   @keyframes lineDraw { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
@@ -599,7 +606,7 @@
       <div class="fw " style="--c:7;--r:1"><i>R</i><i>U</i><i>N</i><i>N</i><i>I</i><i>N</i><i>G</i></div>
       <div class="fw d " style="--c:11;--r:4"><i>H</i><i>I</i><i>K</i><i>E</i></div>
       </div>
-      <div class="fw k" data-fill="0" style="--c:0;--r:3"><i>A</i><i>S</i><i>H</i><i>I</i><i>T</i><i>A</i></div>
+      <div class="fw k" data-fill="0" style="--c:0;--r:3"><i>A</i><i>S</i><i>H</i><i>I</i><i>T</i><i>A</i><i class="me"><img src="img/me-face.webp" alt="Ashita" width="160" height="160"></i></div>
       <div class="fcta">
         <p class="lede">Every design problem starts as a puzzle <br>and I love solving them.</p>
         <p class="ask">Want to solve something together?</p>
