@@ -877,6 +877,8 @@
     align-self: stretch; justify-self: stretch; overflow: hidden;
     padding-top: 22px; box-sizing: border-box; }
   .mock-scale.shot img { width: 100%; height: 100%; object-fit: cover; object-position: left top; display: block; }
+  /* while the ServiceNow card is held, the heat map pans slowly across */
+  .proj.scrub .mock-scale.shot img { transform: scale(1.22); transform-origin: calc(var(--pan, 0) * 100%) 35%; transition: transform-origin .2s linear; }
 
   .jpm-app {
     position: absolute; inset: 0;
@@ -2632,7 +2634,7 @@ document.querySelectorAll('.proj').forEach(proj => {
   };
   const stopLoop = () => { clearInterval(loop); loop = null; };
   const startLoop = () => {
-    if (!LOOP_MS || reduced || loop) return;
+    if (!LOOP_MS || reduced || loop || proj.classList.contains('scrub')) return;
     loop = setInterval(restart, LOOP_MS);
   };
   const reveal = () => {
@@ -2659,6 +2661,7 @@ document.querySelectorAll('.proj').forEach(proj => {
     entries.forEach(e => {
       if (!e.isIntersecting) { stopLoop(); return; }
       e.target.classList.add('seen');
+      if (proj.classList.contains('scrub')) return;
       if (started && LOOP_MS && !reduced) { restart(); startLoop(); }
     });
   }, { threshold: 0.01, rootMargin: '30% 0px 30% 0px' }).observe(proj);
@@ -2666,7 +2669,7 @@ document.querySelectorAll('.proj').forEach(proj => {
   // the brand card holds while it is on screen; a quick scroll cuts straight to the screen
   new IntersectionObserver(entries => {
     entries.forEach(e => {
-      if (!e.isIntersecting) return;
+      if (!e.isIntersecting || proj.classList.contains('scrub')) return;
       if (!started) {
         started = true;
         const rush = scrollSpeed > 900 || e.intersectionRatio >= 0.45;
@@ -2677,7 +2680,9 @@ document.querySelectorAll('.proj').forEach(proj => {
     });
   }, { threshold: [0.01, 0.45] }).observe(proj);
 
-  proj.querySelector('a').addEventListener('mouseenter', () => play());
+  proj._reveal = () => { if (!visual.classList.contains('revealed')) { visual.classList.add('quick'); reveal(); } stopLoop(); };
+  proj._cover = () => { if (visual.classList.contains('revealed')) { clearTimeout(timer); stopLoop(); visual.classList.remove('revealed'); } };
+  proj.querySelector('a').addEventListener('mouseenter', () => { if (!proj.classList.contains('scrub')) play(); });
 });
 
 // The gated card's padlock rides the pointer, flipping side near the right edge.
@@ -3476,33 +3481,49 @@ const VP = (() => {
 })();
 
 
-// Case study cards: they stack as you scroll, the artwork lands flat, and the
-// impact figures count up the first time a card arrives.
+// Case study cards: they stack as you scroll, and each one holds in place for a
+// while before the next slides over it. While a card is held, scrolling drives its
+// mock forward, so the small animations play at the reader's pace instead of
+// racing past. The artwork lands flat and the impact figures count up once.
 (() => {
   const list = document.querySelector('.projects');
   const cards = [...document.querySelectorAll('.projects .proj')];
   if (!cards.length || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const clamp = x => Math.max(0, Math.min(1, x));
-  let geo = null;
+  const CAP = { review: 14000, midigi: 8000 };
+  let geo = null, hold = 0, on = false;
   const measure = () => {
-    cards.forEach(c => { c.style.transform = ''; });
+    on = document.documentElement.clientWidth >= 600;
+    hold = on ? Math.round(Math.max(520, Math.min(1000, VP.height * 0.95))) : 0;
+    list.style.gap = on ? hold + 'px' : '';
+    list.style.paddingBottom = on ? Math.round(hold * 0.6) + 'px' : '';
+    cards.forEach(c => { c.style.transform = ''; c.classList.toggle('scrub', on); });
     const sy = scrollY;
     geo = {
       end: list.getBoundingClientRect().bottom + sy,
       cards: cards.map(c => { const r = c.getBoundingClientRect(); return { top: r.top + sy, h: r.height }; }),
     };
   };
+  const scrub = (c, p) => {
+    // the first stretch shows the brand card, then the screen takes over
+    if (p < 0.1) { if (c._cover) c._cover(); return; }
+    p = (p - 0.1) / 0.9;
+    if (c._reveal) c._reveal();
+    if (c.dataset.mock === 'matrix') { c.style.setProperty('--pan', p.toFixed(3)); return; }
+    const v = c.querySelector('.proj-visual');
+    const anims = v.getAnimations({ subtree: true }).filter(a => a instanceof CSSAnimation);
+    if (!anims.length) return;
+    const T = CAP[c.dataset.mock] || 8000;
+    anims.forEach(a => { if (a.playState !== 'paused') a.pause(); a.currentTime = p * T; });
+  };
   const paint = vp => {
     if (!geo) measure();
     list.classList.toggle('framed', vp.framed);
-    const phone = document.documentElement.clientWidth < 600;
     const pin = vp.framed ? 24 : 84;
-    // a card pins below the nav; one taller than the window pins with its bottom
-    // edge in view instead, so the next card still slides up over it
+    const sticks = geo.cards.map((g, k) => Math.min(pin, vp.height - g.h - 16) + k * 18);
     const offs = geo.cards.map((g, k) => {
-      if (phone) return 0;
-      const stick = Math.min(pin, vp.height - g.h - 16) + k * 18;
-      const want = vp.top + stick - g.top;
+      if (!on) return 0;
+      const want = vp.top + sticks[k] - g.top;
       return Math.max(0, Math.min(want, geo.end - (g.top + g.h)));
     });
     cards.forEach((c, k) => {
@@ -3513,11 +3534,18 @@ const VP = (() => {
       c.style.transform = offs[k] ? 'translateY(' + offs[k].toFixed(1) + 'px) scale(' + (1 - q * 0.055).toFixed(4) + ')' : '';
       c.style.setProperty('--q', q.toFixed(3));
       c.style.setProperty('--t', t.toFixed(3));
+      if (on) {
+        // from the card being a third of the way up the screen to the end of its hold
+        const from = g.top - vp.height * 0.66, to = g.top - sticks[k] + hold * 0.85;
+        const p = (vp.top - from) / (to - from);
+        if (p > -0.2 && (top - vp.top) < vp.height) scrub(c, clamp(p));
+      }
     });
   };
   VP.on(paint);
   addEventListener('resize', () => { measure(); paint(VP); });
   addEventListener('load', () => { measure(); paint(VP); });
+  measure();
   paint(VP);
 
   // count the figures up from zero, once, when half the card is in view
