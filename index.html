@@ -40,8 +40,9 @@
 
   * { box-sizing: border-box; margin: 0; }
 
+  html { background: var(--bg); }
   body {
-    background: var(--bg);
+    background: transparent;
     color: var(--ink);
     font-family: 'DM Sans', system-ui, sans-serif;
     min-height: 100vh;
@@ -59,7 +60,7 @@
     padding-block: 22px;
     margin-inline: -140px;
     padding-inline: 140px;
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    background: rgba(255, 255, 255, 0.55);
     backdrop-filter: blur(10px) saturate(1.1);
     -webkit-backdrop-filter: blur(10px) saturate(1.1);
     border-bottom: 1px solid transparent;
@@ -1935,17 +1936,40 @@
     left: calc(50% - 50vw); right: calc(50% - 50vw);
     background: #e3e7fb url(img/sky.webp) center / cover no-repeat;
     pointer-events: none;
+    /* the page colour runs into the sky; there is no edge */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 280px);
+            mask-image: linear-gradient(to bottom, transparent 0, #000 280px);
   }
   .ftr::after {
     content: "";
     position: absolute; inset: 0;
     left: calc(50% - 50vw); right: calc(50% - 50vw);
-    background:
-      linear-gradient(rgba(52,48,58,.07) 1px, transparent 1px) 0 0 / var(--u) var(--u),
-      linear-gradient(90deg, rgba(52,48,58,.07) 1px, transparent 1px) 0 0 / var(--u) var(--u),
-      rgba(255,255,255,.18);
+    background: rgba(255,255,255,.18);
     pointer-events: none;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 280px);
+            mask-image: linear-gradient(to bottom, transparent 0, #000 280px);
   }
+
+  /* One layer behind the whole page: a colour that follows the case study in
+     view and ends in the footer's sky, and a crossword grid that starts almost
+     invisible under the hero and is at full strength by the footer. */
+  .pagebg { position: absolute; left: 0; top: 0; width: 100%; z-index: -1; pointer-events: none; overflow: hidden; }
+  .pagebg > i { position: absolute; inset: 0; }
+  .pagebg .grid {
+    background:
+      linear-gradient(rgba(52,48,58,.075) 1px, transparent 1px) 0 0 / 52px 52px,
+      linear-gradient(90deg, rgba(52,48,58,.075) 1px, transparent 1px) 0 0 / 52px 52px;
+  }
+  .pagebg .sq b {
+    position: absolute; width: 52px; height: 52px;
+    background: var(--ink); opacity: .82;
+    transform: scale(.4); opacity: 0;
+    transition: transform .55s cubic-bezier(.3,1.5,.5,1), opacity .35s ease;
+  }
+  .pagebg .sq b.pale { background: #e5e2fa; }
+  .pagebg .sq b.on { transform: none; opacity: .74; }
+  .pagebg .sq b.pale.on { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .pagebg .sq b { transition: none; } }
   .ftr-stage { position: relative; z-index: 1; height: calc(var(--ch) * var(--s)); }
   .ftr-canvas {
     position: absolute; left: 50%; top: 0;
@@ -3480,6 +3504,87 @@ const VP = (() => {
   });
 })();
 
+
+// The page background: one layer the length of the page. Its colour follows the
+// case study in view and ends in the footer's sky; the crossword grid on top of it
+// strengthens on the way down, and a few squares fill in black as they come into
+// view. Painted on the page itself, so it moves with the scroll and needs no
+// scroll handling.
+(() => {
+  const cards = [...document.querySelectorAll('.projects .proj')];
+  const work = document.getElementById('work'), sxLead = document.getElementById('sxLead');
+  const sx = document.getElementById('make'), ftr = document.querySelector('.ftr');
+  if (!cards.length || !ftr) return;
+  const bg = document.createElement('div');
+  bg.className = 'pagebg';
+  bg.setAttribute('aria-hidden', 'true');
+  bg.innerHTML = '<i class="tint"></i><i class="grid"></i><div class="sq"></div>';
+  document.body.prepend(bg);
+  const [tint, grid, sqs] = bg.children;
+  const U = 52, TINTS = ['#f7f0e8', '#f1eefc', '#edf7ea'], SKY = '#dde4fa', CALM = '#f8f7fa';
+  const absTop = el => { let y = 0; while (el) { y += el.offsetTop; el = el.offsetParent; } return y; };
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let io = null, lastKey = '';
+
+  const layout = () => {
+    bg.style.height = '0px';
+    const H = document.documentElement.scrollHeight, W = document.documentElement.clientWidth;
+    const vh = Math.min(VP.height, 1000);
+    bg.style.height = H + 'px';
+    const tops = cards.map(absTop), f = absTop(ftr);
+    const lead = absTop(sxLead), sxTop = absTop(sx), sxEnd = sxTop + sx.offsetHeight;
+
+    // colour: white hero, each card's tint while it is on screen, calm for the
+    // sketchnote section, then into the sky colour the footer starts with
+    const st = ['#ffffff 0px', '#ffffff ' + (absTop(work) + 40) + 'px'];
+    tops.forEach((t, k) => {
+      st.push(TINTS[k % TINTS.length] + ' ' + Math.round(t - vh * 0.15) + 'px');
+      const next = k + 1 < tops.length ? tops[k + 1] : lead;
+      st.push(TINTS[k % TINTS.length] + ' ' + Math.round(next - vh * 0.55) + 'px');
+    });
+    st.push(CALM + ' ' + Math.round(sxTop) + 'px', CALM + ' ' + Math.round(sxEnd - vh * 0.2) + 'px');
+    st.push(SKY + ' ' + Math.round(f + 40) + 'px', SKY + ' ' + H + 'px');
+    tint.style.background = 'linear-gradient(to bottom, ' + st.join(', ') + ')';
+
+    // grid: barely there under the hero, a little stronger by the work, full at the footer
+    const m = 'linear-gradient(to bottom, rgba(0,0,0,.14) 0px, rgba(0,0,0,.3) ' + absTop(work) + 'px, rgba(0,0,0,.45) ' + lead + 'px, #000 ' + f + 'px)';
+    grid.style.webkitMaskImage = grid.style.maskImage = m;
+
+    // filled squares, only in the side margins, on the grid
+    const list = document.querySelector('.projects').getBoundingClientRect();
+    const leftCols = Math.floor((list.left - 12) / U), firstRight = Math.ceil((list.right + 12) / U), lastCol = Math.floor(W / U) - 1;
+    const key = [W, H, leftCols].join();
+    if (key === lastKey) return;
+    lastKey = key;
+    if (io) io.disconnect();
+    sqs.innerHTML = '';
+    const cols = [];
+    for (let c = 0; c < leftCols; c++) cols.push(c);
+    for (let c = firstRight; c <= lastCol; c++) cols.push(c);
+    if (!cols.length) return;
+    let seed = 7;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const r0 = Math.ceil(tops[0] / U), r1 = Math.floor((f + 200) / U);
+    for (let r = r0 + 1; r < r1; r += 5 + Math.floor(rnd() * 5)) {
+      const b = document.createElement('b');
+      b.style.left = cols[Math.floor(rnd() * cols.length)] * U + 'px';
+      b.style.top = r * U + 'px';
+      if (rnd() < 0.3) b.className = 'pale';
+      sqs.appendChild(b);
+    }
+    if (reduced) { sqs.querySelectorAll('b').forEach(b => b.classList.add('on')); return; }
+    io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.intersectionRatio < 0.99) return;
+      e.target.classList.add('on');
+      io.unobserve(e.target);
+    }), { threshold: [0, 1] });
+    sqs.querySelectorAll('b').forEach(b => io.observe(b));
+  };
+  layout();
+  addEventListener('load', layout);
+  addEventListener('resize', layout);
+  if ('ResizeObserver' in window) new ResizeObserver(() => requestAnimationFrame(layout)).observe(document.querySelector('.projects'));
+})();
 
 // Case study cards: they stack as you scroll, and each one holds in place for a
 // while before the next slides over it. While a card is held, scrolling drives its
