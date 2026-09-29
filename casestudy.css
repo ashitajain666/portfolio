@@ -1,7 +1,7 @@
 /* Shared case-study system. Each page sets --accent / --accent-soft / --tint. */
 :root {
   --lavender-mist: #eae4e9; --soft-blush: #fde2e4; --mint-cream: #e2ece9;
-  --bg: #faf7f5; --ink: #34303a; --mid: #746e7a; --light: #756d7c;
+  --bg: #ffffff; --ink: #34303a; --mid: #746e7a; --light: #756d7c;
   --rule: #e6e0e6; --cell-filled: #f7f5f7; --cell-border: #ddd5dd;
   --surface: #fffdfc;
   --accent: #7a7480; --accent-soft: #eae4e9; --tint: #f0efeb;
