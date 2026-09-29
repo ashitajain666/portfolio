@@ -1493,45 +1493,26 @@
   }
   .cw-note.clue { font-size: 14px; }
 
-  /* Ashita, drawn, looking down at the puzzle. She nods at a right letter,
-     shakes her head at a wrong one, and blushes when HUMAN is solved. */
+  /* Ashita's photo is a square in the puzzle, two cells by two, so a visitor who
+     never types still sees who made this. It wobbles yes at a right letter, no
+     at a wrong one, and hops with hearts when HUMAN is solved. */
   .cw-me {
-    position: absolute; z-index: 0; pointer-events: none; transform-origin: 53% 56%;
-    rotate: var(--lean, 0deg); translate: var(--shift, 0px) 0;
-    transition: rotate .7s cubic-bezier(.3,1.2,.5,1), translate .7s cubic-bezier(.3,1.2,.5,1);
+    position: absolute; z-index: 2; box-sizing: border-box;
+    border: 1.5px solid var(--cell-border); background: #fff; padding: 3px;
+    box-shadow: 0 6px 18px rgba(52, 48, 58, 0.10);
+    rotate: -2deg; transform-origin: 50% 60%; cursor: pointer;
   }
-  .cw-me img { display: block; width: 100%; height: auto; pointer-events: auto; cursor: pointer; -webkit-user-drag: none; user-select: none; }
-  .cw-me .say {
-    position: absolute; left: -34%; top: 14%; padding: 7px 12px 8px;
-    font-family: 'Patrick Hand', cursive; font-size: 17px; line-height: 1.2; color: var(--ink);
-    background: #fff; border: 1.5px solid var(--ink); border-radius: 14px 14px 3px 14px;
-    white-space: nowrap; opacity: 0; transform: translateY(6px) scale(.9); transform-origin: 100% 100%;
-    transition: opacity .3s ease, transform .4s cubic-bezier(.3,1.5,.5,1);
-  }
-  .cw-me .say.on { opacity: 1; transform: none; }
+  .cw-me img { display: block; width: 100%; height: 100%; object-fit: cover; -webkit-user-drag: none; user-select: none; }
   .cw-me.nod { animation: meNod .5s ease; }
   .cw-me.shake { animation: meShake .45s ease; }
   .cw-me.yay { animation: meYay .8s cubic-bezier(.3,1.6,.5,1); }
   .cw-me.hop { animation: meHop .6s cubic-bezier(.3,1.6,.5,1); }
-  @keyframes meNod { 30% { transform: rotate(-7deg) translateY(5px); } 65% { transform: rotate(1.5deg); } }
-  @keyframes meShake { 15% { transform: rotate(5deg); } 40% { transform: rotate(-5deg); } 65% { transform: rotate(3deg); } 85% { transform: rotate(-1.5deg); } }
-  @keyframes meHop { 40% { transform: translateY(-10px); } }
-  @keyframes meYay { 35% { transform: translateY(-12px) rotate(-2deg); } 65% { transform: translateY(0) rotate(1deg); } }
-  /* when HUMAN is solved, the drawing turns into the real photo, looking up */
-  .cw-me img.draw { transition: opacity .45s ease; }
-  .cw-me .real {
-    position: absolute; left: 50%; top: -6%; width: 76%; aspect-ratio: 1;
-    border-radius: 50%; border: 3px solid #fff;
-    box-shadow: 0 12px 30px rgba(52, 48, 58, 0.18);
-    opacity: 0; transform: translateX(-50%) scale(.55) rotate(-8deg);
-    transition: opacity .45s ease .15s, transform .75s cubic-bezier(.3,1.5,.5,1) .15s;
-    pointer-events: none;
-  }
-  .cw-me .real img { width: 100%; height: 100%; display: block; border-radius: 50%; }
-  .cw-me.happy img.draw { opacity: 0; }
-  .cw-me.happy .real { opacity: 1; transform: translateX(-50%) scale(1) rotate(-3deg); pointer-events: auto; cursor: pointer; }
+  @keyframes meNod { 30% { transform: translateY(4px) rotate(-3deg); } 65% { transform: translateY(-2px); } }
+  @keyframes meShake { 15% { transform: rotate(4deg); } 40% { transform: rotate(-4deg); } 65% { transform: rotate(2deg); } }
+  @keyframes meHop { 40% { transform: translateY(-10px) rotate(2deg); } }
+  @keyframes meYay { 35% { transform: translateY(-14px) rotate(3deg) scale(1.06); } 65% { transform: translateY(0) rotate(-1deg); } }
   .cw-me .luv {
-    position: absolute; left: 64%; top: 6%; font-style: normal; color: #e07d9c;
+    position: absolute; top: -6%; font-style: normal; color: #e07d9c; pointer-events: none;
     animation: luvUp 1.7s ease-out forwards;
   }
   @keyframes luvUp {
@@ -1539,7 +1520,8 @@
     18% { opacity: 1; }
     to { opacity: 0; transform: translate(var(--dx), -84px) scale(1.15) rotate(var(--r)); }
   }
-  .cw-intro .cw-me { animation: noteIn .7s ease .8s backwards; }
+  .cw-note.me-cap { font-size: 15px; color: var(--ink); white-space: nowrap; }
+  .cw-intro .cw-me { animation: tileIn .55s cubic-bezier(.3,1.45,.5,1) 1s backwards; }
   @media (prefers-reduced-motion: reduce) { .cw-me, .cw-me .luv { animation: none !important; } }
   .cw-note.hint { font-size: 14px; color: var(--light); }
   .cw-note.solved-msg { font-size: 22px; color: var(--green-ink); opacity: 0; }
@@ -2984,10 +2966,9 @@ function note(cls, text, col, row, rot) {
 
 const me = document.createElement('div');
 me.className = 'cw-me';
-me.setAttribute('aria-hidden', 'true');
-me.innerHTML = '<img class="draw" src="img/me-line.webp" alt="" width="564" height="504" draggable="false"><span class="real"><img src="img/me-photo.webp" alt="" width="520" height="520" draggable="false"></span><span class="say"></span>';
-area.prepend(me);
-const ME_RATIO = 504 / 564;
+me.dataset.col = 5; me.dataset.row = 2;
+me.innerHTML = '<img src="img/me-square.webp" alt="Ashita Jain" width="360" height="360" draggable="false">';
+area.appendChild(me);
 function meReact(kind) {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches && kind !== 'yay') return;
   me.classList.remove('nod', 'shake', 'yay', 'hop');
@@ -2995,8 +2976,7 @@ function meReact(kind) {
   me.classList.add(kind);
   if (kind === 'hop') { floatHeart(0); return; }
   if (kind !== 'yay') return;
-  me.classList.add('happy');
-  setTimeout(() => meSay("Hi! I'm Ashita.", 5000), 700);
+  meCap.textContent = CAP_HI;
   [0, 1, 2, 3].forEach(i => floatHeart(250 + i * 180));
 }
 function floatHeart(delay) {
@@ -3005,50 +2985,26 @@ function floatHeart(delay) {
     h.className = 'luv';
     h.textContent = '\u2665';
     h.style.fontSize = (12 + Math.random() * 9) + 'px';
-    h.style.left = (58 + Math.random() * 14) + '%';
-    h.style.setProperty('--dx', (Math.random() * 40 - 16) + 'px');
+    h.style.left = (20 + Math.random() * 60) + '%';
+    h.style.setProperty('--dx', (Math.random() * 40 - 20) + 'px');
     h.style.setProperty('--r', (Math.random() * 30 - 15) + 'deg');
     me.appendChild(h);
     setTimeout(() => h.remove(), 1800);
   }, delay);
 }
-const meBubble = me.querySelector('.say');
-let sayTimer = null;
-function meSay(text, ms = 3200) {
-  clearTimeout(sayTimer);
-  if (!text) { meBubble.classList.remove('on'); return; }
-  meBubble.textContent = text;
-  meBubble.classList.add('on');
-  sayTimer = setTimeout(() => meBubble.classList.remove('on'), ms);
-}
-// she leans toward the pointer while it is over the hero
-(() => {
-  if (!matchMedia('(hover: hover)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const hero = document.querySelector('.hero');
-  hero.addEventListener('pointermove', e => {
-    const r = me.getBoundingClientRect();
-    const dx = Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / (innerWidth / 2)));
-    me.style.setProperty('--lean', (dx * 6).toFixed(2) + 'deg');
-    me.style.setProperty('--shift', (dx * 6).toFixed(1) + 'px');
-  });
-  hero.addEventListener('pointerleave', () => { me.style.setProperty('--lean', '0deg'); me.style.setProperty('--shift', '0px'); });
-})();
-// tap her and she hops
-me.querySelectorAll('img').forEach(img => img.addEventListener('click', e => {
-  e.stopPropagation();
-  meReact('hop');
-  meSay(solved ? "Hi! I'm Ashita." : 'Hi! Can you fill in the blanks?', 2600);
-}));
-// if nobody has typed after a few seconds, she asks
+// tap the photo and it hops
+me.addEventListener('click', e => { e.stopPropagation(); meReact('hop'); });
+// if nobody has typed after a few seconds, the photo hops to be noticed
 let meTyped = false;
-setTimeout(() => { if (!meTyped && !solved) { meSay('Go on, type it.'); meReact('nod'); } }, 4200);
-setTimeout(() => { if (!meTyped && !solved) meSay('Five letters. Starts with H.', 3600); }, 14000);
+[4200, 14000].forEach(t => setTimeout(() => { if (!meTyped && !solved) meReact('hop'); }, t));
 
 const CLUE_L = '← I design for them,\n    with them. Who?\n    Type it in.';
 const CLUE_U = '↑ I design for them,\n    with them. Who?\n    Type it in.';
 const clue = note('clue', CLUE_L, 5.25, 0.7, -1.5);
 const solvedMsg = note('solved-msg', 'Hello, human!', 5.35, 0.85, -1.5);
 note('hint', '↑ hover for what, how & why', 1.5, 5.3, -2);
+const CAP_ME = "← that's me, Ashita", CAP_HI = '← hi, I\'m Ashita!', CAP_ME_U = "↑ that's me";
+const meCap = note('me-cap', CAP_ME, 7.12, 2.6, -3);
 
 const hearts = [
   { col: 0.35, row: 0.4, rot: -15, size: 15 },
@@ -3086,12 +3042,10 @@ function cwLayout() {
     el.style.top = row * STEP + 'px';
   });
   area.style.minHeight = (narrow ? 7.4 : 6.2) * STEP + 'px';
-  // the drawing sits above the right end of HUMAN, looking down at it
-  const meW = narrow ? 3.6 : 4.4, meH = meW * ME_RATIO;
-  me.style.width = meW * STEP + 'px';
-  me.style.left = (narrow ? 3.4 : 3.9) * STEP + 'px';
-  me.style.top = (0.55 - meH) * STEP + 'px';
-  area.style.marginTop = (meH - 0.5) * STEP + 'px';
+  // the photo fills two cells by two
+  me.style.width = me.style.height = (2 * STEP - 2) + 'px';
+  if (narrow) { meCap.style.left = 5.05 * STEP + 'px'; meCap.style.top = 4 * STEP + 'px'; meCap.style.display = 'none'; }
+  else meCap.style.display = '';
 }
 let cwQueued = false;
 addEventListener('resize', () => {
@@ -3176,7 +3130,6 @@ if (matchMedia('(hover: hover)').matches) {
 function typeLetter(letter) {
   if (solved) return;
   meTyped = true;
-  meSay('');
   showWord(null);
   const cur = emptyCells[active];
   if (cur.done) { const n = nextOpen(active); if (n === -1) return; setActive(n); return typeLetter(letter); }
