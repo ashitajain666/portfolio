@@ -3594,7 +3594,7 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
   bg.innerHTML = '<i class="tint"></i><i class="grid"></i><div class="bits"></div>';
   document.body.prepend(bg);
   const [tint, grid, sqs] = bg.children;
-  const U = 52, TINTS = ['#f7f0e8', '#f1eefc', '#edf7ea'], SKY = '#dde4fa', SX_TOP = '#f4f6e9', SX_MID = '#f9f5ea', SX_END = '#f8f1ee';
+  const U = 52, TINTS = ['#f7f0e8', '#f1eefc', '#edf7ea'], SKY = '#dde4fa', SX_TOP = '#faf2f2', SX_MID = '#fcf0f4', SX_END = '#f9eef4';
   const absTop = el => { let y = 0; while (el) { y += el.offsetTop; el = el.offsetParent; } return y; };
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let io = null, lastKey = '';
@@ -3615,8 +3615,7 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
       const next = k + 1 < tops.length ? tops[k + 1] : lead;
       st.push(TINTS[k % TINTS.length] + ' ' + Math.round(next - vh * 0.55) + 'px');
     });
-    // the sketchnote section is warm sketch paper: it picks up from ServiceNow's green,
-    // turns to cream, and warms toward the peach in the footer's sky
+    // the sketchnote section is a light pink, the pink in the footer's sky
     const sxMid = (sxTop + sxEnd) / 2;
     st.push(SX_TOP + ' ' + Math.round(sxTop) + 'px', SX_MID + ' ' + Math.round(sxMid) + 'px', SX_END + ' ' + Math.round(sxEnd - vh * 0.1) + 'px');
     st.push(SKY + ' ' + Math.round(f + 40) + 'px', SKY + ' ' + H + 'px');
