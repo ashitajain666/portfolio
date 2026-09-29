@@ -1492,6 +1492,36 @@
     transition: opacity 0.4s;
   }
   .cw-note.clue { font-size: 14px; }
+
+  /* Ashita, drawn, looking down at the puzzle. She nods at a right letter,
+     shakes her head at a wrong one, and blushes when HUMAN is solved. */
+  .cw-me { position: absolute; z-index: 0; pointer-events: none; transform-origin: 53% 56%; }
+  .cw-me img { display: block; width: 100%; height: auto; }
+  .cw-me.nod { animation: meNod .5s ease; }
+  .cw-me.shake { animation: meShake .45s ease; }
+  .cw-me.yay { animation: meYay .8s cubic-bezier(.3,1.6,.5,1); }
+  @keyframes meNod { 35% { transform: rotate(-3.5deg) translateY(2px); } }
+  @keyframes meShake { 20% { transform: rotate(2.5deg); } 45% { transform: rotate(-2.5deg); } 70% { transform: rotate(1.5deg); } }
+  @keyframes meYay { 35% { transform: translateY(-12px) rotate(-2deg); } 65% { transform: translateY(0) rotate(1deg); } }
+  .cw-me .blush {
+    position: absolute; top: 39%; width: 11%; height: 5.5%; border-radius: 50%;
+    background: #f29bb8; opacity: 0; filter: blur(3px);
+    transition: opacity .7s ease .2s;
+  }
+  .cw-me .blush.l { left: 38.5%; }
+  .cw-me .blush.r { left: 55.5%; }
+  .cw-me.happy .blush { opacity: .7; }
+  .cw-me .luv {
+    position: absolute; left: 64%; top: 6%; font-style: normal; color: #e07d9c;
+    animation: luvUp 1.7s ease-out forwards;
+  }
+  @keyframes luvUp {
+    from { opacity: 0; transform: translate(0, 12px) scale(.5); }
+    18% { opacity: 1; }
+    to { opacity: 0; transform: translate(var(--dx), -84px) scale(1.15) rotate(var(--r)); }
+  }
+  .cw-intro .cw-me { animation: noteIn .7s ease .8s backwards; }
+  @media (prefers-reduced-motion: reduce) { .cw-me, .cw-me .luv { animation: none !important; } }
   .cw-note.hint { font-size: 14px; color: var(--light); }
   .cw-note.solved-msg { font-size: 22px; color: var(--green-ink); opacity: 0; }
   .cw-note.hidden { opacity: 0; }
@@ -2933,6 +2963,32 @@ function note(cls, text, col, row, rot) {
   return el;
 }
 
+const me = document.createElement('div');
+me.className = 'cw-me';
+me.setAttribute('aria-hidden', 'true');
+me.innerHTML = '<img src="img/me-line.webp" alt="" width="564" height="504"><i class="blush l"></i><i class="blush r"></i>';
+area.prepend(me);
+const ME_RATIO = 504 / 564;
+function meReact(kind) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches && kind !== 'yay') return;
+  me.classList.remove('nod', 'shake', 'yay');
+  void me.offsetWidth;
+  me.classList.add(kind);
+  if (kind !== 'yay') return;
+  me.classList.add('happy');
+  [0, 1, 2, 3].forEach(i => setTimeout(() => {
+    const h = document.createElement('i');
+    h.className = 'luv';
+    h.textContent = '\u2665';
+    h.style.fontSize = (12 + Math.random() * 9) + 'px';
+    h.style.left = (58 + Math.random() * 14) + '%';
+    h.style.setProperty('--dx', (Math.random() * 40 - 16) + 'px');
+    h.style.setProperty('--r', (Math.random() * 30 - 15) + 'deg');
+    me.appendChild(h);
+    setTimeout(() => h.remove(), 1800);
+  }, 250 + i * 180));
+}
+
 const CLUE_L = '← I design for them,\n    with them. Who?\n    Type it in.';
 const CLUE_U = '↑ I design for them,\n    with them. Who?\n    Type it in.';
 const clue = note('clue', CLUE_L, 5.25, 0.7, -1.5);
@@ -2975,6 +3031,12 @@ function cwLayout() {
     el.style.top = row * STEP + 'px';
   });
   area.style.minHeight = (narrow ? 7.4 : 6.2) * STEP + 'px';
+  // the drawing sits above the right end of HUMAN, looking down at it
+  const meW = narrow ? 3.6 : 4.4, meH = meW * ME_RATIO;
+  me.style.width = meW * STEP + 'px';
+  me.style.left = (narrow ? 3.4 : 3.9) * STEP + 'px';
+  me.style.top = (0.55 - meH) * STEP + 'px';
+  area.style.marginTop = (meH - 0.5) * STEP + 'px';
 }
 let cwQueued = false;
 addEventListener('resize', () => {
@@ -3068,9 +3130,10 @@ function typeLetter(letter) {
     cur.el.classList.add('correct');
     const n = nextOpen(active);
     if (n === -1) { tone(660, 0.05, 0.05); celebrate(); }
-    else { tone(520 + Math.random() * 60, 0.05, 0.05); setActive(n); }
+    else { tone(520 + Math.random() * 60, 0.05, 0.05); setActive(n); meReact('nod'); }
   } else {
     tone(150, 0.09, 0.04, 'sine');
+    meReact('shake');
     cur.el.classList.add('wrong');
     setTimeout(() => {
       if (cur.done) return;
@@ -3135,6 +3198,7 @@ function celebrate() {
     }, i * 110);
   });
   setTimeout(confetti, 150);
+  meReact('yay');
 }
 
 function confetti() {
