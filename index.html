@@ -2147,6 +2147,30 @@
   .fdeco i.l { background: var(--pur-pale); }
   .fdeco i.h { background: repeating-linear-gradient(135deg, rgba(91,79,184,.16) 0 1.5px, transparent 1.5px 7px); opacity: .7; }
 
+  /* A pile of crossword tiles on the footer floor. They drop in when the end of
+     the page comes into view and can be picked up and thrown. */
+  .ftrpile {
+    position: relative; z-index: 2; height: 240px; margin: 8px 0 18px;
+    left: calc(50% - 50vw); width: 100vw; overflow: hidden;
+  }
+  .ftrpile .pilenote {
+    position: absolute; left: 50%; top: 6px; transform: translateX(-50%) rotate(-2deg);
+    font-family: 'Patrick Hand', cursive; font-size: 17px; color: var(--mid); margin: 0;
+    transition: opacity .6s ease;
+  }
+  .ftrpile.touched .pilenote { opacity: 0; }
+  .ftrpile b {
+    position: absolute; left: 0; top: 0; display: flex; align-items: center; justify-content: center;
+    width: var(--t); height: var(--t); margin: calc(var(--t) / -2) 0 0 calc(var(--t) / -2);
+    border-radius: 9px; font: 700 calc(var(--t) * 0.44) 'DM Sans', sans-serif; color: var(--ink);
+    background: var(--bg-t); border: 1.5px solid var(--bd-t);
+    box-shadow: inset 0 3px 0 rgba(255,255,255,.75), inset 0 -4px 0 rgba(52,48,58,.08), 0 6px 12px rgba(52,48,58,.12);
+    cursor: grab; touch-action: none; user-select: none; will-change: transform;
+    visibility: hidden;
+  }
+  .ftrpile b.blk { color: transparent; }
+  .ftrpile b.held { cursor: grabbing; box-shadow: inset 0 3px 0 rgba(255,255,255,.75), 0 14px 24px rgba(52,48,58,.2); }
+  .ftrpile.on b { visibility: visible; }
   .ftr-bar { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 10px; padding-bottom: 26px; font-size: 13px; color: var(--mid); }
   @media (max-width: 620px) { .ftr-bar { flex-direction: column; align-items: flex-start; gap: 10px; padding-bottom: 22px; } }
   .ftr-bar .thanks { font-family: var(--hand); font-size: 17px; color: var(--pur); }
@@ -2522,6 +2546,7 @@
       </div>
     </div>
   </div>
+  <div class="ftrpile" id="ftrPile" aria-hidden="true"><p class="pilenote">pick one up and throw it &darr;</p></div>
   <div class="ftr-bar">
     <span>&copy; 2026 Ashita Jain</span>
     <span class="thanks">Thanks for being here.</span>
@@ -2550,6 +2575,7 @@
   </div>
 </div>
 
+<script src="matter.min.js"></script>
 <script>
 document.querySelectorAll('.exp-logos a').forEach(a => {
   const name = document.createElement('span');
@@ -3897,6 +3923,119 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
     if (raf) { cancelAnimationFrame(raf); raf = 0; }
     target = cur = scrollY;
   }, { passive: true });
+})();
+
+// The tile pile: real physics (matter.js). Tiles fall in once, the first time the
+// floor comes into view, then can be dragged and thrown. The engine only runs
+// while the pile is on screen.
+(() => {
+  const box = document.getElementById('ftrPile');
+  if (!box || !window.Matter) return;
+  const { Engine, Bodies, Body, Composite, Constraint, Sleeping } = Matter;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COLS = { build: ['#fbe3ea', '#e6b3c3'], design: ['#e2ece9', '#9cc3bd'], ai: ['#dfe5fd', '#a9b8ee'], human: ['#fff6df', '#dcc07a'], blk: ['#34303a', '#34303a'] };
+  const SET = [['HUMAN', 'human'], ['DESIGN', 'design'], ['BUILD', 'build'], ['AI', 'ai']];
+  const tiles = [];
+  SET.forEach(([w, k]) => [...w].forEach(ch => tiles.push({ ch, k })));
+  for (let i = 0; i < 5; i++) tiles.push({ ch: '', k: 'blk' });
+  let seed = 9;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  tiles.sort(() => rnd() - 0.5);
+
+  const engine = Engine.create({ enableSleeping: true });
+  engine.gravity.y = 1.1;
+  let walls = [], bodies = [], els = [], W = 0, H = 0, T = 52, dropped = false, running = false, raf = 0, last = 0;
+
+  const makeWalls = () => {
+    Composite.remove(engine.world, walls);
+    W = box.clientWidth; H = box.clientHeight;
+    const o = { isStatic: true, friction: 0.8 };
+    walls = [
+      Bodies.rectangle(W / 2, H + 30, W + 400, 60, o),
+      Bodies.rectangle(-30, H / 2 - 400, 60, H + 1000, o),
+      Bodies.rectangle(W + 30, H / 2 - 400, 60, H + 1000, o),
+    ];
+    Composite.add(engine.world, walls);
+  };
+  const build = () => {
+    T = Math.round(Math.max(40, Math.min(56, W / 26)));
+    box.style.setProperty('--t', T + 'px');
+    tiles.forEach((t, i) => {
+      const el = document.createElement('b');
+      el.textContent = t.ch;
+      if (t.k === 'blk') el.className = 'blk';
+      el.style.setProperty('--bg-t', COLS[t.k][0]);
+      el.style.setProperty('--bd-t', COLS[t.k][1]);
+      box.appendChild(el);
+      // spread across the middle of the floor, staggered above the top edge
+      const x = W * 0.12 + rnd() * W * 0.76;
+      const y = -T - i * (T * 0.55) - rnd() * T;
+      const body = Bodies.rectangle(x, y, T, T, { chamfer: { radius: 8 }, restitution: 0.25, friction: 0.6, frictionAir: 0.012, density: 0.002 });
+      Body.setAngle(body, (rnd() - 0.5) * 1.2);
+      Body.setAngularVelocity(body, (rnd() - 0.5) * 0.12);
+      bodies.push(body); els.push(el);
+      el.addEventListener('pointerdown', e => grab(e, body, el));
+    });
+  };
+  const paint = () => {
+    for (let i = 0; i < bodies.length; i++) {
+      const b = bodies[i];
+      els[i].style.transform = 'translate(' + b.position.x.toFixed(1) + 'px,' + b.position.y.toFixed(1) + 'px) rotate(' + b.angle.toFixed(3) + 'rad)';
+    }
+  };
+  const loop = now => {
+    const dt = Math.min(33, now - (last || now));
+    last = now;
+    Engine.update(engine, dt || 16.7);
+    paint();
+    raf = requestAnimationFrame(loop);
+  };
+  const start = () => { if (!running && dropped) { running = true; last = 0; raf = requestAnimationFrame(loop); } };
+  const stop = () => { running = false; cancelAnimationFrame(raf); };
+
+  // picking a tile up: a spring from the pointer to the point that was grabbed
+  let held = null;
+  const pt = e => { const r = box.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  const grab = (e, body, el) => {
+    e.preventDefault();
+    box.classList.add('touched');
+    Sleeping.set(body, false);
+    const p = pt(e);
+    const local = { x: p.x - body.position.x, y: p.y - body.position.y };
+    const c = Constraint.create({ pointA: p, bodyB: body, pointB: local, stiffness: 0.12, damping: 0.08, length: 0 });
+    Composite.add(engine.world, c);
+    held = { c, el };
+    el.classList.add('held');
+    el.setPointerCapture(e.pointerId);
+    start();
+  };
+  addEventListener('pointermove', e => { if (held) held.c.pointA = pt(e); });
+  const drop = () => { if (!held) return; Composite.remove(engine.world, held.c); held.el.classList.remove('held'); held = null; };
+  addEventListener('pointerup', drop);
+  addEventListener('pointercancel', drop);
+
+  const fall = () => {
+    if (dropped) return;
+    dropped = true;
+    makeWalls(); build();
+    Composite.add(engine.world, bodies);
+    if (reduced) { for (let i = 0; i < 400; i++) Engine.update(engine, 16.7); }
+    paint();
+    box.classList.add('on');
+    start();
+  };
+  new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting && e.intersectionRatio >= 0.6) fall();
+    if (e.isIntersecting) start(); else stop();
+  }), { threshold: [0, 0.6] }).observe(box);
+  addEventListener('resize', () => {
+    if (!dropped) return;
+    const oldW = W;
+    makeWalls();
+    // keep tiles inside the new width
+    bodies.forEach(b => { if (b.position.x > W - T) Body.setPosition(b, { x: W - T, y: b.position.y - T }); Sleeping.set(b, false); });
+    if (oldW !== W) start();
+  });
 })();
 
 document.getElementById('ftrUp')?.addEventListener('click', e => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
