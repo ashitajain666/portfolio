@@ -204,6 +204,19 @@
     white-space: nowrap;
   }
 
+
+  /* London: a small line drawing that draws itself, and the time there now */
+  .hero-place { display: flex; align-items: flex-end; gap: 14px; margin: -14px 0 30px; font-size: 14px; color: var(--mid); }
+  .hero-place .ldn { width: 120px; height: 34px; flex: none; overflow: visible; }
+  .hero-place .ln { fill: none; stroke: #8a8490; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 160; stroke-dashoffset: 160; animation: ldnDraw 1.8s cubic-bezier(.4,0,.2,1) .5s forwards; }
+  .hero-place .eye { transform-origin: 66px 20px; transform-box: view-box; animation: ldnTurn 90s linear 2.3s infinite; }
+  .hero-place .ldn-time { color: var(--light); }
+  .hero-place .ldn-time:not(:empty)::before { content: "\00a0\00b7\00a0"; }
+  @media (max-width: 900px) { .hero-place { flex-direction: column; align-items: center; gap: 8px; margin: -10px 0 26px; } }
+  @keyframes ldnDraw { to { stroke-dashoffset: 0; } }
+  @keyframes ldnTurn { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .hero-place .ln { animation: none; stroke-dashoffset: 0; } .hero-place .eye { animation: none; } }
+
   /* Selected work */
   .work {
     padding-block: 96px 60px;
@@ -2273,6 +2286,22 @@
     <p class="hero-bio">
       <strong>Senior UX designer.</strong> 9 years across AI, fintech, ed-tech and security. MSc in Human-Computer Interaction.
     </p>
+    <p class="hero-place">
+      <svg class="ldn" viewBox="0 0 150 42" aria-hidden="true">
+        <path class="ln" d="M2 40 H148"/>
+        <!-- Big Ben -->
+        <path class="ln" d="M22 40 V14 H32 V40 M22 14 L27 4 L32 14 M24 20 H30"/>
+        <circle class="ln" cx="27" cy="17.5" r="2.2"/>
+        <!-- London Eye, turning slowly -->
+        <g class="eye"><circle class="ln" cx="66" cy="20" r="15"/><path class="ln" d="M66 5 V35 M51 20 H81 M55.4 9.4 L76.6 30.6 M76.6 9.4 L55.4 30.6"/></g>
+        <path class="ln" d="M60 40 L66 20 L72 40"/>
+        <!-- the Shard -->
+        <path class="ln" d="M104 40 L112 6 L120 40 M110 14 L114 14"/>
+        <!-- houses -->
+        <path class="ln" d="M128 40 V30 L134 25 L140 30 V40"/>
+      </svg>
+      <span>Based in London<span class="ldn-time" id="ldnTime"></span></span>
+    </p>
     <div class="exp-logos">
       <a href="https://www.jpmorgan.com" target="_blank" rel="noopener noreferrer" data-name="JPMorgan Chase"><small>2022 to now</small></a>
       <a href="https://www.servicenow.com" target="_blank" rel="noopener noreferrer" data-name="ServiceNow"><small>2021</small></a>
@@ -4117,6 +4146,15 @@ const runPile = (() => {
   if (!('IntersectionObserver' in window)) return load();
   const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); load(); } }, { rootMargin: '2500px 0px' });
   io.observe(ftr);
+})();
+
+// The time in London now, so a visitor elsewhere can see my time zone.
+(() => {
+  const el = document.getElementById('ldnTime');
+  if (!el) return;
+  const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', hour: 'numeric', minute: '2-digit', hour12: true });
+  const tick = () => { el.textContent = 'it\u2019s ' + fmt.format(new Date()).replace(' ', '\u00a0') + ' here'; };
+  tick(); setInterval(tick, 30000);
 })();
 
 document.getElementById('ftrUp')?.addEventListener('click', e => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
