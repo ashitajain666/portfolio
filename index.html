@@ -283,7 +283,7 @@
       radial-gradient(125% 105% at 86% 10%, color-mix(in srgb, var(--tint) 72%, #fff) 0%, transparent 60%),
       radial-gradient(95% 130% at 4% 100%, color-mix(in srgb, var(--tint) 34%, #fff) 0%, transparent 58%),
       linear-gradient(126deg, color-mix(in srgb, var(--tint) 30%, #fff) 0%, color-mix(in srgb, var(--tint) 11%, #fdfbfa) 55%, #fdfbfa 100%);
-    transition: box-shadow 0.45s ease;
+    transition: box-shadow 0.6s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .proj > a:hover { box-shadow: 0 20px 50px rgba(52, 48, 58, 0.10); }
   .proj:nth-child(even) > a { grid-template-columns: minmax(0, 1.22fr) minmax(0, 0.78fr); padding: 70px 58px 78px 0; }
@@ -363,7 +363,7 @@
     background: var(--tint, var(--highlight));
     color: var(--ink);
     font-style: normal; font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
-    transition: transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1);
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
     transition-delay: calc(var(--i, 0) * 35ms);
   }
   .proj > a:hover .pcells i,
@@ -501,7 +501,7 @@
   /* when the page is moving fast, the brand card steps aside quickly */
   .proj-visual.quick .cover { transition-duration: 0.32s; }
   .proj-visual.quick .device { transition: opacity 0.34s ease, transform 0.34s cubic-bezier(0.3, 1, 0.4, 1); }
-  .proj-visual.revealed .device { opacity: 1; transform: none; }
+  .proj-visual.revealed .device { opacity: 1; transform: none; transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
   .proj > a:hover .device { transform: translateY(-5px); }
 
   /* the laptop */
@@ -681,7 +681,7 @@
     box-shadow: 0 14px 34px color-mix(in srgb, var(--tint-line) 30%, transparent);
     white-space: nowrap;
     opacity: 0;
-    transition: opacity 0.2s ease, transform 0.28s cubic-bezier(0.3, 1.35, 0.5, 1);
+    transition: opacity 0.25s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   }
   :is(.proj.locked, .proj.peek) > a:hover .lockcard {
     opacity: 1;
@@ -2878,13 +2878,24 @@ document.querySelectorAll(':is(.proj.locked, .proj.peek) > a').forEach(a => {
       setTimeout(() => tone(262, 0.11, 0.032, 'sine'), 70);
     });
   }
-  a.addEventListener('pointermove', e => {
+  // the padlock glides after the pointer instead of sticking to it
+  let tx = 0, ty = 0, cx = 0, cy = 0, raf = 0;
+  const glide = () => {
+    cx += (tx - cx) * 0.22; cy += (ty - cy) * 0.22;
+    if (Math.abs(tx - cx) < 0.3 && Math.abs(ty - cy) < 0.3) { cx = tx; cy = ty; }
+    mark.style.setProperty('--mx', cx.toFixed(1) + 'px');
+    mark.style.setProperty('--my', cy.toFixed(1) + 'px');
+    raf = cx !== tx || cy !== ty ? requestAnimationFrame(glide) : 0;
+  };
+  const aim = (e, jump) => {
     const r = a.getBoundingClientRect();
-    const x = e.clientX - r.left;
-    mark.style.setProperty('--mx', x + 'px');
-    mark.style.setProperty('--my', (e.clientY - r.top) + 'px');
-    card.style.setProperty('--ox', r.width - x < 240 ? 'calc(-100% - 18px)' : '18px');
-  });
+    tx = e.clientX - r.left; ty = e.clientY - r.top;
+    if (jump) { cx = tx; cy = ty; }
+    card.style.setProperty('--ox', r.width - tx < 240 ? 'calc(-100% - 18px)' : '18px');
+    if (!raf) raf = requestAnimationFrame(glide);
+  };
+  a.addEventListener('pointerenter', e => aim(e, true));
+  a.addEventListener('pointermove', e => aim(e, false));
 });
 
 // Scroll-linked: cards straighten as they centre, panels parallax,
