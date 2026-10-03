@@ -1421,7 +1421,7 @@
     letter-spacing: 0.04em;
     color: var(--ink);
     background: var(--cell-filled);
-    transition: background 0.25s, border-color 0.25s, transform 0.2s;
+    transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, color 0.2s ease, transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
     cursor: default;
     user-select: none;
   }
@@ -1459,7 +1459,11 @@
   @keyframes cwcaret { 0%, 55% { opacity: 1; } 56%, 100% { opacity: 0; } }
   .crossword-area { cursor: text; }
   @media (prefers-reduced-motion: reduce) { .cw-cell.empty .caret { animation: none; } }
-  .cw-cell.empty:hover { background: #faf8fa; transform: scale(1.05); }
+  .cw-cell.empty:hover { background: #faf8fa; }
+  /* a typed letter rises into its square */
+  .cw-cell .ltr { display: inline-block; animation: ltrIn 0.22s cubic-bezier(0.22, 1, 0.36, 1); }
+  @keyframes ltrIn { from { opacity: 0; transform: translateY(35%); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .cw-cell .ltr { animation: none; } }
   .cw-cell.empty.active {
     border-color: var(--highlight-border);
     background: #eef7f8;
@@ -1469,7 +1473,7 @@
     background: var(--highlight);
     border-color: var(--highlight-border);
     color: var(--green-ink);
-    animation: pop 0.35s ease;
+    animation: pop 0.32s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .cw-cell.empty.wrong {
     background: var(--wrong);
@@ -1502,7 +1506,7 @@
 
   @keyframes pop {
     0% { transform: scale(1); }
-    50% { transform: scale(1.15); }
+    45% { transform: scale(1.07); }
     100% { transform: scale(1); }
   }
   @keyframes shake {
@@ -3267,7 +3271,7 @@ function typeLetter(letter) {
   showWord(null);
   const cur = emptyCells[active];
   if (cur.done) { const n = nextOpen(active); if (n === -1) return; setActive(n); return typeLetter(letter); }
-  cur.el.textContent = letter;
+  cur.el.innerHTML = '<span class="ltr">' + letter + '</span>';
   if (letter === cur.ch) {
     cur.done = true;
     cur.el.classList.remove('wrong');
