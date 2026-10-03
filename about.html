@@ -135,42 +135,52 @@
   }
   h2 em { font-style: normal; color: var(--pur); }
 
-  /* ---- the route: a straight row of years; the logo jumps to the one you point at ---- */
+  /* ---- the route: one block per stage, as wide as it lasted; the logo jumps to the one you point at ---- */
   .route { position: relative; }
   .route.js .stops { display: none; }
-  .years { display: none; position: relative; padding-top: 52px; }
+  .years { display: none; position: relative; padding-top: 52px; padding-bottom: 150px; }
   .route.js .years { display: block; }
-  .years .row { display: grid; grid-template-columns: repeat(17, 1fr); gap: 10px; }
+  .years .row { display: flex; gap: 8px; }
   .years .yb {
-    position: relative; aspect-ratio: 1; border: 1.5px solid var(--b); background: var(--c);
-    display: flex; align-items: flex-end; justify-content: center; padding-bottom: 7px;
-    font: 500 12px 'DM Mono', monospace; color: var(--ink); cursor: pointer;
+    position: relative; flex: var(--g) 1 0; min-width: 0; height: 64px; border: 1.5px solid var(--b); background: var(--c);
+    display: flex; align-items: center; justify-content: center;
+    font: 500 12.5px 'DM Mono', monospace; color: var(--ink); cursor: pointer; white-space: nowrap;
     transition: transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s ease, border-color .2s ease;
   }
-  .years .yb.split { background: linear-gradient(135deg, var(--c) 50%, var(--c2) 50%); }
-  .years .yb.split3 { background: linear-gradient(135deg, var(--c) 33.3%, var(--c2) 33.3% 66.6%, var(--c3) 66.6%); }
   .years .yb:hover, .years .yb.on { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(52,48,58,.10); }
   .years .yb.on { border-color: var(--ink); }
   .years .yb:focus-visible { outline: 2px solid var(--pur); outline-offset: 3px; }
   .years .logo {
-    position: absolute; top: 0; left: 0; width: 36px; height: 36px; padding: 2px;
+    position: absolute; top: 0; left: 0; width: 36px; height: 36px; padding: 2px; z-index: 2;
     display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: #fff;
     box-shadow: 0 5px 12px rgba(52,48,58,.22); pointer-events: none; will-change: transform;
   }
   .years .logo i { border: 1.2px solid var(--cell-border); background: var(--cell-filled); font: 700 9.5px 'DM Sans', sans-serif; font-style: normal; display: flex; align-items: center; justify-content: center; color: var(--ink); }
   .years .logo i.f { background: var(--ink); border-color: var(--ink); }
-  .years .info { display: flex; gap: 48px; margin-top: 30px; min-height: 120px; }
-  .years .info .y { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 44px; line-height: 1; min-width: 110px; }
-  .years .info ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 40px; flex-wrap: wrap; }
-  .years .info li { border-left: 3px solid var(--b); padding-left: 14px; min-width: 200px; }
-  .years .info li b { display: block; font-size: 17px; font-weight: 500; }
-  .years .info li span { display: block; font-size: 14px; color: var(--mid); margin-top: 2px; }
-  .years .info li em { display: block; font-style: normal; font: 400 11px 'DM Mono', monospace; color: var(--light); margin-top: 6px; letter-spacing: .04em; }
-  .years .hint { font: 400 17px var(--hand); color: var(--mid); margin: 18px 0 0; transform: rotate(-1deg); transform-origin: left; }
-  @media (max-width: 900px) {
-    .years .row { grid-template-columns: repeat(6, 1fr); gap: 8px; row-gap: 44px; }
-    .years .info { flex-direction: column; gap: 14px; }
-    .years .info ul { flex-direction: column; gap: 14px; }
+  .years .tip {
+    position: absolute; left: 0; top: 0; width: 280px; z-index: 3;
+    background: #fff; border: 1px solid var(--rule); border-top: 3px solid var(--b);
+    box-shadow: 0 14px 34px rgba(52,48,58,.12); padding: 14px 16px 15px;
+    opacity: 0; transform: translateY(6px); transition: opacity .2s ease, transform .25s cubic-bezier(.22,1,.36,1), left .3s cubic-bezier(.22,1,.36,1);
+    pointer-events: none;
+  }
+  .years .tip.show { opacity: 1; transform: none; }
+  .years .tip::before { content: ""; position: absolute; top: -9px; left: var(--ax, 40px); width: 12px; height: 12px; background: #fff; border-left: 1px solid var(--rule); border-top: 1px solid var(--rule); transform: rotate(45deg); }
+  .years .tip .r { font: 400 11.5px 'DM Mono', monospace; color: var(--light); letter-spacing: .04em; margin: 0; }
+  .years .tip h3 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 400; font-size: 27px; line-height: 1.1; margin: 4px 0 2px; }
+  .years .tip p { font-size: 14px; color: var(--mid); margin: 0; }
+  .years .tip .m { display: flex; gap: 8px; align-items: center; margin-top: 10px; font-size: 12px; color: var(--mid); }
+  .years .tip .m b { font-size: 10px; font-weight: 600; letter-spacing: .06em; padding: 2px 7px; background: var(--c); border: 1px solid var(--b); color: var(--ink); }
+  .years .hint { font: 400 17px var(--hand); color: var(--mid); margin: 0; position: absolute; right: 0; top: 14px; transform: rotate(-1.5deg); }
+  /* phones: the blocks stack, and the card opens under the one you tap */
+  @media (max-width: 760px) {
+    .years { padding-top: 40px; padding-bottom: 0; }
+    .years .row { flex-direction: column; }
+    .years .yb { flex: none; height: 56px; justify-content: flex-start; padding-left: 16px; }
+    .years .yb:hover, .years .yb.on { transform: none; }
+    .years .tip { position: static; width: auto; transform: none; margin: 2px 0 6px; transition: opacity .2s ease; }
+    .years .tip::before { display: none; }
+    .years .hint { top: 6px; }
   }
   .stops { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
   .stop { text-align: center; }
@@ -724,35 +734,28 @@ const VP = (() => {
   });
 })();
 
-// The route as a straight row of years. Point at a year (or tap it) and the
-// AJ logo jumps to it; the panel below lists what I was doing that year.
+// The route as a timeline: one block per stage, as wide as it lasted. Point at
+// a block (or tap it) and the AJ logo jumps onto it with a card of what I did.
 (() => {
   const route = document.querySelector('.route');
   if (!route) return;
-  const ST = {
-    cse:  { t: 'Computer Science', w: 'B.E., Bhilai', yr: '2010 to 2014', place: 'India', c: '#dfe7fd', b: '#a9b8ee', a: 2010, z: 2014 },
-    des:  { t: 'Communication Design', w: 'M.Des, DAIICT', yr: '2015 to 2017', place: 'India', c: '#dfe7fd', b: '#a9b8ee', a: 2015, z: 2017 },
-    clab: { t: 'ConnectLab.ai', w: 'MiDigiWorld, founding designer', yr: '2017 to 2021', place: 'India', c: '#e2ece9', b: '#8fbdc4', a: 2017, z: 2021 },
-    sn:   { t: 'ServiceNow', w: 'MITRE ATT&CK', yr: '2021', place: 'India', c: '#e2f5dd', b: '#79bd68', a: 2021, z: 2021 },
-    ucl:  { t: 'UCL', w: 'MSc HCI, Dean’s List', yr: '2021 to 2022', place: 'London', c: '#dfe7fd', b: '#a9b8ee', a: 2021, z: 2022 },
-    jpm:  { t: 'JPMorgan Chase', w: 'Agentic AI onboarding', yr: '2022 to now', place: 'London', c: '#ebe2d8', b: '#b2916f', a: 2022, z: 9999 },
-  };
-  const NOW = new Date().getFullYear(), FIRST = 2010, YEARS = [];
-  for (let y = FIRST; y <= Math.max(NOW, 2026); y++) YEARS.push(y);
-  const during = y => Object.values(ST).filter(s => s.a <= y && y <= s.z);
-
+  const ST = [
+    { r: '2010 – 2014', t: 'Computer Science', w: 'B.E., Bhilai', place: 'India', tag: 'STUDY', c: '#dfe7fd', b: '#a9b8ee', g: 4.5 },
+    { r: '2015 – 2017', t: 'Communication Design', w: 'M.Des, DAIICT', place: 'India', tag: 'STUDY', c: '#dfe7fd', b: '#a9b8ee', g: 2.5 },
+    { r: '2017 – 2021', t: 'ConnectLab.ai', w: 'MiDigiWorld, founding designer', place: 'India', tag: 'WORK', c: '#e2ece9', b: '#8fbdc4', g: 4 },
+    { r: '2021', t: 'ServiceNow', w: 'MITRE ATT&CK', place: 'India', tag: 'WORK', c: '#e2f5dd', b: '#79bd68', g: 1.2 },
+    { r: '2021 – 22', t: 'UCL', w: 'MSc HCI, Dean’s List', place: 'London', tag: 'STUDY', c: '#dfe7fd', b: '#a9b8ee', g: 1.5 },
+    { r: '2022 – now', t: 'JPMorgan Chase', w: 'Agentic AI onboarding', place: 'London', tag: 'WORK', c: '#ebe2d8', b: '#b2916f', g: 4.5 },
+  ];
   const wrap = document.createElement('div');
   wrap.className = 'years';
   const row = document.createElement('div');
   row.className = 'row';
-  row.style.gridTemplateColumns = window.innerWidth > 900 ? 'repeat(' + YEARS.length + ', 1fr)' : '';
-  const blocks = YEARS.map((y, i) => {
-    const on = during(y), d = document.createElement('button');
-    d.type = 'button'; d.className = 'yb' + (on.length === 2 ? ' split' : on.length > 2 ? ' split3' : '');
-    d.textContent = y === NOW ? 'now' : y;
-    d.setAttribute('aria-label', y + ': ' + on.map(s => s.t).join(', '));
-    on.forEach((s, k) => d.style.setProperty(k ? '--c' + (k + 1) : '--c', s.c));
-    d.style.setProperty('--b', on[on.length - 1].b);
+  const blocks = ST.map((s, i) => {
+    const d = document.createElement('button');
+    d.type = 'button'; d.className = 'yb'; d.textContent = s.r;
+    d.setAttribute('aria-label', s.r + ', ' + s.t + ', ' + s.w);
+    d.style.setProperty('--c', s.c); d.style.setProperty('--b', s.b); d.style.setProperty('--g', s.g);
     d.addEventListener('mouseenter', () => go(i));
     d.addEventListener('focus', () => go(i));
     d.addEventListener('click', () => go(i));
@@ -762,23 +765,19 @@ const VP = (() => {
   const logo = document.createElement('div');
   logo.className = 'logo'; logo.setAttribute('aria-hidden', 'true');
   logo.innerHTML = '<i>A</i><i class="f"></i><i class="f"></i><i>J</i>';
-  const info = document.createElement('div');
-  info.className = 'info'; info.setAttribute('aria-live', 'polite');
+  const tip = document.createElement('div');
+  tip.className = 'tip'; tip.setAttribute('role', 'status');
   const hint = document.createElement('p');
-  hint.className = 'hint'; hint.textContent = matchMedia('(hover: hover)').matches ? 'point at a year' : 'tap a year';
-  wrap.append(logo, row, info, hint);
+  hint.className = 'hint'; hint.textContent = matchMedia('(hover: hover)').matches ? 'point at a block' : 'tap a block';
+  wrap.append(hint, logo, row, tip);
   route.appendChild(wrap);
   route.classList.add('js');
 
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let cur = -1, pos = null, anim = 0;
-  // where the logo sits on a block: centred, just above it
-  const spot = i => {
-    const w = wrap.getBoundingClientRect(), r = blocks[i].getBoundingClientRect();
-    return { x: r.left - w.left + r.width / 2 - 18, y: r.top - w.top - 44 };
-  };
+  const box = i => { const w = wrap.getBoundingClientRect(), r = blocks[i].getBoundingClientRect(); return { l: r.left - w.left, t: r.top - w.top, w: r.width, h: r.height, W: w.width }; };
   const put = p => { pos = p; logo.style.transform = 'translate(' + p.x.toFixed(1) + 'px,' + p.y.toFixed(1) + 'px)'; };
-  // a hop: straight across, up and down in an arc
+  // a hop in an arc from the block it is on to the next
   const jump = to => {
     cancelAnimationFrame(anim);
     if (!pos || reduced) { put(to); return; }
@@ -790,31 +789,42 @@ const VP = (() => {
     };
     anim = requestAnimationFrame(step);
   };
+  // the card sits under the block, kept inside the row, with its pointer on the block's middle
+  const narrow = () => matchMedia('(max-width: 760px)').matches;
+  const card = i => {
+    const s = ST[i], cw = 280;
+    tip.style.setProperty('--b', s.b); tip.style.setProperty('--c', s.c);
+    tip.innerHTML = '<p class="r">' + s.r + '</p><h3>' + s.t + '</h3><p>' + s.w + '</p><p class="m"><b>' + s.tag + '</b>' + s.place + '</p>';
+    if (narrow()) { blocks[i].after(tip); tip.classList.add('show'); return; }
+    if (tip.parentNode !== wrap) wrap.appendChild(tip);
+    const b = box(i);
+    const mid = b.l + b.w / 2, left = Math.max(0, Math.min(b.W - cw, mid - cw / 2));
+    tip.style.left = left + 'px'; tip.style.top = (b.t + b.h + 16) + 'px';
+    tip.style.setProperty('--ax', (mid - left - 6) + 'px');
+    tip.classList.add('show');
+  };
   function go(i) {
     if (i === cur) return;
     cur = i;
-    blocks.forEach((b, k) => b.classList.toggle('on', k === i));
-    jump(spot(i));
-    const y = YEARS[i];
-    info.innerHTML = '<div class="y">' + y + '</div><ul>' + during(y).map(s =>
-      '<li style="--b:' + s.b + '"><b>' + s.t + '</b><span>' + s.w + '</span><em>' + s.yr + ' · ' + s.place + '</em></li>').join('') + '</ul>';
+    blocks.forEach((el, k) => el.classList.toggle('on', k === i));
+    card(i);
+    jump(seat(i));
   }
-  // start on today; the first time the row comes into view, the logo hops from 2010 to now
+  // on a wide screen the logo stands on top of the block; on a phone it sits at its right end
+  const seat = i => { const b = box(i); return narrow() ? { x: b.l + b.w - 48, y: b.t + (b.h - 36) / 2 } : { x: b.l + b.w / 2 - 18, y: b.t - 44 }; };
   go(0);
-  const last = YEARS.length - 1;
+  const last = ST.length - 1;
+  // the first time the timeline comes into view, the logo hops from the start to now
   if (!reduced && 'IntersectionObserver' in window) {
     const io = new IntersectionObserver(es => {
       if (!es.some(e => e.isIntersecting)) return;
       io.disconnect();
       let i = 0;
-      const t = setInterval(() => { i = Math.min(last, i + 2); go(i); if (i >= last) clearInterval(t); }, 230);
+      const t = setInterval(() => { i++; go(i); if (i >= last) clearInterval(t); }, 420);
     }, { threshold: 0.6 });
     io.observe(row);
   } else go(last);
-  addEventListener('resize', () => {
-    row.style.gridTemplateColumns = window.innerWidth > 900 ? 'repeat(' + YEARS.length + ', 1fr)' : '';
-    if (cur >= 0) put(spot(cur));
-  });
+  addEventListener('resize', () => { if (cur < 0) return; const c = cur; cur = -1; card(c); put(seat(c)); cur = c; });
 })();
 
 document.getElementById('ftrUp')?.addEventListener('click', e => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
