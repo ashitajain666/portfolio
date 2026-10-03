@@ -182,9 +182,10 @@
   .tally b { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 34px; font-weight: 500; line-height: 1; color: var(--pur); }
   .tally span { font-size: 13.5px; color: var(--mid); }
 
-  .talks { display: grid; grid-template-columns: 1.55fr 1fr; gap: 26px; margin-top: 48px; }
+  .talks { display: grid; grid-template-columns: 1.55fr 1fr; gap: 26px; margin-top: 48px; align-items: start; }
   .talks .pin img { aspect-ratio: 3 / 2; }
-  .talks .pin:nth-child(2) img { object-position: 62% 50%; }
+  /* the lectern photo is nearly square: show all of it, not a 3:2 crop */
+  .talks .pin:nth-child(2) img { aspect-ratio: 760 / 670; }
 
   /* ---- off the clock ---- */
   .wall { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px 24px; margin-top: 46px; }
@@ -562,7 +563,7 @@
     </div>
     <div class="talks">
       <figure class="pin"><span class="ph" style="--rot:-1.2deg"><img src="img/panel.webp" alt="Ashita speaking on an industry panel" width="1000" height="697" loading="lazy"></span><figcaption style="--rot:-1.2deg">industry panel, with Monzo and Google</figcaption></figure>
-      <figure class="pin"><span class="ph" style="--rot:1.4deg"><img src="img/talk.webp" alt="Ashita presenting at a J.P.Morgan lectern" width="760" height="670" loading="lazy"></span><figcaption style="--rot:1.4deg">talking shop at J.P.Morgan</figcaption></figure>
+      <figure class="pin"><span class="ph" style="--rot:1.4deg"><img src="img/talk.webp" alt="Ashita presenting at a J.P.Morgan lectern" width="760" height="670" loading="lazy"></span><figcaption style="--rot:1.4deg">talking at a J.P.Morgan conference</figcaption></figure>
     </div>
   </section>
 
