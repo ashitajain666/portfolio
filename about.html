@@ -48,8 +48,7 @@
     position: sticky; top: 0; z-index: 50;
     display: flex; justify-content: space-between; align-items: center;
     padding-block: 20px;
-    background: color-mix(in srgb, var(--bg) 88%, transparent);
-    backdrop-filter: blur(9px);
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
     border-bottom: 1px solid transparent;
   }
   nav.stuck { border-bottom-color: var(--rule); }
@@ -635,7 +634,7 @@
 // scrolls and scroll events and innerHeight say nothing. Thin strips down the page,
 // watched by IntersectionObserver, report which part is on screen in either case.
 const VP = (() => {
-  const STEP = 8, subs = [];
+  const STEP = 16, subs = [];
   const vp = { top: 0, height: innerHeight, bottom: innerHeight, framed: false, on: f => subs.push(f) };
   const rail = document.createElement('div');
   rail.setAttribute('aria-hidden', 'true');

@@ -60,9 +60,7 @@
     padding-block: 22px;
     margin-inline: -140px;
     padding-inline: 140px;
-    background: rgba(255, 255, 255, 0.55);
-    backdrop-filter: blur(10px) saturate(1.1);
-    -webkit-backdrop-filter: blur(10px) saturate(1.1);
+    background: rgba(255, 255, 255, 0.9);
     border-bottom: 1px solid transparent;
     transition: border-color 0.3s ease, padding 0.3s ease;
   }
@@ -829,7 +827,7 @@
   /* The case studies stack like sheets of paper. Script moves each card so it
      pins a little lower than the one before, and the card underneath sinks back
      as the next one slides over it. */
-  .projects .proj { position: relative; transform-origin: 50% 0; }
+  .projects .proj { position: relative; transform-origin: 50% 0; will-change: transform; }
   .projects.framed .proj { transition: transform .16s linear; }
   .projects .proj::after {
     content: ""; position: absolute; inset: 0; border-radius: 22px;
@@ -2281,7 +2279,7 @@
           <span class="lktxt"><b>Locked</b><em>ask me for the word</em></span>
         </span></span>
         <div class="proj-text">
-          <h2 class="proj-line">I designed AI tools for private client bankers at <b>JPMorgan Chase</b> to review client onboarding data they can actually trust.</h2>
+          <h2 class="proj-line">I designed AI tools for private client bankers at <b>JPMorgan Chase</b> to review client&rsquo;s onboarding data they can actually trust.</h2>
           <div class="proj-meta">JPMorgan Chase &middot; 2022 to now <span>|</span> Enterprise design, Fintech</div>
           <div class="proj-impact"><i>Impact</i><span>Onboarding time down <b>45%</b> &middot; manual reviews down <b>70%</b></span></div>
           <div class="pair" data-fill="200" role="img" aria-label="Human times AI">
@@ -2711,7 +2709,7 @@ const MOCKS = {
 // scrolls and scroll events and innerHeight say nothing. Thin strips down the page,
 // watched by IntersectionObserver, report which part is on screen in either case.
 const VP = (() => {
-  const STEP = 8, subs = [];
+  const STEP = 16, subs = [];
   const vp = { top: 0, height: innerHeight, bottom: innerHeight, framed: false, on: f => subs.push(f) };
   const rail = document.createElement('div');
   rail.setAttribute('aria-hidden', 'true');
