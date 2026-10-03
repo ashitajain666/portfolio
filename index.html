@@ -2065,19 +2065,22 @@
     font-style: normal; font-weight: 600; font-size: calc(var(--u) * 0.42);
     letter-spacing: .04em; color: var(--ink);
   }
-  /* the empty squares waiting for a letter, as in the hero puzzle */
+  /* the words are shown faintly until their letters are dragged in */
   .fside .fw i { transition: background .3s ease, border-color .3s ease, color .3s ease; }
-  .fside .fw i.gap { background: #fff; border: 2px dashed #b3adba; color: transparent; }
+  .fside .fw i.gap { background: rgba(255,255,255,.55); border-color: #e6e0e8; color: #cdc6d2; font-weight: 500; }
   .fside .fw.solved i { background: var(--highlight); border-color: var(--highlight-border); }
   /* while a letter is held, the squares it fits are marked */
-  .fside.seek-E .fw i.gap.l-E { border-color: var(--highlight-border); border-style: solid; }
-  .fside.seek-G .fw i.gap.l-G { border-color: var(--highlight-border); border-style: solid; }
-  .fside.seek-I .fw i.gap.l-I { border-color: var(--highlight-border); border-style: solid; }
-  .fside.seek-K .fw i.gap.l-K { border-color: var(--highlight-border); border-style: solid; }
-  .fside.seek-N .fw i.gap.l-N { border-color: var(--highlight-border); border-style: solid; }
-  .fside.seek-O .fw i.gap.l-O { border-color: var(--highlight-border); border-style: solid; }
-  .fside.seek-S .fw i.gap.l-S { border-color: var(--highlight-border); border-style: solid; }
-  .fside.seek-U .fw i.gap.l-U { border-color: var(--highlight-border); border-style: solid; }
+  .fside.seek-B .fw i.gap.l-B { border-color: var(--highlight-border); color: #9fc9cf; }
+  .fside.seek-R .fw i.gap.l-R { border-color: var(--highlight-border); color: #9fc9cf; }
+  .fside.seek-H .fw i.gap.l-H { border-color: var(--highlight-border); color: #9fc9cf; }
+  .fside.seek-E .fw i.gap.l-E { border-color: var(--highlight-border); color: #9fc9cf; }
+  .fside.seek-G .fw i.gap.l-G { border-color: var(--highlight-border); color: #9fc9cf; }
+  .fside.seek-I .fw i.gap.l-I { border-color: var(--highlight-border); color: #9fc9cf; }
+  .fside.seek-K .fw i.gap.l-K { border-color: var(--highlight-border); color: #9fc9cf; }
+  .fside.seek-N .fw i.gap.l-N { border-color: var(--highlight-border); color: #9fc9cf; }
+  .fside.seek-O .fw i.gap.l-O { border-color: var(--highlight-border); color: #9fc9cf; }
+  .fside.seek-S .fw i.gap.l-S { border-color: var(--highlight-border); color: #9fc9cf; }
+  .fside.seek-U .fw i.gap.l-U { border-color: var(--highlight-border); color: #9fc9cf; }
   .fw.k i {
     background: var(--pur-pale); border-color: var(--pur-soft); color: var(--pur); font-weight: 600;
     width: calc(var(--u) - 6px); height: calc(var(--u) - 6px); margin: 3px;
@@ -3838,20 +3841,21 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
 })();
 
 
-// The footer words as a small puzzle (matter.js). BOOKS, RUNNING and HIKE show
-// only their first letter; the rest lie scattered around the footer as loose
-// tiles. Drag a tile onto a matching empty square and it drops in. No gravity:
-// a tile stays where it is put, and tiles push each other aside. Without
-// script the words are simply shown complete.
+// The footer words as a small puzzle (matter.js). BOOKS, RUNNING and HIKE are
+// shown faintly; their letters lie in a heap along the bottom of the footer.
+// Drag a letter onto its faint square and it drops in. A letter let go
+// anywhere else falls back to the heap. Without script the words are simply
+// shown complete.
 (() => {
   const box = document.getElementById('ftrPile');
   const side = document.querySelector('.ftr .fside');
   const ftr = document.querySelector('.ftr');
-  if (!box || !side || !ftr || !window.Matter) return;
-  const { Engine, Bodies, Body, Composite, Constraint } = Matter;
+  const bar = ftr && ftr.querySelector('.ftr-bar');
+  const note = box && box.querySelector('.pilenote');
+  if (!box || !side || !bar || !window.Matter) return;
+  const { Engine, Bodies, Body, Composite, Constraint, Sleeping } = Matter;
   const engine = Engine.create({ enableSleeping: true });
-  engine.gravity.y = 0;
-  let walls = [], tiles = [], running = false, raf = 0, last = 0, held = null, built = false;
+  let walls = [], tiles = [], running = false, raf = 0, last = 0, held = null, built = false, floor = 0;
 
   const words = [...side.querySelectorAll('.fw')];
   const cells = () => [...side.querySelectorAll('.fw i')];
@@ -3860,12 +3864,31 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
     const b = box.getBoundingClientRect(), r = el.getBoundingClientRect();
     return { x: r.left - b.left + r.width / 2, y: r.top - b.top + r.height / 2, w: r.width, h: r.height };
   };
+  const cellSize = () => { const c = cells()[0].getBoundingClientRect(); return { w: c.width, h: c.height }; };
+
+  // the heap sits on a floor just above the bottom bar; make room for it
+  // when the layout above leaves too little
+  const fitTray = () => {
+    bar.style.marginTop = '';
+    const { w, h } = cellSize();
+    const vw = document.documentElement.clientWidth;
+    const perRow = Math.max(1, Math.floor((vw - 24) / (w * 1.3)));
+    const rows = Math.ceil(cells().length / perRow);
+    const need = rows * h + 28;
+    const b = bar.getBoundingClientRect();
+    const above = [...ftr.querySelectorAll('h2, .fhand, .fcta, .fw')].reduce((m, el) => Math.max(m, el.getBoundingClientRect().bottom), 0);
+    const have = b.top - above;
+    if (have < need) bar.style.marginTop = (parseFloat(getComputedStyle(bar).marginTop) + need - have) + 'px';
+    floor = bar.getBoundingClientRect().top - box.getBoundingClientRect().top - 10;
+    if (note) note.style.bottom = (box.clientHeight - floor + rows * h + 10) + 'px';
+    return { perRow, rows };
+  };
   const makeWalls = () => {
     Composite.remove(engine.world, walls);
-    const W = box.clientWidth, H = box.clientHeight, o = { isStatic: true };
+    const W = box.clientWidth, o = { isStatic: true };
     walls = [
-      Bodies.rectangle(W / 2, -30, W + 200, 60, o), Bodies.rectangle(W / 2, H + 30, W + 200, 60, o),
-      Bodies.rectangle(-30, H / 2, 60, H + 200, o), Bodies.rectangle(W + 30, H / 2, 60, H + 200, o),
+      Bodies.rectangle(W / 2, -30, W + 200, 60, o), Bodies.rectangle(W / 2, floor + 30, W + 200, 60, o),
+      Bodies.rectangle(-30, floor / 2, 60, floor + 400, o), Bodies.rectangle(W + 30, floor / 2, 60, floor + 400, o),
     ];
     Composite.add(engine.world, walls);
   };
@@ -3880,36 +3903,27 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
     t.el.style.transform = 'translate(' + (t.body.position.x - t.w / 2).toFixed(1) + 'px,' + (t.body.position.y - t.h / 2).toFixed(1) + 'px) rotate(' + rot + 'deg)';
   });
   const keepIn = () => {
-    const W = box.clientWidth, H = box.clientHeight;
+    const W = box.clientWidth;
     tiles.forEach(t => {
-      const p = t.body.position, x = Math.min(Math.max(p.x, t.w / 2), W - t.w / 2), y = Math.min(Math.max(p.y, t.h / 2), H - t.h / 2);
+      const p = t.body.position, x = Math.min(Math.max(p.x, t.w / 2), W - t.w / 2), y = Math.min(Math.max(p.y, t.h / 2), floor - t.h / 2);
       if (x !== p.x || y !== p.y) { Body.setPosition(t.body, { x, y }); Body.setVelocity(t.body, { x: 0, y: 0 }); }
     });
   };
+  const wakeAll = () => tiles.forEach(t => Sleeping.set(t.body, false));
 
-  // scatter the tiles over the open parts of the footer, clear of the text
-  const scatter = list => {
-    const b = box.getBoundingClientRect(), W = box.clientWidth, H = box.clientHeight, vw = document.documentElement.clientWidth;
-    const pad = 10;
-    const blocked = [...ftr.querySelectorAll('h2, .fhand, .fcta, .fw, .ftr-bar > *')].map(el => {
-      const r = el.getBoundingClientRect();
-      return { l: r.left - b.left - pad, t: r.top - b.top - pad, r: r.right - b.left + pad, b: r.bottom - b.top + pad };
-    });
-    // only the part of the strip that is on screen
-    const x0 = Math.max(12, -b.left + 12), x1 = Math.min(W - 12, vw - b.left - 12);
-    let seed = 7;
+  // lay the letters along the floor in a loose, mixed-up row
+  const heap = ({ perRow }) => {
+    const b = box.getBoundingClientRect(), vw = document.documentElement.clientWidth;
+    const x0 = Math.max(12, -b.left + 12), x1 = Math.min(box.clientWidth - 12, vw - b.left - 12);
+    let seed = 11;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    list.forEach(t => {
-      let best = null;
-      for (let n = 0; n < 500; n++) {
-        const x = x0 + t.w / 2 + rnd() * (x1 - x0 - t.w), y = 16 + t.h / 2 + rnd() * (H - 32 - t.h);
-        const q = { l: x - t.w / 2, t: y - t.h / 2, r: x + t.w / 2, b: y + t.h / 2 };
-        const hit = blocked.some(o => q.l < o.r && q.r > o.l && q.t < o.b && q.b > o.t);
-        if (!hit) { best = { x, y }; break; }
-      }
-      if (!best) best = { x: x0 + rnd() * (x1 - x0), y: H / 2 };
-      Body.setPosition(t.body, best);
-      blocked.push({ l: best.x - t.w / 2 - 14, t: best.y - t.h / 2 - 14, r: best.x + t.w / 2 + 14, b: best.y + t.h / 2 + 14 });
+    const order = tiles.map((t, k) => [rnd(), t]).sort((a, z) => a[0] - z[0]).map(a => a[1]);
+    order.forEach((t, k) => {
+      const row = Math.floor(k / perRow), col = k % perRow, n = Math.min(perRow, order.length - row * perRow);
+      const step = (x1 - x0) / n;
+      const x = x0 + step * (col + 0.5) + (rnd() - 0.5) * Math.max(0, step - t.w * 1.1);
+      Body.setPosition(t.body, { x, y: floor - t.h / 2 - row * (t.h + 2) });
+      Body.setVelocity(t.body, { x: 0, y: 0 });
     });
   };
 
@@ -3917,22 +3931,24 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
     const all = cells();
     if (!all.length || !all[0].getBoundingClientRect().width) return;
     built = true;
+    all.forEach(c => c.classList.add('gap'));
+    const tray = fitTray();
     makeWalls();
-    words.forEach(w => [...w.querySelectorAll('i')].slice(1).forEach(c => c.classList.add('gap')));
-    gaps().forEach((c, k) => {
+    all.forEach((c, k) => {
       const p = rel(c);
       const el = document.createElement('b');
       el.textContent = c.textContent;
       el.style.cssText = style(c);
       box.appendChild(el);
-      const body = Bodies.rectangle(p.x, p.y, p.w, p.h, { inertia: Infinity, frictionAir: 0.18, friction: 0.1, restitution: 0.1 });
-      const t = { el, body, w: p.w, h: p.h, ch: c.textContent, rot: Math.round((((k * 37) % 25) - 12)) };
+      const body = Bodies.rectangle(p.x, p.y, p.w, p.h, { inertia: Infinity, frictionAir: 0.03, friction: 0.4, restitution: 0.15 });
+      const t = { el, body, w: p.w, h: p.h, ch: c.textContent, rot: ((k * 37) % 21) - 10 };
       tiles.push(t);
       el.addEventListener('pointerdown', e => grab(e, t));
     });
     Composite.add(engine.world, tiles.map(t => t.body));
-    scatter(tiles);
+    heap(tray);
     paint();
+    start();
   };
 
   const loop = now => {
@@ -3950,6 +3966,7 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
   const grab = (e, t) => {
     e.preventDefault();
     box.classList.add('touched');
+    wakeAll();
     const p = pt(e);
     const c = Constraint.create({ pointA: p, bodyB: t.body, pointB: { x: p.x - t.body.position.x, y: p.y - t.body.position.y }, stiffness: 0.2, damping: 0.1, length: 0 });
     Composite.add(engine.world, c);
@@ -3961,7 +3978,7 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
   };
   addEventListener('pointermove', e => { if (held) held.c.pointA = pt(e); });
 
-  // a tile dropped close to an empty square with the same letter goes in
+  // a letter dropped close to an empty square with the same letter goes in
   const tryFit = t => {
     const p = t.body.position;
     let hit = null, d = Infinity;
@@ -3976,9 +3993,10 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
     tiles = tiles.filter(x => x !== t);
     t.el.classList.add('fit');
     t.el.style.transform = 'translate(' + (q.x - t.w / 2).toFixed(1) + 'px,' + (q.y - t.h / 2).toFixed(1) + 'px)';
+    hit.classList.remove('gap');
     setTimeout(() => {
       t.el.remove();
-      hit.classList.remove('gap');
+      hit.classList.add('in');
       const w = hit.closest('.fw');
       if (!w.querySelector('.gap')) w.classList.add('solved');
     }, 170);
@@ -3991,6 +4009,7 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
     side.classList.remove('seek-' + t.ch);
     held = null;
     tryFit(t);
+    wakeAll();
     start();
   };
   addEventListener('pointerup', drop);
@@ -3998,8 +4017,24 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
 
   const init = () => { if (!built) build(); };
   if (document.readyState === 'complete') init(); else addEventListener('load', init);
-  let rq = 0;
-  addEventListener('resize', () => { cancelAnimationFrame(rq); rq = requestAnimationFrame(() => { if (!built) return init(); makeWalls(); tiles.forEach(t => { const s = gaps()[0] || cells()[0], r = s.getBoundingClientRect(); t.w = r.width; t.h = r.height; t.el.style.cssText = style(s); }); keepIn(); paint(); start(); }); });
+  let rq = 0, lastW = innerWidth;
+  addEventListener('resize', () => {
+    cancelAnimationFrame(rq);
+    rq = requestAnimationFrame(() => {
+      if (!built) return init();
+      const tray = fitTray(); makeWalls();
+      const s = cellSize(), ref = gaps()[0] || cells()[0];
+      tiles.forEach(t => {
+        Body.scale(t.body, s.w / t.w, s.h / t.h);
+        t.w = s.w; t.h = s.h; t.el.style.cssText = style(ref);
+      });
+      // a real width change (not the phone's address bar) rebuilds the heap
+      if (innerWidth !== lastW && !held) heap(tray);
+      lastW = innerWidth;
+      keepIn(); wakeAll(); paint(); start();
+    });
+  });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (built && !held) { const tray = fitTray(); makeWalls(); heap(tray); wakeAll(); paint(); start(); } });
 })();
 
 document.getElementById('ftrUp')?.addEventListener('click', e => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
