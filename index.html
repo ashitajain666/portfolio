@@ -465,6 +465,17 @@
 
   /* JPMorgan: the brand screen sits on a sunset, as on the Private Bank site */
   .cover.sunset { background: url('img/jpm-hero.webp') center 62% / cover no-repeat, #f5efe6; }
+  /* the JPMorgan card shows only this picture: no device, no screen */
+  .proj[data-mock="review"] .device { display: none; }
+  .proj[data-mock="review"] .proj-visual { min-height: 360px; align-self: stretch; }
+  .proj[data-mock="review"] .proj-visual .cover,
+  .proj[data-mock="review"] .proj-visual.revealed .cover { opacity: 1; transform: none; inset: -62px 0 -74px 0; }
+  .proj[data-mock="review"] .case-pill { display: none; }
+  @media (max-width: 940px) {
+    .proj[data-mock="review"] .proj-visual { min-height: 0; aspect-ratio: 4 / 3; }
+    .proj[data-mock="review"] .proj-visual .cover,
+    .proj[data-mock="review"] .proj-visual.revealed .cover { inset: 0; border-radius: 12px; }
+  }
   .cover.sunset .wordmark, .cover.sunset .sub { text-shadow: 0 1px 12px rgba(255, 248, 238, .7); }
   .cover .sub {
     font-size: 10.5px; font-weight: 500; letter-spacing: 0.05em;
