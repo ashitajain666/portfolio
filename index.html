@@ -3967,16 +3967,21 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
     e.preventDefault();
     box.classList.add('touched');
     wakeAll();
+    // the letter follows the pointer exactly while it is held
     const p = pt(e);
-    const c = Constraint.create({ pointA: p, bodyB: t.body, pointB: { x: p.x - t.body.position.x, y: p.y - t.body.position.y }, stiffness: 0.2, damping: 0.1, length: 0 });
-    Composite.add(engine.world, c);
-    held = { c, t };
+    Body.setStatic(t.body, true);
+    held = { t, dx: t.body.position.x - p.x, dy: t.body.position.y - p.y };
     t.el.classList.add('held');
     side.classList.add('seek-' + t.ch);
     try { t.el.setPointerCapture(e.pointerId); } catch (err) {}
     start();
   };
-  addEventListener('pointermove', e => { if (held) held.c.pointA = pt(e); });
+  addEventListener('pointermove', e => {
+    if (!held) return;
+    const p = pt(e), W = box.clientWidth, t = held.t;
+    Body.setPosition(t.body, { x: Math.min(Math.max(p.x + held.dx, t.w / 2), W - t.w / 2), y: Math.min(Math.max(p.y + held.dy, t.h / 2), floor - t.h / 2) });
+    paint();
+  });
 
   // a letter dropped close to an empty square with the same letter goes in
   const tryFit = t => {
@@ -4004,7 +4009,7 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
   const drop = () => {
     if (!held) return;
     const t = held.t;
-    Composite.remove(engine.world, held.c);
+    Body.setStatic(t.body, false);
     t.el.classList.remove('held');
     side.classList.remove('seek-' + t.ch);
     held = null;
@@ -4015,8 +4020,10 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
   addEventListener('pointerup', drop);
   addEventListener('pointercancel', drop);
 
+  // start as soon as the page is laid out, without waiting for images
   const init = () => { if (!built) build(); };
-  if (document.readyState === 'complete') init(); else addEventListener('load', init);
+  if (document.readyState === 'loading') addEventListener('DOMContentLoaded', init); else setTimeout(init, 0);
+  addEventListener('load', init);
   let rq = 0, lastW = innerWidth;
   addEventListener('resize', () => {
     cancelAnimationFrame(rq);
