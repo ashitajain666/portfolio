@@ -3890,7 +3890,7 @@ const runPile = (() => {
     const cols = Math.min(n, fit);
     const rows = Math.ceil(n / cols);
     // a clear band of space above the letters, so they sit apart from the buttons
-    const need = rows * h + 28 + h * 4;
+    const need = rows * h + 28 + h * 3.45;
     const b = bar.getBoundingClientRect();
     const above = [...ftr.querySelectorAll('h2, .fhand, .fcta, .fw')].reduce((m, el) => Math.max(m, el.getBoundingClientRect().bottom), 0);
     const have = b.top - above;
