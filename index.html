@@ -3243,13 +3243,16 @@ function tone(freq, dur, gain, type) {
   } catch (e) { /* audio unavailable */ }
 }
 
-// Browsers gate audio behind a real gesture; unlock on the first click or key anywhere.
-['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, () => {
+// Browsers gate audio behind a real gesture (a click, tap or key press; hovering
+// and scrolling do not count). Keep trying on each one until sound is on.
+const unlock = () => {
   try {
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    audioCtx.resume();
+    if (audioCtx.state !== 'running') audioCtx.resume();
+    if (audioCtx.state === 'running') ['pointerdown', 'click', 'touchend', 'keydown'].forEach(ev => removeEventListener(ev, unlock, true));
   } catch (e) { /* audio unavailable */ }
-}, { once: true, passive: true }));
+};
+['pointerdown', 'click', 'touchend', 'keydown'].forEach(ev => addEventListener(ev, unlock, { capture: true, passive: true }));
 
 // Soft tick when hovering a company, each a step higher than the last.
 if (matchMedia('(hover: hover)').matches) {
