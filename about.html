@@ -141,8 +141,12 @@
   .climb { display: none; position: relative; }
   .route.js .climb { display: block; }
   .climb svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: none; user-select: none; -webkit-user-select: none; }
-  .climb .base { fill: none; stroke: #d8d3dd; stroke-width: 2; stroke-dasharray: 2 7; stroke-linecap: round; }
-  .climb .done { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; }
+  .climb .geo { fill: none; stroke: none; }
+  .climb .cell { fill: #fff; stroke: #e2dde6; stroke-width: 1.2; transition: fill .25s ease, stroke .25s ease; }
+  .climb .cell.lit { fill: var(--cell-filled); stroke: #b8b0be; }
+  .climb .stop-g .tile { transition: transform .25s cubic-bezier(.22,1,.36,1); }
+  .climb .stop-g .tl { font: 700 11.5px 'DM Sans', sans-serif; fill: var(--ink); pointer-events: none; }
+  .climb .stop-g.ahead .tile { opacity: .55; }
   .climb .rail { stroke: #c9c3cf; stroke-width: 3; stroke-linecap: round; }
   .climb .rung { stroke: #c9c3cf; stroke-width: 2.5; stroke-linecap: round; transition: stroke .25s ease; }
   .climb .rung.lit, .climb .rail.lit { stroke: var(--ink); }
@@ -161,6 +165,8 @@
     position: absolute; left: 0; top: 0; width: min(46%, 520px);
     border-left: 3px solid var(--b, var(--pur-soft)); padding: 4px 0 4px 24px;
   }
+  .climb .card .kw { display: flex; gap: 2px; margin: 0 0 12px; }
+  .climb .card .kw i { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font: 700 11px 'DM Sans', sans-serif; font-style: normal; background: var(--c); border: 1.2px solid var(--b); color: var(--ink); }
   .climb .card .yr { font: 400 12px 'DM Mono', monospace; letter-spacing: .06em; color: var(--light); margin: 0; }
   .climb .card h3 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 400; font-size: 38px; line-height: 1.1; margin: 6px 0 4px; }
   .climb .card .where { font-size: 15px; color: var(--mid); margin: 0; }
@@ -186,7 +192,9 @@
   .climb-list .lv > span { display: block; font: 400 11px 'DM Mono', monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--light); margin-bottom: 10px; }
   .climb-list .it { display: flex; flex-direction: column-reverse; gap: 16px; }
   .climb-list .st { position: relative; }
-  .climb-list .st::before { content: ""; position: absolute; left: -28px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--c); border: 2px solid var(--b); }
+  .climb-list .st::before { content: ""; position: absolute; left: -27px; top: 5px; width: 12px; height: 12px; background: var(--c); border: 1.5px solid var(--b); }
+  .climb-list .st .kw { display: flex; gap: 2px; margin-bottom: 8px; }
+  .climb-list .st .kw i { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font: 700 10.5px 'DM Sans', sans-serif; font-style: normal; background: var(--c); border: 1.2px solid var(--b); color: var(--ink); }
   .climb-list .st .yr { font: 400 11.5px 'DM Mono', monospace; color: var(--light); }
   .climb-list .st b { display: block; font-size: 16px; font-weight: 500; margin-top: 2px; }
   .climb-list .st span { display: block; font-size: 14px; color: var(--mid); }
@@ -756,12 +764,12 @@ const VP = (() => {
   const route = document.querySelector('.route');
   if (!route) return;
   const ST = [
-    { yr: '2010 to 2014', t: 'Computer Science', w: 'B.E., Bhilai', place: 'India', tag: 'STUDY', c: '#dfe7fd', b: '#a9b8ee', x: 110, lv: 0 },
-    { yr: '2015 to 2017', t: 'Communication Design', w: 'M.Des, DAIICT', place: 'India', tag: 'STUDY', c: '#dfe7fd', b: '#a9b8ee', x: 380, lv: 1 },
-    { yr: '2017 to 2021', t: 'ConnectLab.ai', w: 'MiDigiWorld, founding designer', place: 'India', tag: 'WORK', c: '#e2ece9', b: '#8fbdc4', x: 540, lv: 1 },
-    { yr: '2021', t: 'ServiceNow', w: 'MITRE ATT&CK', place: 'India', tag: 'WORK', c: '#e2f5dd', b: '#79bd68', x: 700, lv: 1 },
-    { yr: '2021 to 2022', t: 'UCL', w: 'MSc HCI, Dean’s List', place: 'London', tag: 'STUDY', c: '#dfe7fd', b: '#a9b8ee', x: 935, lv: 2 },
-    { yr: '2022 to now', t: 'JPMorgan Chase', w: 'Agentic AI onboarding', place: 'London', tag: 'WORK', c: '#ebe2d8', b: '#b2916f', x: 1070, lv: 2 },
+    { k: 'CSE', yr: '2010 to 2014', t: 'Computer Science', w: 'B.E., Bhilai', place: 'India', tag: 'STUDY', c: '#dfe7fd', b: '#a9b8ee', x: 110, lv: 0 },
+    { k: 'DES', yr: '2015 to 2017', t: 'Communication Design', w: 'M.Des, DAIICT', place: 'India', tag: 'STUDY', c: '#dfe7fd', b: '#a9b8ee', x: 380, lv: 1 },
+    { k: '0\u21921', yr: '2017 to 2021', t: 'ConnectLab.ai', w: 'MiDigiWorld, founding designer', place: 'India', tag: 'WORK', c: '#e2ece9', b: '#8fbdc4', x: 540, lv: 1 },
+    { k: 'SEC', yr: '2021', t: 'ServiceNow', w: 'MITRE ATT&CK', place: 'India', tag: 'WORK', c: '#e2f5dd', b: '#79bd68', x: 700, lv: 1 },
+    { k: 'HCI', yr: '2021 to 2022', t: 'UCL', w: 'MSc HCI, Dean’s List', place: 'London', tag: 'STUDY', c: '#dfe7fd', b: '#a9b8ee', x: 935, lv: 2 },
+    { k: 'AI', yr: '2022 to now', t: 'JPMorgan Chase', w: 'Agentic AI onboarding', place: 'London', tag: 'WORK', c: '#ebe2d8', b: '#b2916f', x: 1070, lv: 2 },
   ];
   const LY = [400, 262, 124];                       // the three levels
   const LAD = [[230, 400, 290, 262, 'switched from code to design'], [770, 262, 830, 124, 'moved to London for UCL']];
@@ -780,7 +788,7 @@ const VP = (() => {
     ST.filter(s => s.lv === lv).forEach(s => {
       const d = document.createElement('div'); d.className = 'st';
       d.style.setProperty('--c', s.c); d.style.setProperty('--b', s.b);
-      d.innerHTML = '<span class="yr">' + s.yr + '</span><b>' + s.t + '</b><span>' + s.w + '</span>';
+      d.innerHTML = '<span class="kw" aria-hidden="true">' + [...s.k].map(ch => '<i>' + ch + '</i>').join('') + '</span><span class="yr">' + s.yr + '</span><b>' + s.t + '</b><span>' + s.w + '</span>';
       it.appendChild(d);
     });
     box.appendChild(it);
@@ -792,13 +800,12 @@ const VP = (() => {
   const wrap = document.createElement('div');
   wrap.className = 'climb';
   const svg = el(wrap, 'svg', { viewBox: '0 0 1160 470', role: 'group', 'aria-label': 'Timeline: drag the piece or choose a stop' });
-  el(svg, 'text', { x: 20, y: 386, class: 'lvl' }, 'India · engineering');
-  el(svg, 'text', { x: 300, y: 248, class: 'lvl' }, 'India · design');
-  el(svg, 'text', { x: 840, y: 110, class: 'lvl' }, 'London');
-  const base = el(svg, 'path', { d: D, class: 'base' });
-  const done = el(svg, 'path', { d: D, class: 'done' });
+  el(svg, 'text', { x: 20, y: 376, class: 'lvl' }, 'India · engineering');
+  el(svg, 'text', { x: 300, y: 238, class: 'lvl' }, 'India · design');
+  el(svg, 'text', { x: 840, y: 100, class: 'lvl' }, 'London');
+  const base = el(svg, 'path', { d: D, class: 'geo' });
   const L = base.getTotalLength();
-  done.style.strokeDasharray = L; done.style.strokeDashoffset = L;
+  const cellG = el(svg, 'g', { 'aria-hidden': 'true' });
   // ladders sit on the sloped parts of the path
   const ladders = LAD.map(([x1, y1, x2, y2, label], k) => {
     const g = el(svg, 'g', { 'aria-hidden': 'true' });
@@ -813,20 +820,33 @@ const VP = (() => {
   for (let i = 0; i <= N; i++) { const p = base.getPointAtLength(L * i / N); samp.push({ x: p.x, y: p.y, l: L * i / N }); }
   const lenAt = (x, y) => samp.reduce((m, s) => { const d = (s.x - x) ** 2 + (s.y - y) ** 2; return d < m.d ? { d, l: s.l } : m; }, { d: Infinity, l: 0 }).l;
   ST.forEach(s => { s.l = lenAt(s.x, LY[s.lv]); });
+  // each level is a row of small crossword squares; they fill in behind the piece
+  const cells = [];
+  [[20, 230, 400], [290, 770, 262], [830, 1150, 124]].forEach(([x0, x1, y]) => {
+    for (let x = x0 + 9; x <= x1 - 7; x += 20) {
+      if (ST.some(st => LY[st.lv] === y && Math.abs(st.x - x) < st.k.length * 13 + 8)) continue;   // the stop's word sits here
+      const r = el(cellG, 'rect', { x: x - 8, y: y - 8, width: 16, height: 16, class: 'cell' });
+      cells.push({ r, l: lenAt(x, y) });
+    }
+  });
   ladders.forEach(ld => { ld.a = lenAt(ld.x1, ld.x1 === 230 ? 400 : 262); ld.b = lenAt(ld.x2, ld.x2 === 290 ? 262 : 124); });
 
   const stops = ST.map((s, i) => {
     const y = LY[s.lv];
     const g = el(svg, 'g', { class: 'stop-g', tabindex: 0, role: 'button', 'aria-label': s.yr + ', ' + s.t });
-    el(g, 'circle', { cx: s.x, cy: y, r: 15, class: 'ring' });
-    el(g, 'circle', { cx: s.x, cy: y, r: 9, class: 'dot', fill: s.c, stroke: s.b });
-    el(g, 'text', { x: s.x, y: y + 34, 'text-anchor': 'middle', class: 'nm' }, s.t);
-    el(g, 'text', { x: s.x, y: y + 52, 'text-anchor': 'middle', class: 'yr' }, s.yr);
+    const n = s.k.length, T = 24, w = n * T + (n - 1) * 2, x0 = s.x - w / 2;
+    el(g, 'rect', { x: x0 - 5, y: y - T / 2 - 5, width: w + 10, height: T + 10, class: 'ring' });
+    [...s.k].forEach((ch, j) => {
+      el(g, 'rect', { x: x0 + j * (T + 2), y: y - T / 2, width: T, height: T, fill: s.c, stroke: s.b, 'stroke-width': 1.4, class: 'tile' });
+      el(g, 'text', { x: x0 + j * (T + 2) + T / 2, y: y + 4.5, 'text-anchor': 'middle', class: 'tl' }, ch);
+    });
+    el(g, 'text', { x: s.x, y: y + 38, 'text-anchor': 'middle', class: 'nm' }, s.t);
+    el(g, 'text', { x: s.x, y: y + 56, 'text-anchor': 'middle', class: 'yr' }, s.yr);
     g.addEventListener('click', () => walkTo(i));
     g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); walkTo(i); } });
     return g;
   });
-  el(svg, 'text', { x: 1150, y: 112, 'text-anchor': 'end', class: 'note' }, 'next →');
+  el(svg, 'text', { x: 1150, y: 98, 'text-anchor': 'end', class: 'note' }, 'next →');
 
   // the piece: the AJ monogram from the nav
   const piece = el(svg, 'g', { class: 'piece', 'aria-hidden': 'true' });
@@ -840,7 +860,7 @@ const VP = (() => {
   const card = document.createElement('div');
   card.className = 'card';
   card.setAttribute('aria-live', 'polite');
-  card.innerHTML = '<p class="yr"></p><h3></h3><p class="where"></p><p class="meta"><span class="tag"></span><span class="pl"></span></p>'
+  card.innerHTML = '<p class="kw" aria-hidden="true"></p><p class="yr"></p><h3></h3><p class="where"></p><p class="meta"><span class="tag"></span><span class="pl"></span></p>'
     + '<div class="nav"><button type="button" class="prev">&larr; Earlier</button><button type="button" class="next">Later &rarr;</button></div>'
     + '<p class="hint">drag the piece up the climb</p>';
   wrap.appendChild(card);
@@ -852,6 +872,7 @@ const VP = (() => {
     if (i === cur && cT.textContent) return;
     cur = i; const s = ST[i];
     card.style.setProperty('--c', s.c); card.style.setProperty('--b', s.b);
+    card.querySelector('.kw').innerHTML = [...s.k].map(ch => '<i>' + ch + '</i>').join('');
     cYr.textContent = s.yr; cT.textContent = s.t; cW.textContent = s.w; cTag.textContent = s.tag; cPl.textContent = s.place;
     bPrev.disabled = i === 0; bNext.disabled = i === ST.length - 1;
     stops.forEach((g, k) => { g.classList.toggle('on', k === i); g.classList.toggle('ahead', ST[k].l > len + 1); });
@@ -859,8 +880,8 @@ const VP = (() => {
   const place = l => {
     len = Math.max(0, Math.min(L, l));
     const p = base.getPointAtLength(len);
-    piece.setAttribute('transform', 'translate(' + p.x.toFixed(1) + ',' + (p.y - 22).toFixed(1) + ')');
-    done.style.strokeDashoffset = L - len;
+    piece.setAttribute('transform', 'translate(' + p.x.toFixed(1) + ',' + (p.y - 34).toFixed(1) + ')');
+    cells.forEach(c => c.r.classList.toggle('lit', c.l <= len + 1));
     ladders.forEach(ld => {
       const f = (len - ld.a) / (ld.b - ld.a);
       ld.rungs.forEach((r, k) => r.classList.toggle('lit', f >= (k + 1) / (ld.rungs.length + 1)));
@@ -890,7 +911,7 @@ const VP = (() => {
   });
 
   // dragging: the piece follows the path under the pointer, then settles on the nearest stop
-  const toSvg = e => { const r = svg.getBoundingClientRect(), k = 1160 / r.width; return { x: (e.clientX - r.left) * k, y: (e.clientY - r.top) * k + 22 }; };
+  const toSvg = e => { const r = svg.getBoundingClientRect(), k = 1160 / r.width; return { x: (e.clientX - r.left) * k, y: (e.clientY - r.top) * k + 34 }; };
   let dragging = false;
   piece.addEventListener('pointerdown', e => { e.preventDefault(); dragging = true; cancelAnimationFrame(anim); piece.classList.add('drag'); piece.setPointerCapture(e.pointerId); });
   piece.addEventListener('pointermove', e => { if (!dragging) return; const p = toSvg(e); place(lenAt(p.x, p.y)); });
