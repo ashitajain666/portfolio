@@ -483,7 +483,7 @@
   }
   .sunpanel .awards { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 4%; width: 92%; }
   .sunpanel .awards img { width: 30%; height: auto; }
-  .proj-visual.revealed .sunpanel { opacity: 1; }
+  .proj-visual.revealed .sunpanel { opacity: 1; transition-duration: 1.1s; }
   @media (max-width: 940px) {
     .proj[data-mock="review"] .proj-visual { min-height: 0; aspect-ratio: 1 / 1; }
     .sunpanel .awards { flex-direction: column; gap: 6px; }
@@ -2849,14 +2849,15 @@ document.querySelectorAll('.proj').forEach(proj => {
       if (!started) {
         started = true;
         const rush = scrollSpeed > 900 || e.intersectionRatio >= 0.45;
-        play(rush ? 150 : 620);
+        // JPMorgan: the gradient stays up a while before the photo comes in
+        play(isReview ? (rush ? 1200 : 1800) : rush ? 150 : 620);
         return;
       }
-      if (timer && e.intersectionRatio >= 0.45) { visual.classList.add('quick'); reveal(); }
+      if (timer && !isReview && e.intersectionRatio >= 0.45) { visual.classList.add('quick'); reveal(); }
     });
   }, { threshold: [0.01, 0.45] }).observe(proj);
 
-  proj._reveal = () => { if (!visual.classList.contains('revealed')) { visual.classList.add('quick'); reveal(); } stopLoop(); };
+  proj._reveal = () => { if (!visual.classList.contains('revealed')) { visual.classList.toggle('quick', !isReview); reveal(); } stopLoop(); };
   proj._cover = () => { if (visual.classList.contains('revealed')) { clearTimeout(timer); stopLoop(); visual.classList.remove('revealed'); } };
   proj.querySelector('a').addEventListener('mouseenter', () => { if (!proj.classList.contains('scrub')) play(); });
 });
@@ -3764,8 +3765,9 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
   };
   const scrub = (c, p) => {
     // the first stretch shows the brand card, then the screen takes over
-    if (p < 0.1) { if (c._cover) c._cover(); return; }
-    p = (p - 0.1) / 0.9;
+    const lead = c.dataset.mock === 'review' ? 0.35 : 0.1;
+    if (p < lead) { if (c._cover) c._cover(); return; }
+    p = (p - lead) / (1 - lead);
     if (c._reveal) c._reveal();
     if (c.dataset.mock === 'matrix') { c.style.setProperty('--pan', p.toFixed(3)); return; }
     // the list of animations is collected once per screen, not on every frame
@@ -3842,7 +3844,8 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
 
 
 // The footer words as a small puzzle (matter.js). BOOKS, RUNNING and HIKE are
-// shown faintly; their letters lie in a heap along the bottom of the footer.
+// shown faintly; their letters drop in when the footer comes into view and
+// settle in short stacks along the bottom.
 // Drag a letter onto its faint square and it drops in. A letter let go
 // anywhere else falls back to the heap. Without script the words are simply
 // shown complete.
@@ -3855,7 +3858,9 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
   if (!box || !side || !bar || !window.Matter) return;
   const { Engine, Bodies, Body, Composite, Constraint, Sleeping } = Matter;
   const engine = Engine.create({ enableSleeping: true });
-  let walls = [], tiles = [], running = false, raf = 0, last = 0, held = null, built = false, floor = 0;
+  engine.gravity.scale = 0.0016;
+  let walls = [], tiles = [], running = false, raf = 0, last = 0, held = null, built = false, floor = 0, dropped = false;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const words = [...side.querySelectorAll('.fw')];
   const cells = () => [...side.querySelectorAll('.fw i')];
@@ -3871,9 +3876,12 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
   const fitTray = () => {
     bar.style.marginTop = '';
     const { w, h } = cellSize();
-    const vw = document.documentElement.clientWidth;
-    const perRow = Math.max(1, Math.floor((vw - 24) / (w * 1.3)));
-    const rows = Math.ceil(cells().length / perRow);
+    const vw = document.documentElement.clientWidth, n = cells().length;
+    // as many columns as fit with a clear gap between them, at most 10, so
+    // some letters stand on top of others
+    const fit = Math.max(1, Math.floor((vw - 24 + w * 0.6) / (w * 1.75)));
+    const cols = Math.max(Math.ceil(n / 3), Math.min(10, fit));
+    const rows = Math.ceil(n / cols);
     const need = rows * h + 28;
     const b = bar.getBoundingClientRect();
     const above = [...ftr.querySelectorAll('h2, .fhand, .fcta, .fw')].reduce((m, el) => Math.max(m, el.getBoundingClientRect().bottom), 0);
@@ -3881,14 +3889,14 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
     if (have < need) bar.style.marginTop = (parseFloat(getComputedStyle(bar).marginTop) + need - have) + 'px';
     floor = bar.getBoundingClientRect().top - box.getBoundingClientRect().top - 10;
     if (note) note.style.bottom = (box.clientHeight - floor + rows * h + 10) + 'px';
-    return { perRow, rows };
+    return { cols, rows };
   };
   const makeWalls = () => {
     Composite.remove(engine.world, walls);
     const W = box.clientWidth, o = { isStatic: true };
     walls = [
-      Bodies.rectangle(W / 2, -30, W + 200, 60, o), Bodies.rectangle(W / 2, floor + 30, W + 200, 60, o),
-      Bodies.rectangle(-30, floor / 2, 60, floor + 400, o), Bodies.rectangle(W + 30, floor / 2, 60, floor + 400, o),
+      Bodies.rectangle(W / 2, floor + 30, W + 200, 60, o),
+      Bodies.rectangle(-30, floor / 2 - 400, 60, floor + 1200, o), Bodies.rectangle(W + 30, floor / 2 - 400, 60, floor + 1200, o),
     ];
     Composite.add(engine.world, walls);
   };
@@ -3898,32 +3906,40 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
     const k = r.width / (parseFloat(cs.width) || r.width);
     return 'width:' + r.width + 'px;height:' + r.height + 'px;font-size:' + (parseFloat(cs.fontSize) * k).toFixed(2) + 'px';
   };
+  // a square looks the same turned a quarter, so the letter is always drawn
+  // the right way up: only the tilt left over after whole quarter turns shows
+  const Q = Math.PI / 2;
   const paint = () => tiles.forEach(t => {
-    const rot = held && held.t === t ? 0 : t.rot;
-    t.el.style.transform = 'translate(' + (t.body.position.x - t.w / 2).toFixed(1) + 'px,' + (t.body.position.y - t.h / 2).toFixed(1) + 'px) rotate(' + rot + 'deg)';
+    const a = t.body.angle - Math.round(t.body.angle / Q) * Q;
+    t.el.style.transform = 'translate(' + (t.body.position.x - t.w / 2).toFixed(1) + 'px,' + (t.body.position.y - t.h / 2).toFixed(1) + 'px) rotate(' + a.toFixed(3) + 'rad)';
   });
   const keepIn = () => {
     const W = box.clientWidth;
     tiles.forEach(t => {
-      const p = t.body.position, x = Math.min(Math.max(p.x, t.w / 2), W - t.w / 2), y = Math.min(Math.max(p.y, t.h / 2), floor - t.h / 2);
+      const p = t.body.position, x = Math.min(Math.max(p.x, t.w / 2), W - t.w / 2), y = Math.min(p.y, floor - t.h / 2);
       if (x !== p.x || y !== p.y) { Body.setPosition(t.body, { x, y }); Body.setVelocity(t.body, { x: 0, y: 0 }); }
     });
   };
   const wakeAll = () => tiles.forEach(t => Sleeping.set(t.body, false));
 
-  // lay the letters along the floor in a loose, mixed-up row
-  const heap = ({ perRow }) => {
+  // short stacks along the floor with space between them. With drop set, the
+  // letters start above the footer and fall in one after another.
+  const heap = ({ cols }, drop) => {
     const b = box.getBoundingClientRect(), vw = document.documentElement.clientWidth;
     const x0 = Math.max(12, -b.left + 12), x1 = Math.min(box.clientWidth - 12, vw - b.left - 12);
     let seed = 11;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    const order = tiles.map((t, k) => [rnd(), t]).sort((a, z) => a[0] - z[0]).map(a => a[1]);
+    const order = tiles.map(t => [rnd(), t]).sort((a, z) => a[0] - z[0]).map(a => a[1]);
+    const step = (x1 - x0) / cols;
+    const height = new Array(cols).fill(0);
     order.forEach((t, k) => {
-      const row = Math.floor(k / perRow), col = k % perRow, n = Math.min(perRow, order.length - row * perRow);
-      const step = (x1 - x0) / n;
-      const x = x0 + step * (col + 0.5) + (rnd() - 0.5) * Math.max(0, step - t.w * 1.1);
-      Body.setPosition(t.body, { x, y: floor - t.h / 2 - row * (t.h + 2) });
+      const col = k % cols, lvl = height[col]++;
+      const x = x0 + step * (col + 0.5) + (rnd() - 0.5) * Math.max(0, step - t.w * 1.4);
+      const y = drop ? -t.h * (1.2 + lvl * 1.6 + rnd() * 2.5) : floor - t.h / 2 - lvl * (t.h + 1);
+      Body.setPosition(t.body, { x: x + (lvl ? (rnd() - 0.5) * t.w * 0.4 : 0), y });
+      Body.setAngle(t.body, drop ? (rnd() - 0.5) * 0.45 : (rnd() - 0.5) * 0.12);
       Body.setVelocity(t.body, { x: 0, y: 0 });
+      Body.setAngularVelocity(t.body, 0);
     });
   };
 
@@ -3940,15 +3956,30 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
       el.textContent = c.textContent;
       el.style.cssText = style(c);
       box.appendChild(el);
-      const body = Bodies.rectangle(p.x, p.y, p.w, p.h, { inertia: Infinity, frictionAir: 0.03, friction: 0.4, restitution: 0.15 });
-      const t = { el, body, w: p.w, h: p.h, ch: c.textContent, rot: ((k * 37) % 21) - 10 };
+      const body = Bodies.rectangle(p.x, p.y, p.w, p.h, { frictionAir: 0.02, friction: 0.9, frictionStatic: 1.2, restitution: 0.04 });
+      const t = { el, body, w: p.w, h: p.h, ch: c.textContent };
       tiles.push(t);
       el.addEventListener('pointerdown', e => grab(e, t));
     });
-    Composite.add(engine.world, tiles.map(t => t.body));
-    heap(tray);
+    if (reduced) { Composite.add(engine.world, tiles.map(t => t.body)); heap(tray, false); dropped = true; paint(); return; }
+    // wait above the footer, out of the world, until it scrolls into view
+    heap(tray, true);
     paint();
-    start();
+    const io = new IntersectionObserver(es => {
+      if (!es.some(e => e.isIntersecting)) return;
+      io.disconnect();
+      release();
+    }, { threshold: 0.35 });
+    io.observe(bar);
+  };
+  const release = () => {
+    if (dropped) return;
+    dropped = true;
+    [...tiles].sort((a, z) => z.body.position.y - a.body.position.y).forEach((t, k) => setTimeout(() => {
+      if (held && held.t === t) return;
+      Composite.add(engine.world, t.body);
+      start();
+    }, k * 70));
   };
 
   const loop = now => {
@@ -3969,7 +4000,9 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
     wakeAll();
     // the letter follows the pointer exactly while it is held
     const p = pt(e);
+    if (!engine.world.bodies.includes(t.body)) Composite.add(engine.world, t.body);
     Body.setStatic(t.body, true);
+    Body.setAngle(t.body, 0);
     held = { t, dx: t.body.position.x - p.x, dy: t.body.position.y - p.y };
     t.el.classList.add('held');
     side.classList.add('seek-' + t.ch);
@@ -4010,6 +4043,7 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
     if (!held) return;
     const t = held.t;
     Body.setStatic(t.body, false);
+    dropped = true;
     t.el.classList.remove('held');
     side.classList.remove('seek-' + t.ch);
     held = null;
@@ -4036,12 +4070,12 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
         t.w = s.w; t.h = s.h; t.el.style.cssText = style(ref);
       });
       // a real width change (not the phone's address bar) rebuilds the heap
-      if (innerWidth !== lastW && !held) heap(tray);
+      if (innerWidth !== lastW && !held && dropped) heap(tray, false);
       lastW = innerWidth;
       keepIn(); wakeAll(); paint(); start();
     });
   });
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (built && !held) { const tray = fitTray(); makeWalls(); heap(tray); wakeAll(); paint(); start(); } });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (built && !held && !dropped) { const tray = fitTray(); makeWalls(); heap(tray, true); paint(); } });
 })();
 
 document.getElementById('ftrUp')?.addEventListener('click', e => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
