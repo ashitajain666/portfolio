@@ -2065,8 +2065,19 @@
     font-style: normal; font-weight: 600; font-size: calc(var(--u) * 0.42);
     letter-spacing: .04em; color: var(--ink);
   }
-  .fside .fw i { cursor: grab; touch-action: none; user-select: none; }
-  .fside .fw i:hover { border-color: #b8afbd; }
+  /* the empty squares waiting for a letter, as in the hero puzzle */
+  .fside .fw i { transition: background .3s ease, border-color .3s ease, color .3s ease; }
+  .fside .fw i.gap { background: #fff; border: 2px dashed #b3adba; color: transparent; }
+  .fside .fw.solved i { background: var(--highlight); border-color: var(--highlight-border); }
+  /* while a letter is held, the squares it fits are marked */
+  .fside.seek-E .fw i.gap.l-E { border-color: var(--highlight-border); border-style: solid; }
+  .fside.seek-G .fw i.gap.l-G { border-color: var(--highlight-border); border-style: solid; }
+  .fside.seek-I .fw i.gap.l-I { border-color: var(--highlight-border); border-style: solid; }
+  .fside.seek-K .fw i.gap.l-K { border-color: var(--highlight-border); border-style: solid; }
+  .fside.seek-N .fw i.gap.l-N { border-color: var(--highlight-border); border-style: solid; }
+  .fside.seek-O .fw i.gap.l-O { border-color: var(--highlight-border); border-style: solid; }
+  .fside.seek-S .fw i.gap.l-S { border-color: var(--highlight-border); border-style: solid; }
+  .fside.seek-U .fw i.gap.l-U { border-color: var(--highlight-border); border-style: solid; }
   .fw.k i {
     background: var(--pur-pale); border-color: var(--pur-soft); color: var(--pur); font-weight: 600;
     width: calc(var(--u) - 6px); height: calc(var(--u) - 6px); margin: 3px;
@@ -2128,8 +2139,8 @@
   .fdeco i.l { background: var(--pur-pale); }
   .fdeco i.h { background: repeating-linear-gradient(135deg, rgba(91,79,184,.16) 0 1.5px, transparent 1.5px 7px); opacity: .7; }
 
-  /* Letters pulled out of BOOKS, RUNNING and HIKE become loose tiles that
-     can be dropped anywhere in the footer. */
+  /* The missing letters of BOOKS, RUNNING and HIKE lie loose in the footer
+     and can be dragged into the words. */
   .ftrpile {
     position: absolute; top: 0; bottom: 0; z-index: 4;
     left: calc(50% - 50vw); width: 100vw; overflow: hidden; pointer-events: none;
@@ -2145,9 +2156,12 @@
     position: absolute; left: 0; top: 0; box-sizing: border-box;
     display: flex; align-items: center; justify-content: center;
     pointer-events: auto; cursor: grab; touch-action: none; user-select: none; will-change: transform;
-    font-style: normal; letter-spacing: .04em;
+    border: 1.5px solid var(--cell-border); background: var(--cell-filled); color: var(--ink);
+    font-family: 'DM Sans', system-ui, sans-serif; font-style: normal; font-weight: 600; letter-spacing: .04em;
+    box-shadow: 0 2px 5px rgba(52,48,58,.08);
     transition: box-shadow .2s ease;
   }
+  .ftrpile b.fit { transition: transform .17s ease-out; box-shadow: none; }
   .ftrpile b.held { cursor: grabbing; box-shadow: 0 10px 22px rgba(52,48,58,.16); z-index: 2; }
     .ftr-bar { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 10px; padding-bottom: 26px; font-size: 13px; color: var(--mid); }
   @media (max-width: 620px) { .ftr-bar { flex-direction: column; align-items: flex-start; gap: 10px; padding-bottom: 22px; } }
@@ -2508,9 +2522,9 @@
       </p>
       <h2 class="l1">Human <span class="em">behind this.</span></h2>
       <div class="fside">
-      <div class="fw d " style="--c:-6;--r:2"><i>B</i><i>O</i><i>O</i><i>K</i><i>S</i></div>
-      <div class="fw " style="--c:7;--r:1"><i>R</i><i>U</i><i>N</i><i>N</i><i>I</i><i>N</i><i>G</i></div>
-      <div class="fw d " style="--c:11;--r:4"><i>H</i><i>I</i><i>K</i><i>E</i></div>
+      <div class="fw d " style="--c:-6;--r:2"><i class="l-B">B</i><i class="l-O">O</i><i class="l-O">O</i><i class="l-K">K</i><i class="l-S">S</i></div>
+      <div class="fw " style="--c:7;--r:1"><i class="l-R">R</i><i class="l-U">U</i><i class="l-N">N</i><i class="l-N">N</i><i class="l-I">I</i><i class="l-N">N</i><i class="l-G">G</i></div>
+      <div class="fw d " style="--c:11;--r:4"><i class="l-H">H</i><i class="l-I">I</i><i class="l-K">K</i><i class="l-E">E</i></div>
       </div>
       <div class="fw k" data-fill="0" style="--c:0;--r:3"><i>A</i><i>S</i><i>H</i><i>I</i><i>T</i><i>A</i></div>
       <div class="fcta">
@@ -2525,7 +2539,7 @@
       </div>
     </div>
   </div>
-  <div class="ftrpile" id="ftrPile" aria-hidden="true"><p class="pilenote">pull letters out of the words and fill the footer</p></div>
+  <div class="ftrpile" id="ftrPile" aria-hidden="true"><p class="pilenote">drag the letters into the words</p></div>
   <div class="ftr-bar">
     <span>&copy; 2026 Ashita Jain</span>
     <span class="thanks">Thanks for being here.</span>
@@ -3824,49 +3838,47 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
 })();
 
 
-// The footer words as a tile supply (matter.js). BOOKS, RUNNING and HIKE stay in
-// their crossword places; pulling a letter out of a word makes a loose copy of it
-// that can be dropped anywhere in the footer, so the footer can be filled with
-// tiles. No gravity: a tile stays where it is put, and tiles push each other
-// (and the words) aside instead of overlapping.
+// The footer words as a small puzzle (matter.js). BOOKS, RUNNING and HIKE show
+// only their first letter; the rest lie scattered around the footer as loose
+// tiles. Drag a tile onto a matching empty square and it drops in. No gravity:
+// a tile stays where it is put, and tiles push each other aside. Without
+// script the words are simply shown complete.
 (() => {
   const box = document.getElementById('ftrPile');
   const side = document.querySelector('.ftr .fside');
-  if (!box || !side || !window.Matter) return;
+  const ftr = document.querySelector('.ftr');
+  if (!box || !side || !ftr || !window.Matter) return;
   const { Engine, Bodies, Body, Composite, Constraint } = Matter;
   const engine = Engine.create({ enableSleeping: true });
   engine.gravity.y = 0;
-  const MAX = 160;
-  let fixed = [], tiles = [], running = false, raf = 0, last = 0, held = null;
+  let walls = [], tiles = [], running = false, raf = 0, last = 0, held = null, built = false;
 
-  const src = () => [...side.querySelectorAll('.fw i')];
+  const words = [...side.querySelectorAll('.fw')];
+  const cells = () => [...side.querySelectorAll('.fw i')];
+  const gaps = () => cells().filter(c => c.classList.contains('gap'));
   const rel = el => {
     const b = box.getBoundingClientRect(), r = el.getBoundingClientRect();
     return { x: r.left - b.left + r.width / 2, y: r.top - b.top + r.height / 2, w: r.width, h: r.height };
   };
-  // walls at the footer edges, and each word's letters as fixed blocks
-  const makeFixed = () => {
-    Composite.remove(engine.world, fixed);
+  const makeWalls = () => {
+    Composite.remove(engine.world, walls);
     const W = box.clientWidth, H = box.clientHeight, o = { isStatic: true };
-    fixed = [
+    walls = [
       Bodies.rectangle(W / 2, -30, W + 200, 60, o), Bodies.rectangle(W / 2, H + 30, W + 200, 60, o),
       Bodies.rectangle(-30, H / 2, 60, H + 200, o), Bodies.rectangle(W + 30, H / 2, 60, H + 200, o),
-      ...src().map(el => { const p = rel(el); return Bodies.rectangle(p.x, p.y, p.w, p.h, o); }),
     ];
-    Composite.add(engine.world, fixed);
+    Composite.add(engine.world, walls);
   };
   // the footer canvas is scaled to the window, so sizes come from the drawn box
   const style = el => {
     const cs = getComputedStyle(el), r = el.getBoundingClientRect();
     const k = r.width / (parseFloat(cs.width) || r.width);
-    return 'width:' + r.width + 'px;height:' + r.height + 'px;background:' + cs.backgroundColor + ';border:' + cs.borderTopWidth + ' ' + cs.borderTopStyle + ' ' + cs.borderTopColor
-      + ';color:' + cs.color + ';font:' + cs.fontWeight + ' ' + (parseFloat(cs.fontSize) * k).toFixed(2) + 'px ' + cs.fontFamily;
+    return 'width:' + r.width + 'px;height:' + r.height + 'px;font-size:' + (parseFloat(cs.fontSize) * k).toFixed(2) + 'px';
   };
   const paint = () => tiles.forEach(t => {
-    t.el.style.transform = 'translate(' + (t.body.position.x - t.w / 2).toFixed(1) + 'px,' + (t.body.position.y - t.h / 2).toFixed(1) + 'px)';
+    const rot = held && held.t === t ? 0 : t.rot;
+    t.el.style.transform = 'translate(' + (t.body.position.x - t.w / 2).toFixed(1) + 'px,' + (t.body.position.y - t.h / 2).toFixed(1) + 'px) rotate(' + rot + 'deg)';
   });
-
-  // a tile can never leave the footer, however hard it is dragged
   const keepIn = () => {
     const W = box.clientWidth, H = box.clientHeight;
     tiles.forEach(t => {
@@ -3874,6 +3886,55 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
       if (x !== p.x || y !== p.y) { Body.setPosition(t.body, { x, y }); Body.setVelocity(t.body, { x: 0, y: 0 }); }
     });
   };
+
+  // scatter the tiles over the open parts of the footer, clear of the text
+  const scatter = list => {
+    const b = box.getBoundingClientRect(), W = box.clientWidth, H = box.clientHeight, vw = document.documentElement.clientWidth;
+    const pad = 10;
+    const blocked = [...ftr.querySelectorAll('h2, .fhand, .fcta, .fw, .ftr-bar > *')].map(el => {
+      const r = el.getBoundingClientRect();
+      return { l: r.left - b.left - pad, t: r.top - b.top - pad, r: r.right - b.left + pad, b: r.bottom - b.top + pad };
+    });
+    // only the part of the strip that is on screen
+    const x0 = Math.max(12, -b.left + 12), x1 = Math.min(W - 12, vw - b.left - 12);
+    let seed = 7;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    list.forEach(t => {
+      let best = null;
+      for (let n = 0; n < 500; n++) {
+        const x = x0 + t.w / 2 + rnd() * (x1 - x0 - t.w), y = 16 + t.h / 2 + rnd() * (H - 32 - t.h);
+        const q = { l: x - t.w / 2, t: y - t.h / 2, r: x + t.w / 2, b: y + t.h / 2 };
+        const hit = blocked.some(o => q.l < o.r && q.r > o.l && q.t < o.b && q.b > o.t);
+        if (!hit) { best = { x, y }; break; }
+      }
+      if (!best) best = { x: x0 + rnd() * (x1 - x0), y: H / 2 };
+      Body.setPosition(t.body, best);
+      blocked.push({ l: best.x - t.w / 2 - 14, t: best.y - t.h / 2 - 14, r: best.x + t.w / 2 + 14, b: best.y + t.h / 2 + 14 });
+    });
+  };
+
+  const build = () => {
+    const all = cells();
+    if (!all.length || !all[0].getBoundingClientRect().width) return;
+    built = true;
+    makeWalls();
+    words.forEach(w => [...w.querySelectorAll('i')].slice(1).forEach(c => c.classList.add('gap')));
+    gaps().forEach((c, k) => {
+      const p = rel(c);
+      const el = document.createElement('b');
+      el.textContent = c.textContent;
+      el.style.cssText = style(c);
+      box.appendChild(el);
+      const body = Bodies.rectangle(p.x, p.y, p.w, p.h, { inertia: Infinity, frictionAir: 0.18, friction: 0.1, restitution: 0.1 });
+      const t = { el, body, w: p.w, h: p.h, ch: c.textContent, rot: Math.round((((k * 37) % 25) - 12)) };
+      tiles.push(t);
+      el.addEventListener('pointerdown', e => grab(e, t));
+    });
+    Composite.add(engine.world, tiles.map(t => t.body));
+    scatter(tiles);
+    paint();
+  };
+
   const loop = now => {
     const dt = Math.min(33, now - (last || now)); last = now;
     Engine.update(engine, dt || 16.7);
@@ -3894,50 +3955,51 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
     Composite.add(engine.world, c);
     held = { c, t };
     t.el.classList.add('held');
+    side.classList.add('seek-' + t.ch);
     try { t.el.setPointerCapture(e.pointerId); } catch (err) {}
     start();
   };
-  // a new tile, made from one letter of a word, starting on top of it
-  const spawn = (cell, e) => {
-    if (tiles.length >= MAX) { const old = tiles.shift(); Composite.remove(engine.world, old.body); old.el.remove(); }
-    const p = rel(cell);
-    const el = document.createElement('b');
-    el.textContent = cell.textContent;
-    el.style.cssText = style(cell);
-    box.appendChild(el);
-    // it does not collide until it has left its word, so it can be pulled out
-    const body = Bodies.rectangle(p.x, p.y, p.w, p.h, { inertia: Infinity, frictionAir: 0.18, friction: 0.1, restitution: 0.1, collisionFilter: { group: -1 } });
-    const t = { el, body, w: p.w, h: p.h };
-    tiles.push(t);
-    Composite.add(engine.world, body);
-    el.addEventListener('pointerdown', ev => grab(ev, t));
-    paint();
-    grab(e, t);
-  };
-  side.addEventListener('pointerdown', e => {
-    const cell = e.target.closest('.fw i');
-    if (cell && side.contains(cell)) spawn(cell, e);
-  });
   addEventListener('pointermove', e => { if (held) held.c.pointA = pt(e); });
+
+  // a tile dropped close to an empty square with the same letter goes in
+  const tryFit = t => {
+    const p = t.body.position;
+    let hit = null, d = Infinity;
+    gaps().forEach(c => {
+      if (c.textContent !== t.ch) return;
+      const q = rel(c), dd = Math.hypot(q.x - p.x, q.y - p.y);
+      if (dd < q.w * 0.75 && dd < d) { d = dd; hit = c; }
+    });
+    if (!hit) return;
+    const q = rel(hit);
+    Composite.remove(engine.world, t.body);
+    tiles = tiles.filter(x => x !== t);
+    t.el.classList.add('fit');
+    t.el.style.transform = 'translate(' + (q.x - t.w / 2).toFixed(1) + 'px,' + (q.y - t.h / 2).toFixed(1) + 'px)';
+    setTimeout(() => {
+      t.el.remove();
+      hit.classList.remove('gap');
+      const w = hit.closest('.fw');
+      if (!w.querySelector('.gap')) w.classList.add('solved');
+    }, 170);
+  };
   const drop = () => {
     if (!held) return;
+    const t = held.t;
     Composite.remove(engine.world, held.c);
-    held.t.el.classList.remove('held');
-    held.t.body.collisionFilter.group = 0;
+    t.el.classList.remove('held');
+    side.classList.remove('seek-' + t.ch);
     held = null;
+    tryFit(t);
     start();
   };
   addEventListener('pointerup', drop);
   addEventListener('pointercancel', drop);
 
-  const resync = () => {
-    makeFixed();
-    keepIn(); paint(); start();
-  };
-  if (document.readyState === 'complete') makeFixed(); else addEventListener('load', makeFixed);
+  const init = () => { if (!built) build(); };
+  if (document.readyState === 'complete') init(); else addEventListener('load', init);
   let rq = 0;
-  addEventListener('resize', () => { cancelAnimationFrame(rq); rq = requestAnimationFrame(resync); });
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(makeFixed);
+  addEventListener('resize', () => { cancelAnimationFrame(rq); rq = requestAnimationFrame(() => { if (!built) return init(); makeWalls(); tiles.forEach(t => { const s = gaps()[0] || cells()[0], r = s.getBoundingClientRect(); t.w = r.width; t.h = r.height; t.el.style.cssText = style(s); }); keepIn(); paint(); start(); }); });
 })();
 
 document.getElementById('ftrUp')?.addEventListener('click', e => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
