@@ -10,7 +10,9 @@
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   addEventListener('pageshow', function () { scrollTo(0, 0); });
 </script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Cabin+Sketch:wght@700&family=Patrick+Hand&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,400&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Cabin+Sketch:wght@700&family=Patrick+Hand&family=DM+Mono:wght@400&family=DM+Sans:wght@200;300;400;500;600;700&display=swap">
 <style>
   :root {
     /* Pastel palette */
@@ -2305,7 +2307,7 @@
           </div>
         </div>
         <div class="proj-visual" aria-hidden="true">
-          <div class="sunpanel"><span class="awards"><img src="img/award-1.png" alt="Global Finance: Best Private Bank in the World" width="412" height="161"><img src="img/award-2.png" alt="Euromoney: The World&rsquo;s Best Private Bank" width="372" height="161"><img src="img/award-3.png" alt="Financial Times: Best Digital Private Bank" width="372" height="161"></span></div>
+          <div class="sunpanel"><span class="awards"><img src="img/award-1.webp" alt="Global Finance: Best Private Bank in the World" width="412" height="161"><img src="img/award-2.webp" alt="Euromoney: The World&rsquo;s Best Private Bank" width="372" height="161"><img src="img/award-3.webp" alt="Financial Times: Best Digital Private Bank" width="372" height="161"></span></div>
           <div class="cover"><span class="wordmark jpm"><b>J.P.Morgan</b><em>Private Bank</em></span><span class="sub">Onboarding</span></div>
           <div class="device"><div class="lid"><span class="notch"></span><div class="screen"><div class="bar"><b></b><b></b><b></b><em>preview</em></div><div class="mock-scale"></div></div></div><div class="base"></div></div>
           <span class="case-pill">View case study</span>
@@ -2572,7 +2574,6 @@
 </div>
 
 <script src="smooth.js"></script>
-<script src="matter.min.js"></script>
 <script>
 document.querySelectorAll('.exp-logos a').forEach(a => {
   const name = document.createElement('span');
@@ -3849,7 +3850,7 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
 // Drag a letter onto its faint square and it drops in. A letter let go
 // anywhere else falls back to the heap. Without script the words are simply
 // shown complete.
-(() => {
+const runPile = (() => {
   const box = document.getElementById('ftrPile');
   const side = document.querySelector('.ftr .fside');
   const ftr = document.querySelector('.ftr');
@@ -3969,7 +3970,7 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
       if (!es.some(e => e.isIntersecting)) return;
       io.disconnect();
       release();
-    }, { threshold: 0.35 });
+    }, { threshold: 0 });
     io.observe(bar);
   };
   const release = () => {
@@ -4076,6 +4077,22 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
     });
   });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (built && !held && !dropped) { const tray = fitTray(); makeWalls(); heap(tray, true); paint(); } });
+});
+
+// the physics library is only fetched when the footer is getting close
+(() => {
+  const ftr = document.querySelector('.ftr');
+  if (!ftr) return;
+  const load = () => {
+    if (window.Matter) return runPile();
+    const sc = document.createElement('script');
+    sc.src = 'matter.min.js';
+    sc.onload = runPile;
+    document.head.appendChild(sc);
+  };
+  if (!('IntersectionObserver' in window)) return load();
+  const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); load(); } }, { rootMargin: '2500px 0px' });
+  io.observe(ftr);
 })();
 
 document.getElementById('ftrUp')?.addEventListener('click', e => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
