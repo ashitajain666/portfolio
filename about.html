@@ -135,20 +135,72 @@
   }
   h2 em { font-style: normal; color: var(--pur); }
 
-  /* ---- the route: five stops on a drawn line ---- */
-  .route { position: relative; margin-top: 46px; }
-  .route svg.line { position: absolute; left: 0; top: -2px; width: 100%; height: 40px; color: var(--pur-soft); }
-  .route svg.line path { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 1 7; }
-  .stops { list-style: none; margin: 0; padding: 0; position: relative; display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
-  .stop { text-align: center; }
-  .stop .cells { display: flex; justify-content: center; gap: 2px; margin-bottom: 20px; }
-  .stop .cells i {
-    width: 26px; height: 26px; display: grid; place-items: center;
-    border: 1.2px solid var(--cell-border); background: #fff;
-    font-style: normal; font-size: 12px; font-weight: 600; color: var(--ink);
+  /* ---- the route: a climb in three levels, one ladder for each big change ---- */
+  .route { position: relative; }
+  .route.js .stops { display: none; }
+  .climb { display: none; position: relative; }
+  .route.js .climb { display: block; }
+  .climb svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .climb .base { fill: none; stroke: #d8d3dd; stroke-width: 2; stroke-dasharray: 2 7; stroke-linecap: round; }
+  .climb .done { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; }
+  .climb .rail { stroke: #c9c3cf; stroke-width: 3; stroke-linecap: round; }
+  .climb .rung { stroke: #c9c3cf; stroke-width: 2.5; stroke-linecap: round; transition: stroke .25s ease; }
+  .climb .rung.lit, .climb .rail.lit { stroke: var(--ink); }
+  .climb .lvl { font: 400 11px 'DM Mono', monospace; letter-spacing: .14em; text-transform: uppercase; fill: var(--light); }
+  .climb .note { font: 400 19px var(--hand); fill: var(--mid); }
+  .climb .stop-g { cursor: pointer; outline: none; }
+  .climb .stop-g circle.dot { stroke-width: 2; transition: r .25s cubic-bezier(.22,1,.36,1); }
+  .climb .stop-g .ring { fill: none; stroke: var(--ink); stroke-width: 1.5; opacity: 0; transition: opacity .2s ease; }
+  .climb .stop-g:hover .ring, .climb .stop-g:focus-visible .ring, .climb .stop-g.on .ring { opacity: 1; }
+  .climb .stop-g .nm { font: 500 14.5px 'DM Sans', sans-serif; fill: var(--ink); }
+  .climb .stop-g .yr { font: 400 11px 'DM Mono', monospace; fill: var(--light); }
+  .climb .stop-g.ahead .nm, .climb .stop-g.ahead .yr { opacity: .5; }
+  .climb .piece { cursor: grab; transition: filter .2s ease; filter: drop-shadow(0 4px 8px rgba(52,48,58,.25)); }
+  .climb .piece.drag { cursor: grabbing; filter: drop-shadow(0 8px 14px rgba(52,48,58,.3)); }
+  .climb .card {
+    position: absolute; left: 0; top: 0; width: min(46%, 520px);
+    border-left: 3px solid var(--b, var(--pur-soft)); padding: 4px 0 4px 24px;
   }
-  .stop.now .cells i { background: var(--pur-pale); border-color: var(--pur-soft); color: var(--pur); }
-  .stop .yr { font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--light); letter-spacing: 0.06em; }
+  .climb .card .yr { font: 400 12px 'DM Mono', monospace; letter-spacing: .06em; color: var(--light); margin: 0; }
+  .climb .card h3 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 400; font-size: 38px; line-height: 1.1; margin: 6px 0 4px; }
+  .climb .card .where { font-size: 15px; color: var(--mid); margin: 0; }
+  .climb .card .meta { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-size: 12.5px; color: var(--mid); }
+  .climb .card .tag { font-size: 10.5px; font-weight: 600; letter-spacing: .06em; padding: 3px 8px; background: var(--c, var(--peri)); border: 1px solid var(--b, var(--pur-soft)); color: var(--ink); }
+  .climb .card .nav { display: flex; gap: 8px; margin-top: 18px; }
+  .climb .card button {
+    font: 500 13px 'DM Sans', sans-serif; color: var(--ink); background: #fff; border: 1px solid var(--rule);
+    padding: 6px 12px; cursor: pointer; transition: border-color .2s ease;
+  }
+  .climb .card button:hover { border-color: var(--ink); }
+  .climb .card button:disabled { opacity: .35; cursor: default; border-color: var(--rule); }
+  .climb .card button:focus-visible { outline: 2px solid var(--pur); outline-offset: 2px; }
+  .climb .hint { font: 400 17px var(--hand); color: var(--mid); margin: 10px 0 0; transform: rotate(-1.5deg); transform-origin: left; }
+
+  /* phones and small tablets: the same climb, read from the bottom up as a list */
+  .climb-list { display: none; list-style: none; margin: 0; padding: 0; }
+  @media (max-width: 980px) {
+    .route.js .climb { display: none; }
+    .route.js .climb-list { display: flex; flex-direction: column-reverse; gap: 0; }
+  }
+  .climb-list .lv { border-left: 2px solid var(--ink); padding: 4px 0 6px 20px; margin-left: 6px; }
+  .climb-list .lv > span { display: block; font: 400 11px 'DM Mono', monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--light); margin-bottom: 10px; }
+  .climb-list .it { display: flex; flex-direction: column-reverse; gap: 16px; }
+  .climb-list .st { position: relative; }
+  .climb-list .st::before { content: ""; position: absolute; left: -28px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--c); border: 2px solid var(--b); }
+  .climb-list .st .yr { font: 400 11.5px 'DM Mono', monospace; color: var(--light); }
+  .climb-list .st b { display: block; font-size: 16px; font-weight: 500; margin-top: 2px; }
+  .climb-list .st span { display: block; font-size: 14px; color: var(--mid); }
+  .climb-list .lad { position: relative; height: 92px; margin-left: -4px; padding-left: 44px; display: flex; align-items: center; }
+  .climb-list .lad::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 22px;
+    border-left: 2.5px solid #c9c3cf; border-right: 2.5px solid #c9c3cf;
+    background: repeating-linear-gradient(to bottom, transparent 0 12px, #c9c3cf 12px 14.5px);
+  }
+  .climb-list .lad em { font: normal 400 18px var(--hand); color: var(--mid); }
+  .stops { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
+  .stop { text-align: center; }
+  .stop .cells { display: none; }
+  .stop .yr { font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--light); }
   .stop b { display: block; font-size: 15px; font-weight: 500; margin-top: 4px; }
   .stop span { display: block; font-size: 13.5px; color: var(--mid); margin-top: 2px; }
 
@@ -214,7 +266,6 @@
     .talks { grid-template-columns: 1fr; }
     .shot .me { width: 124px; right: -16px; }
     .stops { grid-template-columns: repeat(3, 1fr); gap: 34px 20px; }
-    .route svg.line { display: none; }
   }
   @media (max-width: 620px) {
     .wrap { width: calc(100% - 32px); }
@@ -428,9 +479,6 @@
   .fill-go i { animation: fillIn .46s cubic-bezier(.3,1.5,.5,1) var(--fd, 0ms) backwards; }
   @keyframes fillIn { from { color: transparent; transform: scale(.5) rotate(-10deg); } 60% { transform: scale(1.12); } }
 
-  .route.line-wait svg.line { clip-path: inset(0 100% 0 0); }
-  .route.line-go svg.line { animation: lineDraw 1.6s cubic-bezier(.4,0,.2,1) backwards; }
-  @keyframes lineDraw { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 
   .skip { position: absolute; left: 16px; top: -48px; z-index: 100; padding: 8px 14px; background: #34303a; color: #fff; font-size: 14px; text-decoration: none; }
   .skip:focus { top: 12px; outline: 2px solid #5b4fb8; outline-offset: 2px; }
@@ -469,42 +517,39 @@
   <section id="route">
     <p class="kicker">How I got here</p>
     <div class="route">
-      <svg class="line" viewBox="0 0 1000 40" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M83 20 C 200 4, 300 36, 417 20 C 530 4, 640 36, 750 20 C 820 10, 870 30, 917 20"/>
-      </svg>
       <ol class="stops">
         <li class="stop">
-          <span class="cells" data-fill="0" aria-hidden="true"><i>C</i><i>S</i><i>E</i></span>
+          <span class="cells" aria-hidden="true"><i>C</i><i>S</i><i>E</i></span>
           <span class="yr">2010 to 2014</span>
           <b>Computer Science</b>
           <span>B.E., Bhilai</span>
         </li>
         <li class="stop">
-          <span class="cells" data-fill="280" aria-hidden="true"><i>D</i><i>E</i><i>S</i></span>
+          <span class="cells" aria-hidden="true"><i>D</i><i>E</i><i>S</i></span>
           <span class="yr">2015 to 2017</span>
           <b>Communication Design</b>
           <span>M.Des, DAIICT</span>
         </li>
         <li class="stop">
-          <span class="cells" data-fill="560" aria-hidden="true"><i>0</i><i>&rarr;</i><i>1</i></span>
+          <span class="cells" aria-hidden="true"><i>0</i><i>&rarr;</i><i>1</i></span>
           <span class="yr">2017 to 2021</span>
           <b>ConnectLab.ai</b>
           <span>MiDigiWorld, founding designer</span>
         </li>
         <li class="stop">
-          <span class="cells" data-fill="840" aria-hidden="true"><i>S</i><i>E</i><i>C</i></span>
+          <span class="cells" aria-hidden="true"><i>S</i><i>E</i><i>C</i></span>
           <span class="yr">2021</span>
           <b>ServiceNow</b>
           <span>MITRE ATT&amp;CK</span>
         </li>
         <li class="stop">
-          <span class="cells" data-fill="1120" aria-hidden="true"><i>H</i><i>C</i><i>I</i></span>
+          <span class="cells" aria-hidden="true"><i>H</i><i>C</i><i>I</i></span>
           <span class="yr">2021 to 2022</span>
           <b>UCL</b>
           <span>MSc HCI, Dean's List</span>
         </li>
         <li class="stop now">
-          <span class="cells" data-fill="1400" aria-hidden="true"><i>A</i><i>I</i></span>
+          <span class="cells" aria-hidden="true"><i>A</i><i>I</i></span>
           <span class="yr">2022 to now</span>
           <b>JPMorgan Chase</b>
           <span>Agentic AI onboarding</span>
@@ -704,12 +749,164 @@ const VP = (() => {
   });
 })();
 
-// The route line draws itself across as the stops fill in.
+// The route as a climb: three levels joined by two ladders, one for each big
+// change. Drag the AJ piece along it, click a stop, or use the arrow keys; the
+// card shows that stage. Phones get the same climb as a list.
 (() => {
-  const route = document.querySelector('.route'), first = route && route.querySelector('[data-fill]');
-  if (!first) return;
-  first.addEventListener('fillwait', () => route.classList.add('line-wait'), { once: true });
-  first.addEventListener('filling', () => route.classList.replace('line-wait', 'line-go'), { once: true });
+  const route = document.querySelector('.route');
+  if (!route) return;
+  const ST = [
+    { yr: '2010 to 2014', t: 'Computer Science', w: 'B.E., Bhilai', place: 'India', tag: 'STUDY', c: '#dfe7fd', b: '#a9b8ee', x: 110, lv: 0 },
+    { yr: '2015 to 2017', t: 'Communication Design', w: 'M.Des, DAIICT', place: 'India', tag: 'STUDY', c: '#dfe7fd', b: '#a9b8ee', x: 380, lv: 1 },
+    { yr: '2017 to 2021', t: 'ConnectLab.ai', w: 'MiDigiWorld, founding designer', place: 'India', tag: 'WORK', c: '#e2ece9', b: '#8fbdc4', x: 540, lv: 1 },
+    { yr: '2021', t: 'ServiceNow', w: 'MITRE ATT&CK', place: 'India', tag: 'WORK', c: '#e2f5dd', b: '#79bd68', x: 700, lv: 1 },
+    { yr: '2021 to 2022', t: 'UCL', w: 'MSc HCI, Dean’s List', place: 'London', tag: 'STUDY', c: '#dfe7fd', b: '#a9b8ee', x: 935, lv: 2 },
+    { yr: '2022 to now', t: 'JPMorgan Chase', w: 'Agentic AI onboarding', place: 'London', tag: 'WORK', c: '#ebe2d8', b: '#b2916f', x: 1070, lv: 2 },
+  ];
+  const LY = [400, 262, 124];                       // the three levels
+  const LAD = [[230, 400, 290, 262, 'switched from code to design'], [770, 262, 830, 124, 'moved to London for UCL']];
+  const D = 'M20 400 H230 L290 262 H770 L830 124 H1150';
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (p, tag, at, txt) => { const n = document.createElementNS(NS, tag); for (const k in at) n.setAttribute(k, at[k]); if (txt != null) n.textContent = txt; p.appendChild(n); return n; };
+
+  // ---- phones: a list read from the bottom up, with the ladders between levels
+  const list = document.createElement('div');
+  list.className = 'climb-list';
+  const LVN = ['India · engineering', 'India · design', 'London'];
+  [0, 1, 2].forEach(lv => {
+    const box = document.createElement('div'); box.className = 'lv';
+    box.innerHTML = '<span>' + LVN[lv] + '</span>';
+    const it = document.createElement('div'); it.className = 'it';
+    ST.filter(s => s.lv === lv).forEach(s => {
+      const d = document.createElement('div'); d.className = 'st';
+      d.style.setProperty('--c', s.c); d.style.setProperty('--b', s.b);
+      d.innerHTML = '<span class="yr">' + s.yr + '</span><b>' + s.t + '</b><span>' + s.w + '</span>';
+      it.appendChild(d);
+    });
+    box.appendChild(it);
+    list.appendChild(box);
+    if (lv < 2) { const l = document.createElement('div'); l.className = 'lad'; l.innerHTML = '<em>' + LAD[lv][4] + ' ↑</em>'; list.appendChild(l); }
+  });
+
+  // ---- wide screens: the board
+  const wrap = document.createElement('div');
+  wrap.className = 'climb';
+  const svg = el(wrap, 'svg', { viewBox: '0 0 1160 470', role: 'group', 'aria-label': 'Timeline: drag the piece or choose a stop' });
+  el(svg, 'text', { x: 20, y: 386, class: 'lvl' }, 'India · engineering');
+  el(svg, 'text', { x: 300, y: 248, class: 'lvl' }, 'India · design');
+  el(svg, 'text', { x: 840, y: 110, class: 'lvl' }, 'London');
+  const base = el(svg, 'path', { d: D, class: 'base' });
+  const done = el(svg, 'path', { d: D, class: 'done' });
+  const L = base.getTotalLength();
+  done.style.strokeDasharray = L; done.style.strokeDashoffset = L;
+  // ladders sit on the sloped parts of the path
+  const ladders = LAD.map(([x1, y1, x2, y2, label], k) => {
+    const g = el(svg, 'g', { 'aria-hidden': 'true' });
+    const dx = 12, rails = [el(g, 'line', { x1: x1 - dx, y1, x2: x2 - dx, y2, class: 'rail' }), el(g, 'line', { x1: x1 + dx, y1, x2: x2 + dx, y2, class: 'rail' })];
+    const rungs = [];
+    for (let t = 0.1; t < 0.95; t += 0.14) { const x = x1 + (x2 - x1) * t, y = y1 + (y2 - y1) * t; rungs.push(el(g, 'line', { x1: x - dx, y1: y, x2: x + dx, y2: y, class: 'rung' })); }
+    el(svg, 'text', { x: x1 - 6, y: (y1 + y2) / 2 + 6, 'text-anchor': 'end', class: 'note' }, label);
+    return { rails, rungs, a: 0, b: 0, x1, x2 };
+  });
+  // lengths along the path, sampled once
+  const N = 600, samp = [];
+  for (let i = 0; i <= N; i++) { const p = base.getPointAtLength(L * i / N); samp.push({ x: p.x, y: p.y, l: L * i / N }); }
+  const lenAt = (x, y) => samp.reduce((m, s) => { const d = (s.x - x) ** 2 + (s.y - y) ** 2; return d < m.d ? { d, l: s.l } : m; }, { d: Infinity, l: 0 }).l;
+  ST.forEach(s => { s.l = lenAt(s.x, LY[s.lv]); });
+  ladders.forEach(ld => { ld.a = lenAt(ld.x1, ld.x1 === 230 ? 400 : 262); ld.b = lenAt(ld.x2, ld.x2 === 290 ? 262 : 124); });
+
+  const stops = ST.map((s, i) => {
+    const y = LY[s.lv];
+    const g = el(svg, 'g', { class: 'stop-g', tabindex: 0, role: 'button', 'aria-label': s.yr + ', ' + s.t });
+    el(g, 'circle', { cx: s.x, cy: y, r: 15, class: 'ring' });
+    el(g, 'circle', { cx: s.x, cy: y, r: 9, class: 'dot', fill: s.c, stroke: s.b });
+    el(g, 'text', { x: s.x, y: y + 34, 'text-anchor': 'middle', class: 'nm' }, s.t);
+    el(g, 'text', { x: s.x, y: y + 52, 'text-anchor': 'middle', class: 'yr' }, s.yr);
+    g.addEventListener('click', () => walkTo(i));
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); walkTo(i); } });
+    return g;
+  });
+  el(svg, 'text', { x: 1150, y: 112, 'text-anchor': 'end', class: 'note' }, 'next →');
+
+  // the piece: the AJ monogram from the nav
+  const piece = el(svg, 'g', { class: 'piece', 'aria-hidden': 'true' });
+  el(piece, 'rect', { x: -22, y: -22, width: 44, height: 44, fill: 'transparent' });   // a generous grab area
+  [[0, 0, 'A', 0], [17, 0, '', 1], [0, 17, '', 1], [17, 17, 'J', 0]].forEach(([x, y, ch, f]) => {
+    el(piece, 'rect', { x: x - 16, y: y - 16, width: 15, height: 15, fill: f ? '#34303a' : '#fff', stroke: f ? '#34303a' : '#ddd5dd', 'stroke-width': 1.2 });
+    if (ch) el(piece, 'text', { x: x - 8.5, y: y - 4.5, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: '#34303a' }, ch);
+  });
+
+  // the card
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.setAttribute('aria-live', 'polite');
+  card.innerHTML = '<p class="yr"></p><h3></h3><p class="where"></p><p class="meta"><span class="tag"></span><span class="pl"></span></p>'
+    + '<div class="nav"><button type="button" class="prev">&larr; Earlier</button><button type="button" class="next">Later &rarr;</button></div>'
+    + '<p class="hint">drag the piece up the climb</p>';
+  wrap.appendChild(card);
+  const [cYr, cT, cW, cTag, cPl, bPrev, bNext] = ['.yr', 'h3', '.where', '.tag', '.pl', '.prev', '.next'].map(q => card.querySelector(q));
+
+  let len = 0, cur = 0, anim = 0;
+  const nearest = l => ST.reduce((m, s, i) => Math.abs(s.l - l) < Math.abs(ST[m].l - l) ? i : m, 0);
+  const show = i => {
+    if (i === cur && cT.textContent) return;
+    cur = i; const s = ST[i];
+    card.style.setProperty('--c', s.c); card.style.setProperty('--b', s.b);
+    cYr.textContent = s.yr; cT.textContent = s.t; cW.textContent = s.w; cTag.textContent = s.tag; cPl.textContent = s.place;
+    bPrev.disabled = i === 0; bNext.disabled = i === ST.length - 1;
+    stops.forEach((g, k) => { g.classList.toggle('on', k === i); g.classList.toggle('ahead', ST[k].l > len + 1); });
+  };
+  const place = l => {
+    len = Math.max(0, Math.min(L, l));
+    const p = base.getPointAtLength(len);
+    piece.setAttribute('transform', 'translate(' + p.x.toFixed(1) + ',' + (p.y - 22).toFixed(1) + ')');
+    done.style.strokeDashoffset = L - len;
+    ladders.forEach(ld => {
+      const f = (len - ld.a) / (ld.b - ld.a);
+      ld.rungs.forEach((r, k) => r.classList.toggle('lit', f >= (k + 1) / (ld.rungs.length + 1)));
+      ld.rails.forEach(r => r.classList.toggle('lit', f >= 1));
+    });
+    stops.forEach((g, k) => g.classList.toggle('ahead', ST[k].l > len + 1));
+    show(nearest(len));
+  };
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // the piece walks along the path, so it climbs the ladders on the way
+  const walk = (to, after) => {
+    cancelAnimationFrame(anim);
+    const from = len, dur = reduced ? 0 : Math.min(1400, 260 + Math.abs(to - from) * 0.9), t0 = performance.now();
+    const step = now => {
+      const k = dur ? Math.min(1, (now - t0) / dur) : 1, e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      place(from + (to - from) * e);
+      if (k < 1) anim = requestAnimationFrame(step); else if (after) after();
+    };
+    anim = requestAnimationFrame(step);
+  };
+  const walkTo = i => walk(ST[i].l);
+  bPrev.addEventListener('click', () => walkTo(Math.max(0, cur - 1)));
+  bNext.addEventListener('click', () => walkTo(Math.min(ST.length - 1, cur + 1)));
+  svg.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { e.preventDefault(); walkTo(Math.min(ST.length - 1, cur + 1)); stops[Math.min(ST.length - 1, cur + 1)].focus(); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { e.preventDefault(); walkTo(Math.max(0, cur - 1)); stops[Math.max(0, cur - 1)].focus(); }
+  });
+
+  // dragging: the piece follows the path under the pointer, then settles on the nearest stop
+  const toSvg = e => { const r = svg.getBoundingClientRect(), k = 1160 / r.width; return { x: (e.clientX - r.left) * k, y: (e.clientY - r.top) * k + 22 }; };
+  let dragging = false;
+  piece.addEventListener('pointerdown', e => { e.preventDefault(); dragging = true; cancelAnimationFrame(anim); piece.classList.add('drag'); piece.setPointerCapture(e.pointerId); });
+  piece.addEventListener('pointermove', e => { if (!dragging) return; const p = toSvg(e); place(lenAt(p.x, p.y)); });
+  const end = () => { if (!dragging) return; dragging = false; piece.classList.remove('drag'); walkTo(nearest(len)); };
+  piece.addEventListener('pointerup', end);
+  piece.addEventListener('pointercancel', end);
+
+  route.appendChild(wrap);
+  route.appendChild(list);
+  route.classList.add('js');
+  place(0);
+  // the first time the board comes into view, the piece climbs to today
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); setTimeout(() => walk(ST[ST.length - 1].l), reduced ? 0 : 400); } }, { threshold: 0.5 });
+    io.observe(svg);
+  } else place(ST[ST.length - 1].l);
 })();
 
 document.getElementById('ftrUp')?.addEventListener('click', e => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
