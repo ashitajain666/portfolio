@@ -2527,6 +2527,7 @@
   </div>
 </div>
 
+<script src="smooth.js"></script>
 <script src="matter.min.js"></script>
 <script>
 document.querySelectorAll('.exp-logos a').forEach(a => {
@@ -3795,36 +3796,6 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
   });
 })();
 
-// Wheel scrolling glides to a stop instead of jumping in steps. Touch, keys and
-// trackpad momentum are left to the browser; so is anyone who prefers less motion.
-(() => {
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !matchMedia('(pointer: fine)').matches) return;
-  let target = scrollY, cur = scrollY, raf = 0, mine = false;
-  const max = () => document.documentElement.scrollHeight - innerHeight;
-  const step = () => {
-    cur += (target - cur) * 0.14;
-    if (Math.abs(target - cur) < 0.6) cur = target;
-    mine = true;
-    scrollTo(0, cur);
-    raf = cur !== target ? requestAnimationFrame(step) : 0;
-  };
-  addEventListener('wheel', e => {
-    if (e.ctrlKey || e.defaultPrevented || VP.framed || max() <= 0) return;
-    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
-    // a trackpad already glides: small, frequent deltas are left alone
-    if (e.deltaMode === 0 && Math.abs(e.deltaY) < 40) { if (!raf) target = cur = scrollY; return; }
-    if (e.target.closest && e.target.closest('.gatewrap, [data-native-scroll]')) return;
-    e.preventDefault();
-    if (!raf) target = cur = scrollY;
-    target = Math.max(0, Math.min(max(), target + e.deltaY * (e.deltaMode === 1 ? 36 : 1)));
-    if (!raf) raf = requestAnimationFrame(step);
-  }, { passive: false });
-  addEventListener('scroll', () => {
-    if (mine) { mine = false; return; }
-    if (raf) { cancelAnimationFrame(raf); raf = 0; }
-    target = cur = scrollY;
-  }, { passive: true });
-})();
 
 // The tile pile: real physics (matter.js). Tiles fall in once, the first time the
 // floor comes into view, then can be dragged and thrown. The engine only runs
