@@ -469,25 +469,27 @@
   .proj[data-mock="review"] .proj-visual { min-height: 360px; align-self: stretch; }
   .proj[data-mock="review"] .proj-visual .cover { inset: -62px 0 -74px 0; }
   .sunpanel {
-    position: absolute; inset: -62px 0 -74px 0; z-index: 2;
-    background: url('img/jpm-hero.webp') center 62% / cover no-repeat, #f5efe6;
-    display: grid; place-items: center; text-align: center; color: #17140f;
+    position: absolute; inset: -62px 0 -74px 0; z-index: 2; overflow: hidden;
+    background: #25231f; display: grid; place-items: center;
     opacity: 0; transition: opacity 0.7s ease;
   }
-  .sunpanel span { max-width: 74%; margin-top: -8%; }
-  .sunpanel b {
-    display: block; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500;
-    font-size: clamp(24px, 2.6vw, 38px); line-height: 1.1; letter-spacing: -0.01em;
-    text-shadow: 0 1px 14px rgba(255, 248, 238, .75);
+  /* the Private Bank photo, dimmed, with a soft band behind the awards */
+  .sunpanel::before {
+    content: ""; position: absolute; inset: 0;
+    background: url('img/jpm-bridges.webp') center / cover no-repeat;
+    opacity: .5;
   }
-  .sunpanel em {
-    display: block; margin-top: 14px; font-style: normal; font-weight: 400;
-    font-size: clamp(13px, 1.05vw, 15px); line-height: 1.5; color: #3c372e;
-    text-shadow: 0 1px 10px rgba(255, 248, 238, .8);
+  .sunpanel::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(70% 38% at 50% 50%, rgba(37,35,31,.7), rgba(37,35,31,0));
   }
+  .sunpanel .awards { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 4%; width: 92%; }
+  .sunpanel .awards img { width: 30%; height: auto; }
   .proj-visual.revealed .sunpanel { opacity: 1; }
   @media (max-width: 940px) {
-    .proj[data-mock="review"] .proj-visual { min-height: 0; aspect-ratio: 4 / 3; }
+    .proj[data-mock="review"] .proj-visual { min-height: 0; aspect-ratio: 1 / 1; }
+    .sunpanel .awards { flex-direction: column; gap: 6px; }
+    .sunpanel .awards img { width: 44%; }
     .proj[data-mock="review"] .proj-visual .cover, .sunpanel { inset: 0; border-radius: 12px; overflow: hidden; }
   }
   .cover .sub {
@@ -2289,7 +2291,7 @@
           </div>
         </div>
         <div class="proj-visual" aria-hidden="true">
-          <div class="sunpanel"><span><b>The World&rsquo;s Best Private Bank, seven years running</b><em>Imagine what your wealth could achieve with us by your side</em></span></div>
+          <div class="sunpanel"><span class="awards"><img src="img/award-1.png" alt="Global Finance: Best Private Bank in the World" width="412" height="161"><img src="img/award-2.png" alt="Euromoney: The World&rsquo;s Best Private Bank" width="372" height="161"><img src="img/award-3.png" alt="Financial Times: Best Digital Private Bank" width="372" height="161"></span></div>
           <div class="cover"><span class="wordmark jpm"><b>J.P.Morgan</b><em>Private Bank</em></span><span class="sub">Onboarding</span></div>
           <div class="device"><div class="lid"><span class="notch"></span><div class="screen"><div class="bar"><b></b><b></b><b></b><em>preview</em></div><div class="mock-scale"></div></div></div><div class="base"></div></div>
           <span class="case-pill">View case study</span>
