@@ -463,20 +463,33 @@
     .clabmark .ribbon { stroke-dasharray: none; }
   }
 
-  /* JPMorgan: the brand screen sits on a sunset, as on the Private Bank site */
-  .cover.sunset { background: url('img/jpm-hero.webp') center 62% / cover no-repeat, #f5efe6; }
-  /* the JPMorgan card shows only this picture: no device, no screen */
-  .proj[data-mock="review"] .device { display: none; }
+  /* JPMorgan: no device. The card opens on the gradient with the wordmark, then
+     the sunset panel from the Private Bank site takes its place. */
+  .proj[data-mock="review"] .device, .proj[data-mock="review"] .case-pill { display: none; }
   .proj[data-mock="review"] .proj-visual { min-height: 360px; align-self: stretch; }
-  .proj[data-mock="review"] .proj-visual .cover,
-  .proj[data-mock="review"] .proj-visual.revealed .cover { opacity: 1; transform: none; inset: -62px 0 -74px 0; }
-  .proj[data-mock="review"] .case-pill { display: none; }
+  .proj[data-mock="review"] .proj-visual .cover { inset: -62px 0 -74px 0; }
+  .sunpanel {
+    position: absolute; inset: -62px 0 -74px 0; z-index: 2;
+    background: url('img/jpm-hero.webp') center 62% / cover no-repeat, #f5efe6;
+    display: grid; place-items: center; text-align: center; color: #17140f;
+    opacity: 0; transition: opacity 0.7s ease;
+  }
+  .sunpanel span { max-width: 74%; margin-top: -8%; }
+  .sunpanel b {
+    display: block; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500;
+    font-size: clamp(24px, 2.6vw, 38px); line-height: 1.1; letter-spacing: -0.01em;
+    text-shadow: 0 1px 14px rgba(255, 248, 238, .75);
+  }
+  .sunpanel em {
+    display: block; margin-top: 14px; font-style: normal; font-weight: 400;
+    font-size: clamp(13px, 1.05vw, 15px); line-height: 1.5; color: #3c372e;
+    text-shadow: 0 1px 10px rgba(255, 248, 238, .8);
+  }
+  .proj-visual.revealed .sunpanel { opacity: 1; }
   @media (max-width: 940px) {
     .proj[data-mock="review"] .proj-visual { min-height: 0; aspect-ratio: 4 / 3; }
-    .proj[data-mock="review"] .proj-visual .cover,
-    .proj[data-mock="review"] .proj-visual.revealed .cover { inset: 0; border-radius: 12px; }
+    .proj[data-mock="review"] .proj-visual .cover, .sunpanel { inset: 0; border-radius: 12px; overflow: hidden; }
   }
-  .cover.sunset .wordmark, .cover.sunset .sub { text-shadow: 0 1px 12px rgba(255, 248, 238, .7); }
   .cover .sub {
     font-size: 10.5px; font-weight: 500; letter-spacing: 0.05em;
     color: var(--tint-line, var(--mid));
@@ -2276,7 +2289,8 @@
           </div>
         </div>
         <div class="proj-visual" aria-hidden="true">
-          <div class="cover sunset"><span class="wordmark jpm"><b>J.P.Morgan</b><em>Private Bank</em></span><span class="sub">Onboarding</span></div>
+          <div class="sunpanel"><span><b>The World&rsquo;s Best Private Bank, seven years running</b><em>Imagine what your wealth could achieve with us by your side</em></span></div>
+          <div class="cover"><span class="wordmark jpm"><b>J.P.Morgan</b><em>Private Bank</em></span><span class="sub">Onboarding</span></div>
           <div class="device"><div class="lid"><span class="notch"></span><div class="screen"><div class="bar"><b></b><b></b><b></b><em>preview</em></div><div class="mock-scale"></div></div></div><div class="base"></div></div>
           <span class="case-pill">View case study</span>
         </div>
