@@ -64,9 +64,11 @@
     padding-inline: 140px;
     background: rgba(255, 255, 255, 0.9);
     border-bottom: 1px solid transparent;
-    transition: border-color 0.3s ease, padding 0.3s ease;
+    transition: border-color 0.3s ease, padding 0.3s ease, background-color 0.3s ease;
   }
   nav.scrolled { border-bottom-color: var(--border); padding-block: 16px; }
+  /* over the hero's wash the bar is see-through; it turns white once the page moves */
+  nav:not(.scrolled) { background: transparent; }
   .nav-brand {
     font-weight: 500;
     font-size: 12px;
@@ -2010,6 +2012,14 @@
      invisible under the hero and is at full strength by the footer. */
   .pagebg { position: absolute; left: 0; top: 0; width: 100%; z-index: -1; pointer-events: none; overflow: hidden; }
   .pagebg > i { position: absolute; inset: 0; }
+  .pagebg .wash {
+    background:
+      radial-gradient(55% 45% at 12% 18%, #e3dbfa 0%, rgba(227,219,250,0) 70%),
+      radial-gradient(45% 40% at 88% 12%, #f9dbe7 0%, rgba(249,219,231,0) 70%),
+      radial-gradient(55% 45% at 72% 62%, #d9e4fb 0%, rgba(217,228,251,0) 72%),
+      radial-gradient(60% 45% at 22% 88%, #f5e8db 0%, rgba(245,232,219,0) 72%),
+      #f8f5fc;
+  }
   .pagebg .grid {
     background:
       linear-gradient(rgba(52,48,58,.075) 1px, transparent 1px) 0 0 / 52px 52px,
@@ -3671,9 +3681,9 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
   const bg = document.createElement('div');
   bg.className = 'pagebg';
   bg.setAttribute('aria-hidden', 'true');
-  bg.innerHTML = '<i class="tint"></i><i class="grid"></i><div class="bits"></div>';
+  bg.innerHTML = '<i class="tint"></i><i class="wash"></i><i class="grid"></i><div class="bits"></div>';
   document.body.prepend(bg);
-  const [tint, grid, sqs] = bg.children;
+  const [tint, wash, grid, sqs] = bg.children;
   const U = 52, TINTS = ['#f7f0e8', '#f1eefc', '#edf7ea'], SKY = '#dde4fa', SX_TOP = '#faf2f2', SX_MID = '#fcf0f4', SX_END = '#f9eef4';
   const absTop = el => { let y = 0; while (el) { y += el.offsetTop; el = el.offsetParent; } return y; };
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -3700,6 +3710,12 @@ document.getElementById('brandTop')?.addEventListener('click', e => { e.preventD
     st.push(SX_TOP + ' ' + Math.round(sxTop) + 'px', SX_MID + ' ' + Math.round(sxMid) + 'px', SX_END + ' ' + Math.round(sxEnd - vh * 0.1) + 'px');
     st.push(SKY + ' ' + Math.round(f + 40) + 'px', SKY + ' ' + H + 'px');
     tint.style.background = 'linear-gradient(to bottom, ' + st.join(', ') + ')';
+
+    // a soft pastel wash behind the hero that thins out into the first card's colour
+    const washEnd = Math.round(tops[0] + vh * 0.25);
+    wash.style.bottom = 'auto';
+    wash.style.height = washEnd + 'px';
+    wash.style.webkitMaskImage = wash.style.maskImage = 'linear-gradient(to bottom, #000 0, #000 ' + Math.round(absTop(work) * 0.55) + 'px, transparent ' + washEnd + 'px)';
 
     // grid: barely there under the hero, a little stronger by the work, full at the footer
     const m = 'linear-gradient(to bottom, rgba(0,0,0,.14) 0px, rgba(0,0,0,.3) ' + absTop(work) + 'px, rgba(0,0,0,.45) ' + lead + 'px, #000 ' + f + 'px)';
