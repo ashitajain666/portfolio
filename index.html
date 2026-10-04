@@ -1629,8 +1629,11 @@
       min-height: auto;
       padding-block: 10px 80px;
     }
-    .hero-left { order: 1; text-align: center; }
-    .hero-right { order: 0; padding-bottom: 130px; }
+    /* phones and narrow screens: the name comes first, then the crossword */
+    .hero-left { order: 0; text-align: center; }
+    .hero-right { order: 1; padding-bottom: 130px; }
+    .crossword-area.filled .clue, .crossword-area.filled .solved-msg { display: none; }
+    .hero-right:has(.filled) { padding-bottom: 24px; }
     .hero-bio { margin-inline: auto; }
     .exp-logos { justify-content: center; }
     .scroll-hint { left: 20px; }
@@ -3324,9 +3327,24 @@ input.addEventListener('focus', () => {
 
 // the caret is there from the start on every device; only a mouse gets the field focused,
 // so a phone does not open its keyboard before anyone asks for it
-placeCaret(0);
-if (matchMedia('(hover: hover)').matches) {
-  setTimeout(() => setActive(0), 600);
+// On a phone the typing puzzle is not obvious, so HUMAN arrives already filled in
+if (matchMedia('(max-width: 900px)').matches) {
+  solved = true;
+  emptyCells.forEach(c => {
+    c.done = true;
+    c.el.innerHTML = '<span class="ltr">' + c.ch + '</span>';
+    c.el.classList.add('correct');
+  });
+  input.disabled = true;
+  area.classList.add('filled');
+  hearts.forEach(el => el.classList.add('lit'));
+  const hint = area.querySelector('.cw-note.hint');
+  if (hint) hint.textContent = '↑ tap a word for what, how & why';
+} else {
+  placeCaret(0);
+  if (matchMedia('(hover: hover)').matches) {
+    setTimeout(() => setActive(0), 600);
+  }
 }
 
 function celebrate() {
