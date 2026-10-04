@@ -72,7 +72,7 @@
   .pagebg .bits .grid2 i { background: #fff; }
   .pagebg .bits .grid2 i:nth-child(3) { background: var(--sq-c); }
 
-  /* "wow moments": an underline draws itself, the letters hop, small squares pop out */
+  /* "moments people remember": an underline draws itself, the letters hop, small squares pop out */
   .wow { position: relative; display: inline-block; white-space: nowrap; color: var(--pur); cursor: default; }
   .wow .ch { display: inline-block; }
   .wow.go .ch { animation: wowHop .5s cubic-bezier(.3,1.6,.5,1) calc(var(--k) * 45ms) both; }
@@ -84,6 +84,13 @@
   @keyframes wowHop { 0% { transform: none; } 40% { transform: translateY(-.22em) rotate(-4deg); } 100% { transform: none; } }
   @keyframes wowPop { 0% { transform: translate(-50%, -50%) scale(.3) rotate(0); opacity: 0; } 20% { opacity: 1; }
     100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(var(--dr)); opacity: 0; } }
+  /* on narrow screens the phrase wraps like normal text, with a plain underline */
+  @media (max-width: 700px) {
+    .wow { display: inline; white-space: normal; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--pur) 45%, transparent); text-decoration-thickness: 2px; text-underline-offset: .18em; }
+    .wow svg { display: none; }
+    .wow .ch { display: inline; }
+    .wow.go .ch { animation: none; }
+  }
   @media (prefers-reduced-motion: reduce) { .wow.go .ch, .wow .pop { animation: none; } .wow svg path { stroke-dashoffset: 0; } }
 
 
@@ -571,7 +578,7 @@
 
   <section id="design">
     <p class="kicker">Design, for me</p>
-    <h2 class="belief-line">Design is about making things simpler, delightful and creating <span class="wow">wow moments</span>. It is also about asking the right questions and understanding why.</h2>
+    <h2 class="belief-line">Design is about making things simpler, delightful and creating <span class="wow">moments people remember</span>. It is also about asking the right questions and understanding why.</h2>
 
   </section>
 
@@ -867,13 +874,15 @@ const VP = (() => {
   let t = 0; addEventListener('resize', () => { clearTimeout(t); t = setTimeout(layout, 150); });
 })();
 
-// "wow moments": the letters hop and a few squares pop out, once when it comes into view and again on hover.
+// "moments people remember": the letters hop and a few squares pop out, once when it comes into view and again on hover.
 (() => {
   const w = document.querySelector('.wow');
   if (!w) return;
   const text = w.textContent;
   w.setAttribute('aria-label', text);
-  w.innerHTML = [...text].map((ch, k) => '<span class="ch" aria-hidden="true" style="--k:' + k + '">' + (ch === ' ' ? '&nbsp;' : ch) + '</span>').join('')
+  // letters grouped by word, so a line only ever breaks between words
+  let k = 0;
+  w.innerHTML = text.split(' ').map(word => '<span style="white-space:nowrap">' + [...word].map(ch => '<span class="ch" aria-hidden="true" style="--k:' + (k++) + '">' + ch + '</span>').join('') + '</span>').join(' ')
     + '<svg viewBox="0 0 200 12" preserveAspectRatio="none" aria-hidden="true"><path d="M2 8 C 40 3, 90 11, 130 6 S 185 4, 198 7"/></svg>';
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const COL = ['#5b4fb8', '#8fbdc4', '#b2916f', '#a9b8ee', '#79bd68'];
