@@ -195,23 +195,33 @@
   .two p { font-size: 16px; margin: 0; }
   .two p + p { margin-top: 16px; }
 
-  .beliefs { list-style: none; margin: 46px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
-  .beliefs li {
-    position: relative;
-    background: var(--tone);
-    padding: 26px 26px 28px;
-    transform: rotate(var(--rot));
+  /* the four beliefs as a small crossword: the grid on the left, the clues on the right */
+  .xw { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 72px; align-items: center; margin-top: 52px; }
+  .xw-grid { position: relative; display: grid; grid-template-columns: repeat(11, var(--u)); grid-auto-rows: var(--u); gap: 3px; --u: 46px; }
+  .xw-grid i {
+    display: flex; align-items: center; justify-content: center; position: relative;
+    border: 1.5px solid var(--cell-border); background: #fff; font: 600 calc(var(--u) * .42) 'DM Sans', sans-serif; font-style: normal; color: transparent;
+    transition: background .3s ease, border-color .3s ease, color .25s ease, transform .3s cubic-bezier(.22,1,.36,1);
   }
-  .beliefs .word { display: flex; gap: 2px; margin-bottom: 16px; }
-  .beliefs .word i {
-    width: 25px; height: 25px; display: grid; place-items: center;
-    background: rgba(255,255,255,.75); border: 1.2px solid rgba(52,48,58,.14);
-    font-style: normal; font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
+  .xw-grid i.in { color: var(--ink); background: var(--cell-filled); }
+  .xw-grid i.lit { background: var(--t); border-color: var(--tb); transform: translateY(-2px); }
+  .xw-grid i small { position: absolute; left: 3px; top: 1px; font: 600 9px 'DM Sans', sans-serif; color: var(--light); }
+  .xw-clues h3 { font: 500 13px 'DM Sans', sans-serif; color: var(--light); margin: 0 0 12px; }
+  .xw-clues h3 + ol + h3 { margin-top: 30px; }
+  .xw-clues ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .xw-clues li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 2px 10px; padding: 10px 12px; margin: 0 -12px; cursor: default; border-left: 3px solid transparent; transition: background .25s ease, border-color .25s ease; }
+  .xw-clues li.lit { background: var(--t); border-left-color: var(--tb); }
+  .xw-clues li > b { font: 600 13px 'DM Sans', sans-serif; color: var(--mid); padding-top: 7px; }
+  .xw-clues .word { display: flex; gap: 2px; }
+  .xw-clues .word i { width: 22px; height: 22px; display: grid; place-items: center; font: 700 10.5px 'DM Sans', sans-serif; font-style: normal; background: #fff; border: 1.2px solid var(--cell-border); color: transparent; transition: color .2s ease, background .2s ease; }
+  .xw-clues li.in .word i { color: var(--ink); background: var(--t); border-color: var(--tb); }
+  .xw-clues p { grid-column: 2; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 25px; line-height: 1.25; margin: 6px 0 0; }
+  .no-js-xw .xw-grid i, .no-js-xw .xw-clues .word i { color: var(--ink); }
+  @media (max-width: 1000px) {
+    .xw { grid-template-columns: 1fr; gap: 36px; }
+    .xw-grid { --u: min(46px, calc((100vw - 64px) / 11 - 3px)); justify-self: start; }
   }
-  .beliefs p {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 25px; line-height: 1.24; margin: 0; letter-spacing: -0.005em;
-  }
+  @media (prefers-reduced-motion: reduce) { .xw-grid i, .xw-clues li { transition: none; } }
 
   /* ---- mentoring ---- */
   .mentor { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 0 72px; align-items: center; }
@@ -247,7 +257,6 @@
     .hero { grid-template-columns: 1fr; gap: 40px; }
     .shot { max-width: 420px; }
     .two, .mentor { grid-template-columns: 1fr; gap: 28px; }
-    .beliefs { grid-template-columns: 1fr; }
     .wall { grid-template-columns: repeat(3, 1fr); }
     .talks { grid-template-columns: 1fr; }
     .shot .me { width: 124px; right: -16px; }
@@ -547,24 +556,21 @@
     <p class="kicker">Design, for me</p>
     <h2 class="belief-line">Design is about making things simpler, delightful and creating wow moments. It is also about asking the right questions and understanding why.</h2>
 
-    <ul class="beliefs">
-      <li style="--tone: var(--peri); --rot: -0.8deg">
-        <span class="word" aria-hidden="true"><i>C</i><i>O</i><i>M</i><i>P</i><i>L</i><i>E</i><i>X</i></span>
-        <p>I design to make sense of complexity.</p>
-      </li>
-      <li style="--tone: var(--mint); --rot: 0.7deg">
-        <span class="word" aria-hidden="true"><i>T</i><i>O</i><i>O</i><i>L</i></span>
-        <p>I see technology as a tool, not the goal.</p>
-      </li>
-      <li style="--tone: var(--linen); --rot: 0.6deg">
-        <span class="word" aria-hidden="true"><i>F</i><i>R</i><i>I</i><i>C</i><i>T</i><i>I</i><i>O</i><i>N</i></span>
-        <p>I am drawn to thoughtful friction.</p>
-      </li>
-      <li style="--tone: var(--blush); --rot: -0.6deg">
-        <span class="word" aria-hidden="true"><i>G</i><i>I</i><i>V</i><i>E</i></span>
-        <p>Good design is generous.</p>
-      </li>
-    </ul>
+    <div class="xw no-js-xw">
+      <div class="xw-grid" aria-hidden="true"></div>
+      <div class="xw-clues">
+        <h3>Across</h3>
+        <ol>
+        <li data-w="friction" style="--t:#fff1e6;--tb:#e7c9a8"><b>3</b><span class="word" aria-label="friction"><i>F</i><i>R</i><i>I</i><i>C</i><i>T</i><i>I</i><i>O</i><i>N</i></span><p>I am drawn to thoughtful friction.</p></li>
+        <li data-w="complex" style="--t:#dfe7fd;--tb:#a9b8ee"><b>4</b><span class="word" aria-label="complex"><i>C</i><i>O</i><i>M</i><i>P</i><i>L</i><i>E</i><i>X</i></span><p>I design to make sense of complexity.</p></li>
+        </ol>
+        <h3>Down</h3>
+        <ol>
+        <li data-w="give" style="--t:#fff1d6;--tb:#e3c487"><b>1</b><span class="word" aria-label="give"><i>G</i><i>I</i><i>V</i><i>E</i></span><p>Good design is generous.</p></li>
+        <li data-w="tool" style="--t:#e2ece9;--tb:#8fbdc4"><b>2</b><span class="word" aria-label="tool"><i>T</i><i>O</i><i>O</i><i>L</i></span><p>I see technology as a tool, not the goal.</p></li>
+        </ol>
+      </div>
+    </div>
   </section>
 
   <section id="mentoring">
@@ -819,6 +825,73 @@ const VP = (() => {
     io.observe(row);
   } else go(last);
   addEventListener('resize', () => { if (cur < 0) return; const c = cur; cur = -1; card(c); put(seat(c)); cur = c; });
+})();
+
+// The four beliefs as a small crossword. The words fill in once when the
+// section comes into view; pointing at a clue lights its word, and pointing at
+// a word lights its clue.
+(() => {
+  const box = document.querySelector('.xw');
+  if (!box) return;
+  const grid = box.querySelector('.xw-grid');
+  const W = {
+    give:     { r: 0, c: 5, d: 'd', s: 'GIVE', n: 1 },
+    tool:     { r: 0, c: 9, d: 'd', s: 'TOOL', n: 2 },
+    friction: { r: 1, c: 3, d: 'a', s: 'FRICTION', n: 3 },
+    complex:  { r: 3, c: 0, d: 'a', s: 'COMPLEX', n: 4 },
+  };
+  const cells = {};
+  Object.entries(W).forEach(([k, w]) => {
+    w.cells = [...w.s].map((ch, i) => {
+      const r = w.r + (w.d === 'd' ? i : 0), c = w.c + (w.d === 'a' ? i : 0), key = r + ',' + c;
+      if (!cells[key]) {
+        const el = document.createElement('i');
+        el.style.gridRow = r + 1; el.style.gridColumn = c + 1;
+        el.textContent = ch;
+        el.dataset.w = '';
+        cells[key] = el; grid.appendChild(el);
+      }
+      cells[key].dataset.w += k + ' ';
+      if (i === 0) { const n = document.createElement('small'); n.textContent = w.n; cells[key].appendChild(n); }
+      return cells[key];
+    });
+  });
+  const clues = {};
+  box.querySelectorAll('.xw-clues li').forEach(li => { clues[li.dataset.w] = li; });
+  box.classList.remove('no-js-xw');
+
+  const light = k => {
+    Object.values(cells).forEach(el => el.classList.remove('lit'));
+    Object.values(clues).forEach(li => li.classList.remove('lit'));
+    if (!k) return;
+    const li = clues[k], t = li.style.getPropertyValue('--t'), tb = li.style.getPropertyValue('--tb');
+    W[k].cells.forEach(el => { el.style.setProperty('--t', t); el.style.setProperty('--tb', tb); el.classList.add('lit'); });
+    li.classList.add('lit');
+  };
+  Object.entries(clues).forEach(([k, li]) => {
+    li.addEventListener('mouseenter', () => light(k));
+    li.addEventListener('mouseleave', () => light(null));
+  });
+  Object.values(cells).forEach(el => {
+    el.addEventListener('mouseenter', () => light(el.dataset.w.trim().split(' ')[0]));
+    el.addEventListener('mouseleave', () => light(null));
+  });
+
+  // fill a word letter by letter, and its clue with it
+  const fill = (k, wait) => new Promise(res => {
+    const w = W[k];
+    w.cells.forEach((el, i) => setTimeout(() => el.classList.add('in'), wait + i * 70));
+    setTimeout(() => { clues[k].classList.add('in'); res(); }, wait + w.cells.length * 70);
+  });
+  const order = ['friction', 'give', 'tool', 'complex'];
+  const all = () => { Object.values(cells).forEach(el => el.classList.add('in')); Object.values(clues).forEach(li => li.classList.add('in')); };
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) { all(); return; }
+  const io = new IntersectionObserver(es => {
+    if (!es.some(e => e.isIntersecting)) return;
+    io.disconnect();
+    order.reduce((p, k) => p.then(() => { light(k); return fill(k, 0); }).then(() => new Promise(r => setTimeout(r, 380))), Promise.resolve()).then(() => light(null));
+  }, { threshold: 0.4 });
+  io.observe(grid);
 })();
 
 document.getElementById('ftrUp')?.addEventListener('click', e => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
