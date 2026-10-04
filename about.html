@@ -325,6 +325,11 @@
     background: #e3e7fb url(img/sky.webp) center / cover no-repeat;
     pointer-events: none;
   }
+  /* the sky and its grid fade in, so the section above runs into the footer without an edge */
+  .ftr::before, .ftr::after {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 240px);
+            mask-image: linear-gradient(to bottom, transparent 0, #000 240px);
+  }
   .ftr::after {
     content: "";
     position: absolute; inset: 0;
@@ -849,9 +854,11 @@ const VP = (() => {
       const sec = document.getElementById(id);
       if (!sec) return;
       const a = top(sec), b = a + sec.offsetHeight;
-      st.push(c + ' ' + Math.round(a - 60) + 'px', c + ' ' + Math.round(Math.max(a + 120, b - 140)) + 'px');
+      // the last section lets go of its colour early, so it has room to turn into the footer sky
+      const end = id === 'offclock' ? Math.max(a + 120, b - 320) : Math.max(a + 120, b - 140);
+      st.push(c + ' ' + Math.round(a - 60) + 'px', c + ' ' + Math.round(end) + 'px');
     });
-    st.push('#f2f4fa ' + Math.round(f) + 'px', '#f2f4fa ' + H + 'px');
+    st.push('#e6eafa ' + Math.round(f + 200) + 'px', '#e6eafa ' + H + 'px');
     tint.style.background = 'linear-gradient(to bottom, ' + st.join(', ') + ')';
     // grid: barely there at the top, a little stronger lower down, gone into the footer
     grid.style.webkitMaskImage = grid.style.maskImage = 'linear-gradient(to bottom, rgba(0,0,0,.18) 0px, rgba(0,0,0,.45) ' + Math.round(f * 0.6) + 'px, rgba(0,0,0,.5) ' + Math.round(f - 200) + 'px, transparent ' + Math.round(f) + 'px)';
