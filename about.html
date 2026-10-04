@@ -66,7 +66,7 @@
       linear-gradient(90deg, rgba(52,48,58,.075) 1px, transparent 1px) 0 0 / 52px 52px;
   }
   .pagebg .bits b { position: absolute; display: block; box-sizing: border-box; opacity: 0; transform: rotate(var(--rot)) scale(.4); transition: transform .6s cubic-bezier(.3,1.5,.5,1), opacity .4s ease; will-change: translate; }
-  .pagebg .bits b.on { opacity: .9; transform: rotate(var(--rot)); }
+  .pagebg .bits b.on { opacity: .65; transform: rotate(var(--rot)); }
   .pagebg .bits .sq { border: 1.5px solid var(--sq-c); }
   .pagebg .bits .fill { background: var(--sq-c); }
   .pagebg .bits .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5px; background: var(--sq-c); border: 1.5px solid var(--sq-c); }
@@ -585,7 +585,7 @@
 
   <section id="mentoring">
     <p class="kicker">Passing it on</p>
-    <h2 class="belief-line">I have mentored 100+ designers through Topmate, from people starting out to people switching into UX.</h2>
+    <h2 class="belief-line">I have mentored 100+ designers through Topmate and ADPList, from people starting out to people switching into UX.</h2>
     <div class="talks">
       <figure class="pin"><span class="ph" style="--rot:-1.2deg"><img src="img/panel.webp" alt="Ashita speaking on an industry panel" width="1000" height="697" loading="lazy"></span><figcaption style="--rot:-1.2deg">industry panel, with Monzo and Google</figcaption></figure>
       <figure class="pin"><span class="ph" style="--rot:1.4deg"><img src="img/talk.webp" alt="Ashita presenting at a J.P.Morgan lectern" width="760" height="670" loading="lazy"></span><figcaption style="--rot:1.4deg">talking at a J.P.Morgan conference</figcaption></figure>
@@ -836,7 +836,7 @@ const VP = (() => {
   document.body.prepend(bg);
   const tint = bg.querySelector('.tint'), grid = bg.querySelector('.grid'), bits = bg.querySelector('.bits');
   // each section has its own soft colour; the page blends from one to the next as you scroll
-  const TINT = { route: '#e9f0fc', design: '#fcf1d8', mentoring: '#e4f3ec', offclock: '#f8ecdc' };
+  const TINT = { route: '#f2f6fb', design: '#fbf6e9', mentoring: '#eff7f3', offclock: '#f9f3eb' };
   const top = el => el.getBoundingClientRect().top + scrollY;
   const COLS = ['#cddafd', '#bee1e6', '#e2ece9', '#ebe2d8', '#d6cfe0'], KINDS = ['sq', 'fill', 'grid2', 'sq'];
   const layout = () => {
@@ -851,7 +851,7 @@ const VP = (() => {
       const a = top(sec), b = a + sec.offsetHeight;
       st.push(c + ' ' + Math.round(a - 60) + 'px', c + ' ' + Math.round(Math.max(a + 120, b - 140)) + 'px');
     });
-    st.push('#e9edf9 ' + Math.round(f) + 'px', '#e9edf9 ' + H + 'px');
+    st.push('#f2f4fa ' + Math.round(f) + 'px', '#f2f4fa ' + H + 'px');
     tint.style.background = 'linear-gradient(to bottom, ' + st.join(', ') + ')';
     // grid: barely there at the top, a little stronger lower down, gone into the footer
     grid.style.webkitMaskImage = grid.style.maskImage = 'linear-gradient(to bottom, rgba(0,0,0,.18) 0px, rgba(0,0,0,.45) ' + Math.round(f * 0.6) + 'px, rgba(0,0,0,.5) ' + Math.round(f - 200) + 'px, transparent ' + Math.round(f) + 'px)';
