@@ -50,7 +50,7 @@
   .pagebg { position: absolute; left: 0; top: 0; width: 100%; z-index: -1; pointer-events: none; overflow: hidden; }
   .pagebg > i { position: absolute; inset: 0; }
   .pagebg .wash {
-    bottom: auto; height: 1100px;
+    bottom: auto; height: 1100px; background-color: transparent;
     background:
       radial-gradient(55% 45% at 12% 18%, #e9f0f8 0%, rgba(233,240,248,0) 70%),
       radial-gradient(45% 40% at 88% 12%, #ebf4f1 0%, rgba(235,244,241,0) 70%),
@@ -65,7 +65,8 @@
       linear-gradient(rgba(52,48,58,.075) 1px, transparent 1px) 0 0 / 52px 52px,
       linear-gradient(90deg, rgba(52,48,58,.075) 1px, transparent 1px) 0 0 / 52px 52px;
   }
-  .pagebg .bits b { position: absolute; display: block; box-sizing: border-box; transform: rotate(var(--rot)); opacity: .9; }
+  .pagebg .bits b { position: absolute; display: block; box-sizing: border-box; opacity: 0; transform: rotate(var(--rot)) scale(.4); transition: transform .6s cubic-bezier(.3,1.5,.5,1), opacity .4s ease; will-change: translate; }
+  .pagebg .bits b.on { opacity: .9; transform: rotate(var(--rot)); }
   .pagebg .bits .sq { border: 1.5px solid var(--sq-c); }
   .pagebg .bits .fill { background: var(--sq-c); }
   .pagebg .bits .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5px; background: var(--sq-c); border: 1.5px solid var(--sq-c); }
@@ -841,15 +842,27 @@ const VP = (() => {
 (() => {
   const bg = document.createElement('div');
   bg.className = 'pagebg'; bg.setAttribute('aria-hidden', 'true');
-  bg.innerHTML = '<i class="wash"></i><i class="grid"></i><div class="bits"></div>';
+  bg.innerHTML = '<i class="tint"></i><i class="wash"></i><i class="grid"></i><div class="bits"></div>';
   document.body.prepend(bg);
-  const grid = bg.querySelector('.grid'), bits = bg.querySelector('.bits');
+  const tint = bg.querySelector('.tint'), grid = bg.querySelector('.grid'), bits = bg.querySelector('.bits');
+  // each section has its own soft colour; the page blends from one to the next as you scroll
+  const TINT = { route: '#e9f0fc', design: '#fcf1d8', mentoring: '#e4f3ec', offclock: '#f8ecdc' };
+  const top = el => el.getBoundingClientRect().top + scrollY;
   const COLS = ['#cddafd', '#bee1e6', '#e2ece9', '#ebe2d8', '#d6cfe0'], KINDS = ['sq', 'fill', 'grid2', 'sq'];
   const layout = () => {
     bg.style.height = '0px';
     const H = document.documentElement.scrollHeight, W = document.documentElement.clientWidth;
     bg.style.height = H + 'px';
     const ftr = document.querySelector('.ftr'), f = ftr ? ftr.getBoundingClientRect().top + scrollY : H;
+    const vh = innerHeight, st = ['#fbfbfa 0px'];
+    Object.entries(TINT).forEach(([id, c]) => {
+      const sec = document.getElementById(id);
+      if (!sec) return;
+      const a = top(sec), b = a + sec.offsetHeight;
+      st.push(c + ' ' + Math.round(a - 60) + 'px', c + ' ' + Math.round(Math.max(a + 120, b - 140)) + 'px');
+    });
+    st.push('#e9edf9 ' + Math.round(f) + 'px', '#e9edf9 ' + H + 'px');
+    tint.style.background = 'linear-gradient(to bottom, ' + st.join(', ') + ')';
     // grid: barely there at the top, a little stronger lower down, gone into the footer
     grid.style.webkitMaskImage = grid.style.maskImage = 'linear-gradient(to bottom, rgba(0,0,0,.18) 0px, rgba(0,0,0,.45) ' + Math.round(f * 0.6) + 'px, rgba(0,0,0,.5) ' + Math.round(f - 200) + 'px, transparent ' + Math.round(f) + 'px)';
     // loose squares only where there is a margin wide enough
@@ -865,10 +878,29 @@ const VP = (() => {
       b.className = kind;
       if (kind === 'grid2') b.innerHTML = '<i></i><i></i><i></i><i></i>';
       b.style.cssText = 'width:' + size + 'px;height:' + size + 'px;top:' + Math.round(y) + 'px;' + (side ? 'left:' : 'right:') + Math.round(10 + rnd() * Math.max(0, gut - size - 10)) + 'px;--rot:' + Math.round(rnd() * 30 - 15) + 'deg;--sq-c:' + COLS[Math.floor(rnd() * COLS.length)];
+      b.dataset.s = (0.12 + rnd() * 0.22).toFixed(2) * (rnd() < .5 ? -1 : 1);
       bits.appendChild(b);
       y += 260 + rnd() * 320; left = !left;
     }
+    watch();
   };
+  // the squares pop in as you reach them, then drift at their own speed while you scroll
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let io = null, raf = 0;
+  const watch = () => {
+    if (io) io.disconnect();
+    const list = [...bits.children];
+    if (still || !('IntersectionObserver' in window)) { list.forEach(b => b.classList.add('on')); return; }
+    io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('on'); }), { rootMargin: '0px 0px -10% 0px' });
+    list.forEach(b => io.observe(b));
+    drift();
+  };
+  const drift = () => {
+    if (still) return;
+    const y = scrollY;
+    for (const b of bits.children) b.style.translate = '0 ' + (y * +b.dataset.s).toFixed(1) + 'px';
+  };
+  addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; drift(); }); }, { passive: true });
   layout();
   addEventListener('load', layout);
   let t = 0; addEventListener('resize', () => { clearTimeout(t); t = setTimeout(layout, 150); });
