@@ -31,11 +31,12 @@
   }
   * { box-sizing: border-box; }
   figure { margin: 0; }
-  html { -webkit-text-size-adjust: 100%; }
+  html { -webkit-text-size-adjust: 100%; background: var(--bg); }
   body {
     margin: 0;
     overflow-x: clip;
-    background: var(--bg);
+    position: relative;
+    background: transparent;
     color: var(--ink);
     font-family: 'DM Sans', system-ui, sans-serif;
     font-size: 15px;
@@ -44,15 +45,59 @@
     -webkit-font-smoothing: antialiased;
   }
   .wrap { width: min(1160px, 100% - 48px); margin-inline: auto; }
+  /* the same ground as the home page: a light wash at the top, a faint
+     crossword grid, and a few loose squares in the side margins */
+  .pagebg { position: absolute; left: 0; top: 0; width: 100%; z-index: -1; pointer-events: none; overflow: hidden; }
+  .pagebg > i { position: absolute; inset: 0; }
+  .pagebg .wash {
+    bottom: auto; height: 1100px;
+    background:
+      radial-gradient(55% 45% at 12% 18%, #e9f0f8 0%, rgba(233,240,248,0) 70%),
+      radial-gradient(45% 40% at 88% 12%, #ebf4f1 0%, rgba(235,244,241,0) 70%),
+      radial-gradient(55% 45% at 72% 62%, #edf2f9 0%, rgba(237,242,249,0) 72%),
+      radial-gradient(60% 45% at 22% 88%, #f7f1e9 0%, rgba(247,241,233,0) 72%),
+      #fbfbfa;
+    -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent);
+            mask-image: linear-gradient(to bottom, #000 60%, transparent);
+  }
+  .pagebg .grid {
+    background:
+      linear-gradient(rgba(52,48,58,.075) 1px, transparent 1px) 0 0 / 52px 52px,
+      linear-gradient(90deg, rgba(52,48,58,.075) 1px, transparent 1px) 0 0 / 52px 52px;
+  }
+  .pagebg .bits b { position: absolute; display: block; box-sizing: border-box; transform: rotate(var(--rot)); opacity: .9; }
+  .pagebg .bits .sq { border: 1.5px solid var(--sq-c); }
+  .pagebg .bits .fill { background: var(--sq-c); }
+  .pagebg .bits .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5px; background: var(--sq-c); border: 1.5px solid var(--sq-c); }
+  .pagebg .bits .grid2 i { background: #fff; }
+  .pagebg .bits .grid2 i:nth-child(3) { background: var(--sq-c); }
+
+  /* "wow moments": an underline draws itself, the letters hop, small squares pop out */
+  .wow { position: relative; display: inline-block; white-space: nowrap; color: var(--pur); cursor: default; }
+  .wow .ch { display: inline-block; }
+  .wow.go .ch { animation: wowHop .5s cubic-bezier(.3,1.6,.5,1) calc(var(--k) * 45ms) both; }
+  .wow svg { position: absolute; left: -2%; bottom: -.18em; width: 104%; height: .32em; overflow: visible; pointer-events: none; }
+  .wow svg path { fill: none; stroke: var(--pur); stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 260; stroke-dashoffset: 260; opacity: .55; }
+  .wow.drawn svg path { transition: stroke-dashoffset .8s cubic-bezier(.4,0,.2,1); stroke-dashoffset: 0; }
+  .wow .pop { position: absolute; left: 50%; top: 50%; width: 9px; height: 9px; border: 1.5px solid var(--pc); background: var(--pf, transparent); pointer-events: none;
+    animation: wowPop .9s cubic-bezier(.2,.8,.3,1) forwards; }
+  @keyframes wowHop { 0% { transform: none; } 40% { transform: translateY(-.22em) rotate(-4deg); } 100% { transform: none; } }
+  @keyframes wowPop { 0% { transform: translate(-50%, -50%) scale(.3) rotate(0); opacity: 0; } 20% { opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(var(--dr)); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .wow.go .ch, .wow .pop { animation: none; } .wow svg path { stroke-dashoffset: 0; } }
+
 
   /* ---- nav, the same chrome as the case studies ---- */
   nav {
     position: sticky; top: 0; z-index: 50;
     display: flex; justify-content: space-between; align-items: center;
     padding-block: 20px;
-    background: color-mix(in srgb, var(--bg) 94%, transparent);
     border-bottom: 1px solid transparent;
   }
+  /* see-through over the wash at the top; a full-width white bar once the page moves */
+  nav::before { content: ""; position: absolute; top: 0; bottom: 0; left: calc(50% - 50vw); right: calc(50% - 50vw); z-index: -1;
+    background: color-mix(in srgb, var(--bg) 94%, transparent); opacity: 0; transition: opacity .3s ease; }
+  nav.stuck::before { opacity: 1; }
   nav.stuck { border-bottom-color: var(--rule); }
   .nav-brand {
     display: inline-flex; align-items: center; gap: 11px;
@@ -526,7 +571,7 @@
 
   <section id="design">
     <p class="kicker">Design, for me</p>
-    <h2 class="belief-line">Design is about making things simpler, delightful and creating wow moments. It is also about asking the right questions and understanding why.</h2>
+    <h2 class="belief-line">Design is about making things simpler, delightful and creating <span class="wow">wow moments</span>. It is also about asking the right questions and understanding why.</h2>
 
   </section>
 
@@ -784,6 +829,76 @@ const VP = (() => {
   addEventListener('resize', () => { if (cur < 0) return; const c = cur; cur = -1; card(c); put(seat(c)); cur = c; });
 })();
 
+
+// The same ground as the home page: wash, grid, and loose squares in the margins.
+(() => {
+  const bg = document.createElement('div');
+  bg.className = 'pagebg'; bg.setAttribute('aria-hidden', 'true');
+  bg.innerHTML = '<i class="wash"></i><i class="grid"></i><div class="bits"></div>';
+  document.body.prepend(bg);
+  const grid = bg.querySelector('.grid'), bits = bg.querySelector('.bits');
+  const COLS = ['#cddafd', '#bee1e6', '#e2ece9', '#ebe2d8', '#d6cfe0'], KINDS = ['sq', 'fill', 'grid2', 'sq'];
+  const layout = () => {
+    bg.style.height = '0px';
+    const H = document.documentElement.scrollHeight, W = document.documentElement.clientWidth;
+    bg.style.height = H + 'px';
+    const ftr = document.querySelector('.ftr'), f = ftr ? ftr.getBoundingClientRect().top + scrollY : H;
+    // grid: barely there at the top, a little stronger lower down, gone into the footer
+    grid.style.webkitMaskImage = grid.style.maskImage = 'linear-gradient(to bottom, rgba(0,0,0,.18) 0px, rgba(0,0,0,.45) ' + Math.round(f * 0.6) + 'px, rgba(0,0,0,.5) ' + Math.round(f - 200) + 'px, transparent ' + Math.round(f) + 'px)';
+    // loose squares only where there is a margin wide enough
+    bits.innerHTML = '';
+    const wrap = document.querySelector('main .wrap, main section') || document.querySelector('main');
+    const r = wrap.getBoundingClientRect(), gutL = r.left - 16, gutR = W - r.right - 16;
+    if (gutL < 44 && gutR < 44) return;
+    let seed = 7, y = 700, left = true;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    while (y < f - 200) {
+      const side = (left ? gutL : gutR) >= 44 ? left : !left, gut = side ? gutL : gutR, size = Math.round(22 + rnd() * Math.min(40, gut - 20));
+      const b = document.createElement('b'), kind = KINDS[Math.floor(rnd() * KINDS.length)];
+      b.className = kind;
+      if (kind === 'grid2') b.innerHTML = '<i></i><i></i><i></i><i></i>';
+      b.style.cssText = 'width:' + size + 'px;height:' + size + 'px;top:' + Math.round(y) + 'px;' + (side ? 'left:' : 'right:') + Math.round(10 + rnd() * Math.max(0, gut - size - 10)) + 'px;--rot:' + Math.round(rnd() * 30 - 15) + 'deg;--sq-c:' + COLS[Math.floor(rnd() * COLS.length)];
+      bits.appendChild(b);
+      y += 260 + rnd() * 320; left = !left;
+    }
+  };
+  layout();
+  addEventListener('load', layout);
+  let t = 0; addEventListener('resize', () => { clearTimeout(t); t = setTimeout(layout, 150); });
+})();
+
+// "wow moments": the letters hop and a few squares pop out, once when it comes into view and again on hover.
+(() => {
+  const w = document.querySelector('.wow');
+  if (!w) return;
+  const text = w.textContent;
+  w.setAttribute('aria-label', text);
+  w.innerHTML = [...text].map((ch, k) => '<span class="ch" aria-hidden="true" style="--k:' + k + '">' + (ch === ' ' ? '&nbsp;' : ch) + '</span>').join('')
+    + '<svg viewBox="0 0 200 12" preserveAspectRatio="none" aria-hidden="true"><path d="M2 8 C 40 3, 90 11, 130 6 S 185 4, 198 7"/></svg>';
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COL = ['#5b4fb8', '#8fbdc4', '#b2916f', '#a9b8ee', '#79bd68'];
+  let busy = false;
+  const play = () => {
+    w.classList.add('drawn');
+    if (reduced || busy) return;
+    busy = true;
+    w.classList.remove('go'); void w.offsetWidth; w.classList.add('go');
+    for (let k = 0; k < 9; k++) {
+      const p = document.createElement('i'), a = (k / 9) * Math.PI * 2 + Math.random() * .5, d = 60 + Math.random() * 50, c = COL[k % COL.length];
+      p.className = 'pop';
+      p.style.cssText = '--dx:' + (Math.cos(a) * d).toFixed(0) + 'px;--dy:' + (Math.sin(a) * d * .7).toFixed(0) + 'px;--dr:' + Math.round(Math.random() * 120 - 60) + 'deg;--pc:' + c + ';' + (k % 3 === 0 ? '--pf:' + c + ';' : '') + 'animation-delay:' + (k * 25) + 'ms';
+      w.appendChild(p);
+      setTimeout(() => p.remove(), 1200);
+    }
+    setTimeout(() => { busy = false; }, 1000);
+  };
+  w.addEventListener('mouseenter', play);
+  w.addEventListener('click', play);
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); setTimeout(play, 300); } }, { threshold: 1 });
+    io.observe(w);
+  } else play();
+})();
 
 document.getElementById('ftrUp')?.addEventListener('click', e => { e.preventDefault(); scrollTo({ top: 0, behavior: 'smooth' }); });
 
