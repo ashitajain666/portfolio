@@ -369,3 +369,9 @@ figure a.zoom:hover img { transform: scale(1.015); }
   .facts > div:nth-child(2n+1) { border-left: 0; padding-left: 0; }
   .facts > div:nth-child(n+3) { border-top: 1px solid var(--rule); }
 }
+
+/* large monitors: the page sits in the middle of the screen instead of hugging the left edge */
+@media (min-width: 1700px) {
+  .frame { margin-inline: auto; }
+  nav { padding-inline: calc((100% - 1240px) / 2 + 24px); }
+}
