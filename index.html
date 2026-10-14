@@ -2299,11 +2299,11 @@
   <ol class="projects">
     <li class="proj locked" data-mock="review"
         style="--tint:#ebe2d8; --tint-line:#b2916f;">
-      <a href="sow.html" data-own-gate>
+      <a href="sow.html">
         <span class="lockmark" aria-hidden="true"><span class="lockcard">
           <span class="lk">
             <svg class="shackle" viewBox="0 0 34 15"><path d="M8 15 V8.5 a9 7.5 0 0 1 18 0 V15"/></svg>
-            <span class="cells"><i style="--i:0"></i><i style="--i:1"></i><i class="keyhole" style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i></span>
+            <span class="cells"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i class="keyhole" style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i><i style="--i:6"></i></span>
           </span>
           <span class="lktxt"><b>Locked</b><em>ask me for the word</em></span>
         </span></span>
@@ -2565,7 +2565,7 @@
     <div class="gatebody" id="gateBody">
       <span class="lk" aria-hidden="true">
         <svg class="shackle" viewBox="0 0 34 15"><path d="M8 15 V8.5 a9 7.5 0 0 1 18 0 V15"/></svg>
-        <span class="cells"><i></i><i></i><i class="keyhole"></i><i></i><i></i></span>
+        <span class="cells"><i></i><i></i><i></i><i class="keyhole"></i><i></i><i></i><i></i></span>
       </span>
       <h3 id="gateTitle">This one&rsquo;s under wraps.</h3>
       <p class="lede">JPMorgan Chase asked me to keep the details private. If you have the word, fill it in below.</p>
@@ -3443,19 +3443,17 @@ cellEls.forEach(el => {
 });
 area.addEventListener('mouseleave', () => showWord(null));
 
-// ---- gated case study: the padlock badge morphs into a password gate ----
-// Only the SHA-256 of the word ships in this file, so the word itself is not
-// readable in the source. It is still a client-side gate: someone determined
-// can brute-force a short secret offline. For real protection put the case
-// study behind host-level auth or StatiCrypt and let these cells drive that.
+// ---- gated case study: the padlock badge morphs into a password pop-up ----
+// The case study page is encrypted (AES-GCM, key from the password with PBKDF2).
+// The pop-up checks a word by trying to decrypt that page, so neither the word nor
+// a hash of it ships in this file. When it opens, the word is kept for this tab
+// (sessionStorage 'sow-pass') and the case study page opens straight away.
 (() => {
   const wrap = document.getElementById('gate');
   const link = document.querySelector('.proj.locked > a');
   if (!wrap || !link) return;
-  if (link.hasAttribute('data-own-gate')) return;   // the case study asks for its own password
 
-  const GATE_HASH = 'c7651f4560224a0021c9a2f79ca151e021164d37f3fdeeda2be8825e30e13289';
-  const GATE_LEN = 5;
+  const GATE_LEN = 7, KEY = 'sow-pass';
 
   const scrim = document.getElementById('gateScrim');
   const panel = document.getElementById('gatePanel');
@@ -3475,10 +3473,18 @@ area.addEventListener('mouseleave', () => showWord(null));
 
   let typed = [], solved = false, open = false, checking = false, revealTimer = null;
 
-  const sha256 = async str => {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
-  };
+  // the encrypted case study, fetched when the pop-up opens; a word is right if it decrypts it
+  let page = null;
+  const fetchPage = () => page || (page = fetch(link.getAttribute('href')).then(r => r.text()));
+  async function opens(pw) {
+    const m = (await fetchPage()).match(/const PAYLOAD = "([A-Za-z0-9+\/=]+)"/);
+    if (!m) return false;
+    const raw = Uint8Array.from(atob(m[1]), ch => ch.charCodeAt(0));
+    const salt = raw.slice(0, 16), iv = raw.slice(16, 28), ct = raw.slice(28);
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 250000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    try { await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct); return true; } catch (e) { return false; }
+  }
 
   // each character shows for a beat, then masks
   function paint(reveal) {
@@ -3522,6 +3528,7 @@ area.addEventListener('mouseleave', () => showWord(null));
     const cs = getComputedStyle(link.closest('.proj'));
     panel.style.setProperty('--tint', cs.getPropertyValue('--tint'));
     panel.style.setProperty('--tint-line', cs.getPropertyValue('--tint-line'));
+    fetchPage();
     wrap.hidden = false;
     document.body.style.overflow = 'hidden';
     scrim.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 320, easing: 'ease-out', fill: 'forwards' });
@@ -3556,7 +3563,7 @@ area.addEventListener('mouseleave', () => showWord(null));
     });
     [784, 988, 1175].forEach((f, i) => setTimeout(() => tone(f, 0.45, 0.05, 'sine'), 110 + i * 110));
     okMsg.classList.add('show');
-    try { sessionStorage.setItem('jpm-unlocked', '1'); } catch (e) {}
+    try { sessionStorage.setItem(KEY, typed.join('')); } catch (e) {}
     setTimeout(() => { location.href = link.getAttribute('href'); }, 1100);
   }
 
@@ -3569,7 +3576,7 @@ area.addEventListener('mouseleave', () => showWord(null));
   async function submit() {
     checking = true;
     try {
-      if (await sha256(typed.join('')) === GATE_HASH) unlock();
+      if (await opens(typed.join(''))) unlock();
       else reject();
     } catch (e) {
       reject();
@@ -3578,7 +3585,7 @@ area.addEventListener('mouseleave', () => showWord(null));
 
   function typeChar(ch) {
     if (solved || checking || typed.length >= GATE_LEN) return;
-    typed.push(ch);
+    typed.push(ch.toUpperCase());
     const at = typed.length - 1;
     paint(at);
     tone(500 + at * 22, 0.045, 0.045);
@@ -3593,7 +3600,12 @@ area.addEventListener('mouseleave', () => showWord(null));
     paint(-1);
   }
 
-  link.addEventListener('click', e => { e.preventDefault(); openGate(); });
+  // unlocked earlier in this tab: straight in; otherwise the pop-up
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    let saved = null; try { saved = sessionStorage.getItem(KEY); } catch (err) {}
+    if (saved) location.href = link.getAttribute('href'); else openGate();
+  });
   input.addEventListener('keydown', e => {
     if (e.key === 'Backspace') { e.preventDefault(); backspace(); }
     else if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
@@ -3613,6 +3625,11 @@ area.addEventListener('mouseleave', () => showWord(null));
   document.getElementById('gateClose').addEventListener('click', closeGate);
   scrim.addEventListener('click', closeGate);
   addEventListener('keydown', e => { if (e.key === 'Escape' && open) closeGate(); });
+  if (location.hash === '#case-locked') {
+    history.replaceState(null, '', location.pathname + location.search);
+    link.closest('.proj').scrollIntoView({ block: 'center' });
+    setTimeout(openGate, 400);
+  }
 })();
 
 // The layer stack opens and closes on its own, and stays open while you are on it.
