@@ -2299,7 +2299,7 @@
   <ol class="projects">
     <li class="proj locked" data-mock="review"
         style="--tint:#ebe2d8; --tint-line:#b2916f;">
-      <a href="jpm.html">
+      <a href="sow.html" data-own-gate>
         <span class="lockmark" aria-hidden="true"><span class="lockcard">
           <span class="lk">
             <svg class="shackle" viewBox="0 0 34 15"><path d="M8 15 V8.5 a9 7.5 0 0 1 18 0 V15"/></svg>
@@ -3452,6 +3452,7 @@ area.addEventListener('mouseleave', () => showWord(null));
   const wrap = document.getElementById('gate');
   const link = document.querySelector('.proj.locked > a');
   if (!wrap || !link) return;
+  if (link.hasAttribute('data-own-gate')) return;   // the case study asks for its own password
 
   const GATE_HASH = 'c7651f4560224a0021c9a2f79ca151e021164d37f3fdeeda2be8825e30e13289';
   const GATE_LEN = 5;
