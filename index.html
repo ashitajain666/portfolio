@@ -818,6 +818,7 @@
     margin: 0; height: 0; opacity: 0; transition: opacity 0.35s;
   }
   .gateok.show { opacity: 1; }
+  .gateok { display: none !important; }   /* no message after the right word; the case study opens on its own */
 
   @media (max-width: 460px) {
     .gatecells i { width: 40px; height: 40px; font-size: 18px; }
@@ -2582,7 +2583,7 @@
       <input class="gatepw" id="gatePw" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Password">
       <p class="gateclue">don&rsquo;t have the word? just ask me.</p>
       <p class="gatehint"><a href="mailto:ashitajain.work@gmail.com?subject=Case%20study%20access">&rarr; ashitajain.work@gmail.com</a></p>
-      <p class="gateok" id="gateOk">Solved. Come on in.</p>
+      <p class="gateok" id="gateOk" aria-hidden="true"></p>
     </div>
   </div>
 </div>
