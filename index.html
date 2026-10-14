@@ -3486,8 +3486,8 @@ area.addEventListener('mouseleave', () => showWord(null));
   let page = null;
   const fetchPage = () => {
     if (page) return page;
-    ['casestudy.css', 'casestudy.js', 'smooth.js'].forEach(u => fetch(u).catch(() => {}));   // ready for the case study
-    return (page = fetch(link.getAttribute('href')).then(r => r.text()));
+    ['casestudy.css', 'casestudy.js', 'smooth.js'].forEach(u => fetch(u, { cache: 'no-cache' }).catch(() => {}));   // ready for the case study
+    return (page = fetch(link.getAttribute('href'), { cache: 'no-cache' }).then(r => r.text()));
   };
   async function opens(pw) {
     const m = (await fetchPage()).match(/const PAYLOAD = "([A-Za-z0-9+\/=]+)"/);
