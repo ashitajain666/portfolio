@@ -1,0 +1,1042 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>if("scrollRestoration" in history)history.scrollRestoration="manual";if(!location.hash)scrollTo(0,0);document.documentElement.classList.add('js');</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="description" content="Case study: an AI review step inside an advisor's account-opening workflow. Draft for private editing.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23faf7f5'/%3E%3Crect x='3' y='3' width='11' height='11' fill='none' stroke='%2334303a' stroke-width='2'/%3E%3Crect x='18' y='3' width='11' height='11' fill='%2334303a'/%3E%3Crect x='3' y='18' width='11' height='11' fill='%2334303a'/%3E%3Crect x='18' y='18' width='11' height='11' fill='none' stroke='%2334303a' stroke-width='2'/%3E%3C/svg%3E">
+<title>Onboarding AI review | Ashita Jain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Cormorant+Garamond:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&family=Open+Sans:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="casestudy.css">
+<style>
+  :root {
+    /* Same family as the Source of Wealth case study: the site's warm neutrals,
+       the tan tint and brown accent, and the near-black opening. */
+    --tint: #ebe2d8; --tint-line: #b2916f; --brown: #5f4328;
+    --accent: #5f4328; --accent-soft: #e4d6c5;
+    --bg: #ffffff; --ink: #34303a; --mid: #6b6571; --light: #736d79;
+    --rule: #e6e0e6; --cell-filled: #f7f5f7; --cell-border: #ddd5dd; --surface: #fffdfc;
+    --dark: #0f0d0e; --dark2: #1c1819; --dark-rule: #332d2f;
+    --dark-ink: #f3efea; --dark-mid: #b9aea4; --dark-lo: #86796f;
+    --mono: 'DM Sans', system-ui, sans-serif;
+    /* the product's own colours, used only inside rebuilt product components */
+    --ui-blue: #1a66c9; --ui-green: #1e7f5c; --ui-ink: #2a2a2a; --ui-mid: #5b5b5b;
+    --ui-line: #dcdcdc; --ui-bg: #f4f4f4; --ui-mint: #e6f4ec; --ui-red: #c7254e;
+    --navh: 64px;
+  }
+  html { scroll-snap-type: y proximity; scroll-padding-top: var(--navh); }
+  body { background: var(--bg); color: var(--ink); }
+  .em { font-style: normal; color: var(--brown); }
+  nav { height: var(--navh); }
+
+  /* ---------- the deck: one slide per idea ---------- */
+  .frame { padding-bottom: 0; }
+  .slide {
+    min-height: calc(100vh - var(--navh)); scroll-snap-align: start; scroll-margin-top: var(--navh);
+    padding: clamp(28px, 5vh, 56px) 0 clamp(64px, 9vh, 96px);
+    display: grid; align-content: center; position: relative;
+  }
+  .slide + .slide::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--rule); }
+  .slide.dark + .slide::before, .slide + .slide.dark::before { display: none; }
+  .sn { display: flex; align-items: center; gap: 12px; font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.02em; color: var(--light); margin-bottom: 18px; }
+  .sn i {
+    font-style: normal; width: 24px; height: 24px; display: grid; place-items: center;
+    border: 1.2px solid var(--cell-border); border-radius: 2px; background: var(--cell-filled);
+    font-size: 10.5px; color: var(--ink); font-variant-numeric: tabular-nums;
+  }
+  .big {
+    font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500;
+    font-size: clamp(28px, 3.4vw, 46px); line-height: 1.1; letter-spacing: -0.015em;
+    margin: 0 0 18px; max-width: 24ch; text-wrap: balance;
+  }
+  .lead { font-size: 15.5px; font-weight: 300; line-height: 1.7; color: #56505e; max-width: 60ch; }
+  .lead + .lead { margin-top: 12px; }
+  .lead b { font-weight: 500; color: var(--ink); }
+  .split { display: grid; grid-template-columns: minmax(0, 0.44fr) minmax(0, 0.56fr); gap: clamp(28px, 4vw, 64px); align-items: center; }
+  .split.wide { grid-template-columns: minmax(0, 0.36fr) minmax(0, 0.64fr); }
+  .split figure { margin: 0; }
+  .split.wide .big { font-size: clamp(24px, 2.6vw, 36px); max-width: 22ch; }
+  @media (max-width: 900px) { .split, .split.wide { grid-template-columns: minmax(0, 1fr); } html { scroll-snap-type: none; } .slide { min-height: 0; } }
+  .opt .inner { overflow-x: auto; }
+  .ui table { min-width: 420px; }
+  .rec .cols { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+
+  /* the opening, in the near-black of the home page's unlock animation */
+  .slide.dark { color: var(--dark-ink); }
+  .slide.dark::after { content: ''; position: absolute; top: -120px; bottom: 0; left: 50%; width: 250vw; transform: translateX(-50%); background: var(--dark); z-index: -1; }
+  .slide.dark .sn, .slide.dark .sn i { color: var(--dark-lo); }
+  .slide.dark .sn i { background: rgba(255,255,255,0.05); border-color: var(--dark-rule); color: var(--dark-ink); }
+  .slide.dark h1 { color: #fff; font-size: clamp(38px, 5.6vw, 66px); max-width: 18ch; margin-bottom: 20px; }
+  .slide.dark .lead { color: var(--dark-mid); }
+  .slide.dark .lead b { color: var(--dark-ink); }
+  .slide.dark .big { color: var(--dark-ink); }
+  .slide.dark .facts { border-color: var(--dark-rule); }
+  .slide.dark .facts > div + div { border-color: var(--dark-rule); }
+  .slide.dark .facts em { color: var(--dark-lo); }
+  .slide.dark .facts b { color: var(--dark-ink); }
+  .slide.dark .facts b small { color: var(--dark-mid); }
+  .slide.dark figcaption { color: var(--dark-lo); }
+  .slide.dark .panel { background: #fff; border-color: transparent; }
+  .slide.dark .t { background: var(--dark2); color: var(--dark-ink); }
+  .slide.dark .t h3 { color: var(--dark-ink); }
+  .slide.dark .t p { color: var(--dark-mid); }
+  .slide.dark .t .lbl { color: var(--dark-lo); }
+  .slide.dark .todo { color: #d8c7b3; border-color: #6b5a4a; background: rgba(255,255,255,0.04); }
+  .rail a.over-dark { color: rgba(255, 255, 255, 0.5); }
+  .rail a.over-dark:hover { color: rgba(255, 255, 255, 0.85); }
+  .rail a.over-dark.on { color: #fff; }
+  .rail a.over-dark.on::before { background: #fff; }
+
+  /* ---------- stepped reveals: the points of a slide arrive one after another ---------- */
+  @keyframes stIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .js [data-play] .st { opacity: 0; }
+  .js [data-play].play .st { animation: stIn 0.5s ease both; animation-delay: calc(var(--i, 0) * 120ms + 0.1s); }
+  @media (prefers-reduced-motion: reduce) { [data-play] .st { opacity: 1; animation: none !important; } }
+
+  /* ---------- deck controls ---------- */
+  .deckbar {
+    position: fixed; right: clamp(12px, 2vw, 24px); bottom: 18px; z-index: 55;
+    display: flex; align-items: center; gap: 6px; padding: 6px 6px 6px 14px;
+    background: color-mix(in srgb, var(--bg) 92%, transparent); border: 1px solid var(--rule); border-radius: 999px;
+    font-family: var(--mono); font-size: 12px; color: var(--mid); font-variant-numeric: tabular-nums;
+  }
+  .deckbar b { font-weight: 500; color: var(--ink); }
+  .deckbar button {
+    width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--rule); background: var(--surface);
+    color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; display: grid; place-items: center;
+  }
+  .deckbar button:hover { background: var(--tint); border-color: var(--tint-line); }
+  .deckbar button:disabled { opacity: 0.35; cursor: default; }
+  .deckbar .hintk { margin-right: 6px; color: var(--light); }
+  @media (max-width: 700px) { .deckbar .hintk { display: none; } }
+  .on-dark .deckbar { background: rgba(15,13,14,0.85); border-color: var(--dark-rule); color: var(--dark-mid); }
+  .on-dark .deckbar b { color: #fff; }
+  .on-dark .deckbar button { background: var(--dark2); border-color: var(--dark-rule); color: #fff; }
+
+  /* ---------- drafting notes: square brackets from the draft, as the site's draft marker ---------- */
+  .todo {
+    display: block; margin: 14px 0 0; padding: 9px 12px; max-width: 62ch;
+    font-family: 'Patrick Hand', cursive; font-size: 15.5px; line-height: 1.4; font-weight: 400;
+    color: #6a4f9c; background: #f4f0fa; border: 1.5px dashed #bda9dd; border-radius: 3px;
+  }
+  .todo + .todo { margin-top: 8px; }
+  .todo.scr { color: #4f6a9c; background: #eef3fa; border-color: #a9bedd; }
+  .todo b { font-weight: 400; color: inherit; }
+  .notes-off .todo, .notes-off .notice { display: none; }
+  .notice { margin: 0 0 8px; padding: 14px 18px; max-width: none; font-family: var(--mono); font-size: 13px; line-height: 1.6; color: #4a3c66; background: #f4f0fa; border: 1.5px dashed #bda9dd; border-radius: 6px; }
+  .notice b { font-weight: 600; color: #3c2d59; }
+  .ntoggle { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--mid); cursor: pointer; user-select: none; }
+  .ntoggle input { accent-color: #6a4f9c; }
+  .on-dark .ntoggle { color: var(--dark-mid); }
+
+  /* ---------- tiles and lists ---------- */
+  .t { background: var(--tint); border-radius: 14px; padding: clamp(20px, 2.2vw, 30px); }
+  .t .lbl { display: block; font-family: var(--mono); font-size: 11px; color: var(--light); margin-bottom: 12px; }
+  .t h3 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 400; font-size: clamp(20px, 2vw, 26px); line-height: 1.15; letter-spacing: -0.01em; margin-bottom: 8px; }
+  .t p { font-size: 14.5px; font-weight: 300; line-height: 1.6; color: #56505e; margin: 0; max-width: none; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  @media (max-width: 760px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+  .ways { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(18px, 2.4vw, 32px); }
+  .ways .cell { width: 22px; height: 22px; display: grid; place-items: center; border: 1.2px solid var(--cell-border); border-radius: 2px; background: var(--cell-filled); font-family: var(--mono); font-size: 10.5px; color: var(--ink); margin-bottom: 12px; }
+  .ways b { display: block; font-weight: 500; font-size: 15.5px; line-height: 1.32; color: var(--ink); border-top: 1px solid var(--ink); padding-top: 14px; text-wrap: balance; }
+  .ways p { margin: 6px 0 0; font-size: 14px; font-weight: 300; line-height: 1.55; color: #56505e; max-width: none; }
+  @media (max-width: 760px) { .ways { grid-template-columns: 1fr; } }
+  .num { font-family: 'Cormorant Garamond', Georgia, serif; font-size: clamp(30px, 3vw, 40px); font-weight: 500; line-height: 1; letter-spacing: -0.02em; color: var(--brown); font-variant-numeric: tabular-nums; }
+  .base { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+  .base > div { border-top: 1px solid var(--ink); padding-top: 12px; }
+  .base em { display: block; font-style: normal; font-size: 10.5px; font-weight: 600; letter-spacing: 0.05em; color: var(--light); margin-bottom: 8px; }
+  .base .row { display: flex; gap: 18px; align-items: baseline; margin-top: 6px; }
+  .base .row span { font-size: 12px; color: var(--mid); display: block; margin-top: 3px; }
+  @media (max-width: 560px) { .base { grid-template-columns: 1fr; } }
+
+  /* the sources the review compares */
+  .srcs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: stretch; }
+  .srcs .s.in, .srcs .vs { grid-column: 1 / -1; }
+  .srcs .vs { justify-items: start; padding: 2px 0; }
+  .srcs .s { border: 1px solid var(--rule); border-radius: 10px; padding: 13px 14px; background: var(--surface); }
+  .srcs .s.in { background: var(--tint); border-color: var(--tint-line); }
+  .srcs .s em { display: block; font-style: normal; font-size: 10.5px; font-weight: 600; letter-spacing: 0.05em; color: var(--light); margin-bottom: 6px; }
+  .srcs .s b { display: block; font-weight: 500; font-size: 14px; color: var(--ink); }
+  .srcs .s span { display: block; font-size: 12.5px; color: var(--mid); margin-top: 3px; line-height: 1.45; }
+  .srcs .vs { display: grid; place-items: center; font-family: 'Patrick Hand', cursive; font-size: 17px; color: var(--mid); }
+  @media (max-width: 760px) { .srcs { grid-template-columns: 1fr; } }
+  .srcs .s.in b { font-size: 15px; }
+
+  /* data tables */
+  .data { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.4; }
+  .data th { text-align: left; font-weight: 500; font-size: 11.5px; color: var(--light); padding: 0 12px 10px 0; vertical-align: bottom; border-bottom: 1px solid var(--ink); }
+  .data td { padding: 10px 12px 10px 0; border-bottom: 1px solid var(--rule); vertical-align: top; color: #56505e; font-weight: 300; }
+  .data td b { font-weight: 500; color: var(--ink); }
+
+  /* assistant vs on the page */
+  .cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .cmp > div { border: 1px solid var(--rule); border-radius: 12px; padding: 16px 18px 14px; background: var(--surface); }
+  .cmp > div.pick { background: var(--tint); border-color: var(--tint-line); }
+  .cmp h3 { font-size: 15px; margin-bottom: 2px; }
+  .cmp .sub { font-size: 12.5px; color: var(--light); margin: 0 0 8px; font-weight: 300; }
+  .cmp em { display: block; font-style: normal; font-size: 10.5px; font-weight: 600; letter-spacing: 0.05em; color: var(--light); margin: 10px 0 4px; }
+  .cmp ul { margin: 0; padding-left: 17px; }
+  .cmp li { font-size: 13.5px; font-weight: 300; line-height: 1.5; color: #56505e; margin-bottom: 3px; }
+  @media (max-width: 700px) { .cmp { grid-template-columns: 1fr; } }
+
+  /* ---------- rebuilt product components, in the product's own language ---------- */
+  .ui { font-family: 'Open Sans', 'DM Sans', system-ui, sans-serif; color: var(--ui-ink); font-size: 13px; line-height: 1.4; width: 100%; }
+  .ai { display: inline-block; width: 12px; height: 12px; vertical-align: -1px; margin-left: 4px; fill: var(--ui-green); }
+  .ui .banner { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; padding: 12px 16px; background: var(--ui-mint); border-left: 3px solid var(--ui-green); border-radius: 3px; margin-bottom: 12px; }
+  .ui .banner .ai { width: 15px; height: 15px; margin: 2px 0 0; }
+  .ui .banner b { display: block; font-weight: 600; font-size: 13.5px; }
+  .ui .banner span { display: block; font-size: 12px; color: var(--ui-mid); margin-top: 2px; }
+  .ui .found { display: flex; justify-content: space-between; align-items: center; padding: 4px 2px 8px; font-size: 13.5px; }
+  .ui .found i { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--ui-blue); color: #fff; font-style: normal; font-size: 11px; font-weight: 600; margin: 0 5px; }
+  .ui .found .acc { font-size: 12px; color: var(--ui-mid); }
+  .ui .party { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #f1f1f1; border-radius: 2px; font-size: 13.5px; margin-top: 6px; }
+  .ui .party b { font-weight: 600; }
+  .ui .party small { font-size: 12px; color: var(--ui-mid); }
+  .ui .party::before { content: '\25BE'; font-size: 11px; color: var(--ui-blue); margin-right: 6px; }
+  .rec { background: #fff; border: 1px solid var(--ui-line); border-radius: 2px; padding: 12px 14px; margin-top: 8px; }
+  .rec .issue { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; font-size: 13.5px; font-weight: 600; margin-bottom: 8px; }
+  .rec .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 20px; max-width: 520px; }
+  .rec .cols h5 { font-size: 12.5px; font-weight: 600; color: var(--ui-mid); margin: 0 0 5px; }
+  .rec .cols h5.airec { color: var(--ui-green); }
+  .rec .cols dl { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 8px; font-size: 12.5px; }
+  .rec .cols dt { color: var(--ui-mid); }
+  .rec .cols dd { margin: 0; font-weight: 600; }
+  .rec .cols dd.diff { color: var(--ui-green); }
+  .rec .cols dd a { color: var(--ui-blue); text-decoration: underline; font-weight: 400; }
+  .rec .note { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; font-size: 12px; color: var(--ui-mid); }
+  .rec .note i { flex: none; width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid #d9742a; color: #d9742a; font-style: normal; font-size: 10px; font-weight: 700; display: grid; place-items: center; margin-top: 1px; }
+  .rec.on { border-color: color-mix(in srgb, var(--ui-blue) 45%, #fff); box-shadow: inset 3px 0 0 var(--ui-blue); }
+  .rec .tag { display: inline-block; font-family: 'Patrick Hand', cursive; font-size: 14px; color: var(--brown); margin-bottom: 6px; }
+  .chk { appearance: none; flex: none; width: 16px; height: 16px; border: 1.5px solid #8a8a8a; border-radius: 2px; background: #fff; cursor: pointer; margin: 2px 0 0; display: grid; place-items: center; }
+  .chk:checked { background: var(--ui-blue); border-color: var(--ui-blue); }
+  .chk:checked::after { content: ''; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); }
+  .chk:disabled { background: #eee; border-color: #ccc; cursor: not-allowed; }
+  .chk:focus-visible { outline: 2px solid var(--ui-blue); outline-offset: 2px; }
+  .ui .btn { display: inline-block; padding: 6px 12px; border-radius: 3px; font-size: 12px; font-weight: 600; border: 1px solid var(--ui-blue); color: var(--ui-blue); background: #fff; }
+  .ui .btn.dis { border-color: #ddd; color: #9a9a9a; background: #f3f3f3; }
+  .ui .field { display: inline-block; border: 1px solid #b9b9b9; border-radius: 2px; padding: 5px 9px; font-size: 12.5px; background: #fff; min-width: 160px; }
+  .ui .lab { display: block; font-size: 11.5px; color: var(--ui-mid); margin-bottom: 4px; }
+  .ui .link { color: var(--ui-blue); text-decoration: underline; }
+  .ui .ok { color: var(--ui-green); font-weight: 700; } .ui .no { color: var(--ui-red); font-weight: 700; }
+  .ui .radio { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid #8a8a8a; vertical-align: -2px; margin-right: 8px; background: #fff; }
+  .ui .radio.on { border: 4px solid var(--ui-blue); }
+  .ui table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  .ui table th { text-align: left; font-weight: 400; color: var(--ui-mid); padding: 6px 10px; border-bottom: 1px solid var(--ui-line); font-size: 12px; }
+  .ui table td { padding: 7px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+  .opt { background: var(--ui-bg); border: 1px solid #e4e4e4; border-radius: 10px; padding: clamp(14px, 2vw, 24px); }
+  .opt .inner { background: #fff; border: 1px solid var(--ui-line); border-radius: 3px; padding: 14px 16px; }
+  .opt1 .row { display: grid; grid-template-columns: 100px minmax(0, 1fr) minmax(0, 1.2fr) auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid #eee; }
+  .opt1 .row em { font-style: normal; font-size: 11.5px; color: var(--ui-mid); display: block; }
+  .opt1 .row b { font-weight: 600; font-size: 12.5px; }
+  .opt1 .row p { margin: 0; font-size: 12px; color: var(--ui-ink); max-width: none; line-height: 1.4; }
+  .opt2 .row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; padding: 10px 0; border-top: 1px solid #eee; align-items: start; }
+  .opt2 .row:first-child { border-top: 0; }
+  .opt2 .hint { font-size: 11.5px; color: var(--ui-mid); margin-top: 5px; }
+  .opt2 .orig b { display: block; font-weight: 600; font-size: 12.5px; }
+  .opt3 .rec { margin-top: 0; }
+  @media (max-width: 620px) { .opt1 .row, .opt2 .row { grid-template-columns: 1fr; gap: 6px; } }
+  .vtag { display: inline-block; font-size: 10.5px; font-weight: 600; letter-spacing: 0.02em; padding: 3px 9px; border-radius: 5px; margin-right: 8px; vertical-align: 1px; }
+  .vtag.no { background: #f9e9e7; color: #a03e35; }
+  .vtag.yes { background: #e7f2e9; color: #2e6b3f; }
+  .vtag.part { background: #f3eed9; color: #7a5f12; }
+
+  /* journey slides: a step marker */
+  .stepk { display: inline-flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.02em; color: var(--light); margin-bottom: 14px; }
+  .stepk i { font-style: normal; width: 24px; height: 24px; display: grid; place-items: center; border: 1.2px solid var(--tint-line); border-radius: 2px; background: var(--tint); color: var(--brown); font-size: 11px; font-weight: 600; }
+  .steps7 { display: flex; gap: 4px; margin: 0 0 18px; }
+  .steps7 i { height: 3px; flex: 1; background: var(--rule); border-radius: 2px; }
+  .steps7 i.on { background: var(--brown); }
+
+  /* questions to finish */
+  .qs { counter-reset: q; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0 clamp(20px, 3vw, 44px); }
+  .qs li { counter-increment: q; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid var(--rule); font-size: 14px; font-weight: 300; line-height: 1.55; color: #56505e; }
+  .qs li::before { content: counter(q, decimal-leading-zero); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: var(--brown); padding-top: 3px; font-variant-numeric: tabular-nums; }
+  @media (max-width: 700px) { .qs { grid-template-columns: 1fr; } }
+
+  .fills { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .fills li { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; align-items: start; font-size: 14px; }
+  .fills li b { font-weight: 500; color: var(--ink); padding-top: 9px; }
+  .fills .todo { margin: 0; }
+  @media (max-width: 560px) { .fills li { grid-template-columns: 1fr; gap: 2px; } }
+
+  .skip { position: absolute; left: 16px; top: -48px; z-index: 100; padding: 8px 14px; background: #34303a; color: #fff; font-size: 14px; text-decoration: none; }
+  .skip:focus { top: 12px; outline: 2px solid #5b4fb8; outline-offset: 2px; }
+</style>
+</head>
+<body>
+<span id="pgtop" aria-hidden="true" style="position:absolute;top:0;left:0;width:1px;height:1px"></span>
+<script>
+(() => {
+  if (location.hash) return;
+  const mark = document.getElementById('pgtop');
+  let touched = false;
+  const note = () => { touched = true; };
+  ['wheel', 'touchstart', 'keydown', 'pointerdown'].forEach(t => addEventListener(t, note, { passive: true, once: true }));
+  const go = () => {
+    if (touched) return;
+    try { mark.scrollIntoView({ block: 'start', behavior: 'instant' }); }
+    catch (e) { mark.scrollIntoView(true); }
+  };
+  go();
+  addEventListener('DOMContentLoaded', go);
+  addEventListener('load', go);
+})();
+</script>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="ai" viewBox="0 0 16 16"><path d="M8 0.8 C8.6 4.6 9.8 5.8 13.4 6.4 C9.8 7 8.6 8.2 8 12 C7.4 8.2 6.2 7 2.6 6.4 C6.2 5.8 7.4 4.6 8 0.8 Z M12.8 10.2 C13 11.6 13.5 12.1 14.9 12.3 C13.5 12.5 13 13 12.8 14.4 C12.6 13 12.1 12.5 10.7 12.3 C12.1 12.1 12.6 11.6 12.8 10.2 Z"/></symbol>
+</svg>
+
+<div class="progress"></div>
+
+<a class="skip" href="#main">Skip to content</a>
+<nav>
+  <a class="nav-brand" href="./" aria-label="Ashita Jain, home">
+    <span class="monogram" aria-hidden="true"><i>A</i><i class="fill"></i><i class="fill"></i><i>J</i></span>
+    Ashita Jain
+  </a>
+  <label class="ntoggle"><input type="checkbox" id="notesToggle" checked> drafting notes</label>
+  <a class="back" href="./#work">&larr; All work</a>
+</nav>
+
+<div class="frame">
+
+  <aside class="rail">
+    <ol>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#problem">The problem</a></li>
+      <li><a href="#scope">What it could do</a></li>
+      <li><a href="#output">Output first</a></li>
+      <li><a href="#where">Assistant or page</a></li>
+      <li><a href="#compare">Comparing values</a></li>
+      <li><a href="#actions">Actions</a></li>
+      <li><a href="#journey">Advisor journey</a></li>
+      <li><a href="#craft">Craft</a></li>
+      <li><a href="#testing">Testing</a></li>
+      <li><a href="#built">What was built</a></li>
+      <li><a href="#changed">What changed</a></li>
+      <li><a href="#next">Next</a></li>
+      <li><a href="#questions">To finish</a></li>
+    </ol>
+  </aside>
+
+  <main id="main">
+
+    <!-- ===== 01 OVERVIEW ===== -->
+    <section id="overview" class="slide dark band" data-play>
+      <div class="notice st" style="--i:0"><b>Before sharing.</b> Only employer-approved material may be shared outside the company. Confirm approval for the text, screenshots, internal tool names, diagrams, sample data and footers. The supplied flow includes an internal-use-and-testing notice and a restriction on external distribution. This draft is for private editing, not permission to publish those screens. Removing a footer or adding a password does not establish approval.<br><br>Square brackets mark facts to confirm or content to supply. Screen markers are placement instructions, not claims that a screen was built or shipped. The names and account identifiers in the source screens are not reproduced in this copy. Turn the drafting notes off in the top bar to read the deck clean.</div>
+      <span class="sn st" style="--i:1"><i>01</i>J.P. Morgan Private Bank &middot; Intake Onboarding</span>
+      <div class="title st" style="--i:2"><h1>Helping advisors catch onboarding errors before review.</h1></div>
+      <p class="lead st" style="--i:3">I worked on an AI review step inside an advisor&rsquo;s account-opening workflow. It compared the information entered in Intake with documents and other records, then surfaced discrepancies for the advisor to check.</p>
+      <p class="lead st" style="--i:4">The aim was to catch problems before the case reached quality control. The advisor still had to review the evidence and decide what to change. The design covered the review itself and what happened around it: waiting for results, checking a recommendation, replacing a document, handling a failure and continuing to the next stage.</p>
+      <div class="facts st" style="--i:5">
+        <div><em>My role</em><b><span class="todo">[Exact role, the screens and decisions I owned, and the work owned by other people.]</span></b></div>
+        <div><em>Team</em><b><span class="todo">[Product, engineering, AI/model and operations partners.]</span></b></div>
+        <div><em>Timeline</em><b><span class="todo">[Start and end dates.]</span></b></div>
+        <div><em>Status</em><b><span class="todo">[Prototype, internal test, pilot or production release. The supplied flow refers to internal use and testing.]</span></b></div>
+      </div>
+      <figure class="st" style="--i:6; margin:30px 0 0">
+        <div class="panel tight"><a class="zoom" href="img/ob-review-accepted.webp"><img class="shot" src="img/ob-review-accepted.webp" alt="The review page in Intake: a banner, recommendations grouped by party with the accepted count visible, and the first card showing your input beside the AI recommendation" width="1400" height="1032"></a></div>
+        <figcaption>the review page: your input beside the AI recommendation, grouped by party, with the accepted count visible. click to zoom</figcaption>
+        <span class="todo scr">[SCREEN: Deck 2, review page with &ldquo;Your input&rdquo; beside &ldquo;AI recommendation&rdquo;, recommendations grouped by party and the accepted count visible. Use an approved full-screen image.]</span>
+      </figure>
+    </section>
+
+    <!-- ===== 02 THE PROBLEM ===== -->
+    <section id="problem" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>02</i>The problem</span>
+      <div class="split">
+        <div>
+          <h2 class="big st" style="--i:1">The problem was in the review queue.</h2>
+          <p class="lead st" style="--i:2">The project started with slow account-opening reviews. The analysis in the deck pointed to repetitive checks and a queue made worse by understaffing.</p>
+          <p class="lead st" style="--i:3">A reviewer had to spot differences between the information entered in the application and the supporting records. A name could differ from an identity document. An address document could be too old. A utility bill could be missing a postcode.</p>
+          <p class="lead st" style="--i:4">These are different problems. Some need a corrected value. Others need a new document. The design had to make that difference clear.</p>
+          <p class="lead st" style="--i:5">The goal was to catch these issues earlier, without making the advisor treat an AI suggestion as a verified fact.</p>
+        </div>
+        <div>
+          <div class="base st" style="--i:3">
+            <div><em>Simple case</em><div class="row"><b class="num">10</b><span>days, actual<br>against a 2 day target</span></div><div class="row"><b class="num">26%</b><span>of that time in QC</span></div></div>
+            <div><em>Complex case</em><div class="row"><b class="num">22</b><span>days, actual<br>against a 5 day target</span></div><div class="row"><b class="num">25%</b><span>of that time in QC</span></div></div>
+          </div>
+          <span class="todo scr st" style="--i:4">[SCREEN: Deck 1, &ldquo;Why AI review was the right lever&rdquo;. Replace the raw internal table with an employer-approved summary after checking the figures.]</span>
+          <span class="todo st" style="--i:5">[Baseline: Typical review time was ___ for ___ cases. Source: ___. Sample: ___. Period: ___. Working or calendar days: ___. Define whether this measures active review time, queue time or total turnaround.]</span>
+          <span class="todo st" style="--i:6">[Evidence for choosing this problem: What proportion of discrepancies came from these checks, and how often did they lead to a case being returned?]</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 03 SCOPE ===== -->
+    <section id="scope" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>03</i>Scope</span>
+      <h2 class="big st" style="--i:1">What the review could and could not do.</h2>
+      <div class="split" style="align-items:start">
+        <div>
+          <p class="lead st" style="--i:2">The flow sat inside an existing account-opening process. It came after the advisor had entered account and party details and before Prefill Review.</p>
+          <p class="lead st" style="--i:3">The design checked several sources. The flow names demographic records, documents in DocSuite and conversation data in Connect. Those checks could produce different kinds of recommendations.</p>
+          <p class="lead st" style="--i:4">The advisor could accept some suggested changes in Intake. Other records had to be changed elsewhere. The flow directed email and phone changes to Profile360 rather than allowing them in Intake.</p>
+          <p class="lead st" style="--i:5">The review also had to work when the AI was slow or failed. The flow included a way to retry or continue to Prefill Review without the AI review.</p>
+        </div>
+        <div>
+          <div class="srcs st" style="--i:3">
+            <div class="s in"><em>Entered in Intake</em><b>Account and party details</b><span>Names, roles, addresses, contact details and document codes for each party.</span></div>
+            <div class="vs">vs</div>
+            <div class="s"><em>Records</em><b>Demographic records</b><span>The existing record for each party.</span></div>
+            <div class="s"><em>Documents</em><b>DocSuite</b><span>Identity and address documents.</span></div>
+            <div class="s"><em>Conversations</em><b>Connect</b><span>Roles and contact details the client gave.</span></div>
+          </div>
+          <span class="todo st" style="--i:5">[Confirm: Which checks were required, which could be skipped, and whether skipping AI affected the later review.]</span>
+          <span class="todo st" style="--i:6">[Confirm: Which checks used a model, which used rules, and how the system decided that a discrepancy should be shown. Do not describe every check as generative AI unless that is accurate.]</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 04 OUTPUT FIRST ===== -->
+    <section id="output" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>04</i>Process</span>
+      <div class="split">
+        <div>
+          <h2 class="big st" style="--i:1">I started with the output, not the assistant.</h2>
+          <p class="lead st" style="--i:2">I looked at what the review would return before deciding how it should appear in the interface.</p>
+          <p class="lead st" style="--i:3">The output examples identified the party, the relevant section, the discrepancy and supporting detail. An expired identity document came with an expiry date. An incomplete address came with the missing part. An old address document came with its document date.</p>
+          <p class="lead st" style="--i:4">That gave the interface a clear job: show what was wrong, show what the system had compared and give the advisor an appropriate next action.</p>
+          <span class="todo st" style="--i:5">[Research method: Who I worked with to understand the output, which cases I reviewed, how many, and what I learned beyond the examples shown.]</span>
+        </div>
+        <div>
+          <table class="data st" style="--i:3">
+            <thead><tr><th>Party</th><th>Section</th><th>Discrepancy</th><th>Supporting detail</th></tr></thead>
+            <tbody>
+              <tr><td><b>Main client</b></td><td>ID proof</td><td>ID proof is expired</td><td>Passport expired on 31 Dec 2024</td></tr>
+              <tr><td><b>Main client</b></td><td>Address proof</td><td>Address proof does not show the full residential address</td><td>Missing postcode in the utility bill</td></tr>
+              <tr><td><b>Power of attorney</b></td><td>Address proof</td><td>Proof of address is not within the last 3 months</td><td>Utility bill dated 15 Nov 2023</td></tr>
+            </tbody>
+          </table>
+          <figcaption class="st" style="--i:4; margin-top:10px; font-family:'Patrick Hand',cursive; font-size:16px; color:var(--mid)">the output examples, with the sample names from the deck replaced by roles</figcaption>
+          <span class="todo scr st" style="--i:5">[SCREEN: Deck 1, &ldquo;Understanding AI model and its output&rdquo;. Show the approved output examples beside the review screen they informed. Do not publish the internal architecture diagram unless separately approved.]</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 05 ASSISTANT OR PAGE ===== -->
+    <section id="where" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>05</i>Process</span>
+      <h2 class="big st" style="--i:1">I explored an assistant and recommendations on the page.</h2>
+      <div class="split" style="align-items:start">
+        <div>
+          <p class="lead st" style="--i:2">An assistant could answer follow-up questions, change context and support several AI tasks in one place. It also had room for longer explanations.</p>
+          <p class="lead st" style="--i:3">But the comparison in the deck identified a problem: an extra window could cover the worklist or case details where the advisor needed to act.</p>
+          <p class="lead st" style="--i:4">An in-page approach kept the recommendation closer to the task. It could also leave content on the page for another user to see. Its limits were different: the content was preformatted, it did not support follow-up questions, and the layout needed to work whether a recommendation existed or not.</p>
+          <p class="lead st" style="--i:5">I explored both approaches. The detailed flow supplied here uses a review page with recommendations in the account-opening workflow.</p>
+          <span class="todo st" style="--i:6">[Confirm my final choice: Was the assistant dropped, deferred or kept for another use case? Who made the decision, and what evidence settled it?]</span>
+        </div>
+        <div>
+          <div class="cmp">
+            <div class="st" style="--i:2">
+              <h3>Assistant</h3>
+              <p class="sub">A separate window beside the page</p>
+              <em>For</em>
+              <ul><li>Follow-up questions, a change of context, several AI tasks in one place: summarise, suggest, explain.</li><li>Room for long answers.</li></ul>
+              <em>Against</em>
+              <ul><li>An extra window covers the worklist or case details where the advisor needs to act.</li></ul>
+            </div>
+            <div class="pick st" style="--i:4">
+              <h3>On the page</h3>
+              <p class="sub">Recommendations in the workflow</p>
+              <em>For</em>
+              <ul><li>A mark on the page shows when and how AI was involved.</li><li>Content stays on the page for other users to see.</li><li>Suits content the user does not have to ask for.</li></ul>
+              <em>Against</em>
+              <ul><li>No follow-up questions. The content is preformatted.</li><li>The layout needs space for content that may or may not be there.</li></ul>
+            </div>
+          </div>
+          <span class="todo scr st" style="--i:6">[SCREEN: Deck 1, &ldquo;Assistant UI connect coach&rdquo; versus &ldquo;In-Line&rdquo;. Show the two alternatives with the trade-offs, then the detailed review page from Deck 2.]</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 06 COMPARING VALUES ===== -->
+    <section id="compare" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>06</i>Process</span>
+      <h2 class="big st" style="--i:1">I tried different ways to compare the values.</h2>
+      <div class="split wide" style="align-items:start">
+        <div>
+          <p class="lead st" style="--i:2">I explored a summary table, a choice between the existing and suggested values, and a card with the input beside the recommendation.</p>
+          <p class="lead st" style="--i:3">The summary table put several differences in one place. The radio-button version made the choice explicit. The side-by-side card kept the discrepancy and the two values together.</p>
+          <p class="lead st" style="--i:4">The testing slide records two preferred options. One made the source of the information visible, described the discrepancy clearly and made accepting or rejecting easier to understand. The other took fewer clicks and made the input and AI suggestion easy to compare.</p>
+          <p class="lead st" style="--i:5">That was useful feedback, but it did not establish one clear winner on its own.</p>
+          <span class="todo st" style="--i:6">[Final decision: Which pattern I chose, what I kept from the other option, and why. Add one example of feedback that changed the design.]</span>
+        </div>
+        <figure class="st" style="--i:3">
+          <div class="tabs">
+            <div class="bar" role="tablist" aria-label="Three ways to compare the values">
+              <button role="tab" aria-selected="true">Summary table</button>
+              <button role="tab">A choice</button>
+              <button role="tab">A card</button>
+            </div>
+            <div class="pane on">
+              <div class="opt opt1 ui"><div class="inner">
+                <p style="font-size:12.5px;max-width:none;color:var(--ui-ink);margin:0 0 10px">This symbol <svg class="ai"><use href="#ai"/></svg> marks a value suggested by the AI review. Please review and complete before moving to the next step.</p>
+                <table>
+                  <thead><tr><th style="width:28px"></th><th>Field</th><th>Original</th><th>AI suggested <svg class="ai"><use href="#ai"/></svg></th><th>Actions</th></tr></thead>
+                  <tbody>
+                    <tr><td><input type="checkbox" class="chk" aria-label="Select row"></td><td>First name</td><td>Jane Smith</td><td>J. Smith</td><td><span class="ok">&#10003;</span> &nbsp; <span class="no">&#10005;</span></td></tr>
+                    <tr><td><input type="checkbox" class="chk" checked aria-label="Select row"></td><td>Date of birth</td><td>6 Sep 1989</td><td>8 Sep 1999</td><td><span class="field" style="min-width:110px;background:#fff8dc">Select &nbsp;&#9662;</span></td></tr>
+                    <tr><td><input type="checkbox" class="chk" checked aria-label="Select row"></td><td>Doc code</td><td>602</td><td>405</td><td><span class="ok">&#10003;</span> &nbsp; <span class="no">&#10005;</span></td></tr>
+                  </tbody>
+                </table>
+                <div style="margin-top:14px">
+                  <div class="row"><div><em>Original</em><b>Jane Smith</b></div><div><span class="lab">First name <svg class="ai"><use href="#ai"/></svg></span><span class="field">J. Smith</span></div><div><em>Issue</em><p>Party name does not match. ID proof shows &lsquo;J. Smith&rsquo;.</p></div><div><span class="btn">Accept</span></div></div>
+                  <div class="row"><div><em>Original</em><b>address.pdf</b></div><div><span class="link">Upload the latest address proof</span> <svg class="ai"><use href="#ai"/></svg></div><div><em>Discrepancy</em><p>Address proof is not within the last three months.</p></div><div><span class="btn dis">Accept</span></div></div>
+                </div>
+              </div></div>
+              <p class="why"><span class="vtag part">Preferred, in part</span><b>Several differences in one place.</b> Original and suggested side by side, with a tick or a cross per row. Fewer clicks, and the input and suggestion are easy to compare.</p>
+            </div>
+            <div class="pane">
+              <div class="opt opt2 ui"><div class="inner">
+                <div class="row">
+                  <div><span class="radio on"></span><span class="lab" style="display:inline">First name <svg class="ai"><use href="#ai"/></svg></span><div style="margin:6px 0 0 22px"><span class="field">J. Smith</span><div class="hint">Party name does not match. ID proof shows &lsquo;J. Smith&rsquo;.</div></div></div>
+                  <div class="orig"><span class="radio"></span><span class="lab" style="display:inline">First name</span><b style="margin-left:22px">Jane Smith</b></div>
+                </div>
+                <div class="row">
+                  <div><span class="radio"></span><span class="link">Upload the latest address proof</span> <svg class="ai"><use href="#ai"/></svg><div class="hint" style="margin-left:22px">Address proof is not within the last three months.</div></div>
+                  <div class="orig"><span class="radio"></span><span class="link">Address.pdf</span></div>
+                </div>
+              </div></div>
+              <p class="why"><span class="vtag no">Not preferred</span><b>A choice between the existing and suggested values.</b> A radio button makes the choice explicit, but the two values sit apart from the reason.</p>
+            </div>
+            <div class="pane">
+              <div class="opt opt3 ui"><div class="inner" style="padding:0;border:0;background:none">
+                <div class="rec">
+                  <div class="issue"><span>Party name does not match as ID proof shows &lsquo;J. Smith&rsquo;</span><input type="checkbox" class="chk" aria-label="Accept this recommendation"></div>
+                  <div class="cols">
+                    <div><h5>Your input</h5><dl><dt>First name:</dt><dd>Jane</dd><dt>Middle name:</dt><dd>-</dd><dt>Last name:</dt><dd>Smith</dd></dl></div>
+                    <div><h5 class="airec">AI recommendation <svg class="ai"><use href="#ai"/></svg></h5><dl><dt>First name:</dt><dd class="diff">J.</dd><dt>Middle name:</dt><dd>-</dd><dt>Last name:</dt><dd>Smith</dd></dl></div>
+                  </div>
+                </div>
+              </div></div>
+              <p class="why"><span class="vtag part">Preferred, in part</span><b>The input beside the recommendation.</b> The discrepancy and the two values stay together. Advisors said the description was clear and that accepting or rejecting was easy to understand, and asked to see the source.</p>
+            </div>
+          </div>
+          <span class="todo scr">[SCREEN: Deck 1, the summary table and &ldquo;Option 2&rdquo; / &ldquo;Option 3&rdquo; explorations, followed by &ldquo;Testing our assumptions&rdquo;. Keep the same discrepancy across the alternatives so the difference is easy to see.]</span>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ===== 07 ACTIONS ===== -->
+    <section id="actions" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>07</i>Process</span>
+      <h2 class="big st" style="--i:1">A recommendation needed an action, not just a warning.</h2>
+      <div class="split wide" style="align-items:start">
+        <div>
+          <p class="lead st" style="--i:2">The detailed flow separates a suggested value from a document problem.</p>
+          <p class="lead st" style="--i:3">For a field discrepancy, the advisor sees the current input next to the recommendation. For an expired or incomplete document, the action is to upload a replacement.</p>
+          <p class="lead st" style="--i:4">For email and phone discrepancies, the page explains that the change cannot be accepted in Intake and directs the advisor to Profile360.</p>
+          <p class="lead st" style="--i:5">This matters because the same &ldquo;Accept&rdquo; action would not solve all three problems. A new value, a new document and a change in another system need different paths.</p>
+          <span class="todo st" style="--i:6">[Confirm: Which of these action patterns I introduced, and which were existing product requirements.]</span>
+        </div>
+        <div class="ui">
+          <div class="rec st" style="--i:2">
+            <span class="tag">1. a new value</span>
+            <div class="issue"><span>Proof of address does not match the passport</span><input type="checkbox" class="chk" aria-label="Accept the suggested address"></div>
+            <div class="cols">
+              <div><h5>Your input</h5><dl><dt>City:</dt><dd>VT</dd><dt>Post code:</dt><dd>8411</dd></dl></div>
+              <div><h5 class="airec">AI recommendation <svg class="ai"><use href="#ai"/></svg></h5><dl><dt>City:</dt><dd class="diff">UT</dd><dt>Post code:</dt><dd class="diff">84111</dd></dl></div>
+            </div>
+          </div>
+          <div class="rec st" style="--i:3">
+            <span class="tag">2. a new document</span>
+            <div class="issue"><span>Passport expired on 31 Dec 2024</span><input type="checkbox" class="chk" aria-label="Accept: upload a new ID proof"></div>
+            <div class="cols">
+              <div><h5>Your input</h5><dl><dt>ID proof:</dt><dd><a href="#actions" onclick="return false">Doc code 041 Proof of ID</a></dd></dl></div>
+              <div><h5 class="airec">AI recommendation <svg class="ai"><use href="#ai"/></svg></h5><dl><dt>ID proof:</dt><dd><a href="#actions" onclick="return false">Upload correct ID proof</a></dd></dl></div>
+            </div>
+          </div>
+          <div class="rec st" style="--i:4">
+            <span class="tag">3. a change in another system</span>
+            <div class="issue"><span>Email address does not match conversation data</span><input type="checkbox" class="chk" disabled aria-label="Cannot accept here"></div>
+            <div class="cols">
+              <div><h5>Your input</h5><dl><dt>Email:</dt><dd>name17@example.com</dd></dl></div>
+              <div><h5 class="airec">AI recommendation <svg class="ai"><use href="#ai"/></svg></h5><dl><dt>Email:</dt><dd class="diff">name@example.com</dd></dl></div>
+            </div>
+            <div class="note"><i>!</i><span>You can not accept this recommendation as editing the email address is not allowed in Intake. To make changes, go to Profile360.</span></div>
+          </div>
+          <span class="todo scr st" style="--i:5">[SCREEN: Deck 2, field comparison, &ldquo;Upload correct ID proof&rdquo; or &ldquo;Upload correct address proof&rdquo;, and the Profile360 restriction. Show these as three examples of different actions, not three separate features.]</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 08 to 14 ONE ADVISOR JOURNEY ===== -->
+    <section id="journey" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>08</i>One advisor journey</span>
+      <div class="split wide">
+        <div>
+          <div class="steps7 st" style="--i:1"><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <span class="stepk st" style="--i:1"><i>1</i>Reach the review step</span>
+          <h2 class="big st" style="--i:2">The advisor completes the preceding account and party sections.</h2>
+          <p class="lead st" style="--i:3">The page shows their completion status and offers &ldquo;Next: AI review&rdquo;.</p>
+          <p class="lead st" style="--i:4">Source of Wealth status is shown per party. The examples include not required, submitted and rejected states. That status sits beside the account-opening work rather than being hidden inside the AI results.</p>
+          <span class="todo st" style="--i:5">[SCREEN NEEDED: How the advisor opens the ticket from the worklist. The supplied material does not establish this entry path.]</span>
+        </div>
+        <figure class="st" style="--i:3">
+          <div class="panel tight"><a class="zoom" href="img/ob-details.webp"><img class="shot" src="img/ob-details.webp" alt="The Intake page before the review: every account and party section marked complete, with Source of Wealth status shown for each party" width="1400" height="905" loading="lazy"></a></div>
+          <span class="todo scr">[SCREEN: Deck 2, Intake page immediately before &ldquo;Next: AI review&rdquo;, with account sections and per-party Source of Wealth status visible.]</span>
+        </figure>
+      </div>
+    </section>
+
+    <section id="journey2" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>09</i>One advisor journey</span>
+      <div class="split wide">
+        <div>
+          <div class="steps7 st" style="--i:1"><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+          <span class="stepk st" style="--i:1"><i>2</i>Know what is being checked</span>
+          <h2 class="big st" style="--i:2">Before the next stage, the page says what the review will do.</h2>
+          <p class="lead st" style="--i:3">It explains that AI will review the account and party details and that this may take up to two minutes.</p>
+          <p class="lead st" style="--i:4">The progress state names the work being done: preparing the Intake summary, checking demographics, checking documents and generating recommendations. Another version includes a conversation-data check.</p>
+          <span class="todo st" style="--i:5">[Confirm: Which progress steps belong to the final version, and whether they reflect real system progress or a fixed display sequence.]</span>
+        </div>
+        <figure class="st" style="--i:3">
+          <div class="panel tight"><a class="zoom" href="img/ob-progress.webp"><img class="shot" src="img/ob-progress.webp" alt="The progress state over the dimmed page: AI will review the account and party details, this may take up to two minutes, with each check listed" width="1400" height="1032" loading="lazy"></a></div>
+          <span class="todo scr">[SCREEN: Deck 2, progress state beginning &ldquo;Before moving to the next step&rdquo;.]</span>
+        </figure>
+      </div>
+    </section>
+
+    <section id="journey3" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>10</i>One advisor journey</span>
+      <div class="split wide">
+        <div>
+          <div class="steps7 st" style="--i:1"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
+          <span class="stepk st" style="--i:1"><i>3</i>Read the discrepancies</span>
+          <h2 class="big st" style="--i:2">The result page groups recommendations by party.</h2>
+          <p class="lead st" style="--i:3">It shows how many were found and how many have been accepted.</p>
+          <p class="lead st" style="--i:4">The advisor can compare their input with the suggested change. Examples include a name mismatch, an address mismatch and an additional party role found in conversation data.</p>
+          <p class="lead st" style="--i:5">The page asks the advisor to validate recommendations before making a decision.</p>
+        </div>
+        <figure class="st" style="--i:3">
+          <div class="panel tight"><a class="zoom" href="img/ob-review.webp"><img class="shot" src="img/ob-review.webp" alt="The result page: a banner, six recommendations found and none accepted, the first party expanded with two comparison cards and two more parties collapsed" width="1400" height="1032" loading="lazy"></a></div>
+          <span class="todo scr">[SCREEN: Deck 2, &ldquo;Found 6 recommendations&rdquo;, party groups and &ldquo;Accepted 0 recommendations&rdquo;. Six is an example in this screen, not a project result.]</span>
+        </figure>
+      </div>
+    </section>
+
+    <section id="journey4" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>11</i>One advisor journey</span>
+      <div class="split wide" style="align-items:start">
+        <div>
+          <div class="steps7 st" style="--i:1"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+          <span class="stepk st" style="--i:1"><i>4</i>Check the evidence and choose a change</span>
+          <h2 class="big st" style="--i:2">The advisor selects the changes they want to accept.</h2>
+          <p class="lead st" style="--i:3">The address examples compare the existing record with information from documents. A name discrepancy points to the identity document. The earlier tested design also includes a &ldquo;View source&rdquo; action.</p>
+          <p class="lead st" style="--i:4">The flow shows the accepted count increasing as selections are made. Try it on the rebuilt page on the right: the party count and the total follow each tick.</p>
+          <span class="todo st" style="--i:5">[Confirm: Could the advisor open the original document in the final version? How were conflicting sources handled? What happened to a recommendation they did not accept?]</span>
+          <span class="todo st" style="--i:6">[SCREEN NEEDED: Reject or leave a recommendation unchanged, with the effect on the case made clear. The earlier exploration shows accept/reject actions, but the final behaviour is not established by the text extract.]</span>
+        </div>
+        <div>
+          <figure class="st" style="--i:3">
+            <div class="panel tight">
+              <div class="ui" id="demo">
+                <div class="banner"><svg class="ai"><use href="#ai"/></svg><div><b>AI has analysed your data and provided tailored suggestions.</b><span>AI has scanned your data through various sources and below are the recommendations, validate them with your expertise before making final decisions.</span></div></div>
+                <div class="found"><span>Found <i>6</i> recommendations</span><span class="acc">Accepted <b data-total>0</b> recommendations</span></div>
+                <div class="party" data-group><span><b>Main client</b></span><small><b data-count>0</b> accepted</small></div>
+                <div class="rec">
+                  <div class="issue"><span>Party name does not match as ID proof shows &lsquo;J. Smith&rsquo;</span><input type="checkbox" class="chk" aria-label="Accept: party name"></div>
+                  <div class="cols">
+                    <div><h5>Your input</h5><dl><dt>First name:</dt><dd>Jane</dd><dt>Last name:</dt><dd>Smith</dd></dl></div>
+                    <div><h5 class="airec">AI recommendation <svg class="ai"><use href="#ai"/></svg></h5><dl><dt>First name:</dt><dd class="diff">J.</dd><dt>Last name:</dt><dd>Smith</dd></dl></div>
+                  </div>
+                </div>
+                <div class="rec">
+                  <div class="issue"><span>Proof of address does not match the passport</span><input type="checkbox" class="chk" aria-label="Accept: proof of address"></div>
+                  <div class="cols">
+                    <div><h5>Your input</h5><dl><dt>City:</dt><dd>VT</dd><dt>Post code:</dt><dd>8411</dd></dl></div>
+                    <div><h5 class="airec">AI recommendation <svg class="ai"><use href="#ai"/></svg></h5><dl><dt>City:</dt><dd class="diff">UT</dd><dt>Post code:</dt><dd class="diff">84111</dd></dl></div>
+                  </div>
+                </div>
+                <div class="party" data-group><span><b>Related party</b></span><small><b data-count>0</b> accepted</small></div>
+                <div class="rec">
+                  <div class="issue"><span>Additional role &ldquo;Beneficiary owner&rdquo; has been found in conversation data</span><input type="checkbox" class="chk" aria-label="Accept: additional role"></div>
+                  <div class="cols">
+                    <div><h5>Your input</h5><dl><dt>Role:</dt><dd>Director</dd></dl></div>
+                    <div><h5 class="airec">AI recommendation <svg class="ai"><use href="#ai"/></svg></h5><dl><dt>Role:</dt><dd class="diff">Director and Beneficiary owner</dd></dl></div>
+                  </div>
+                </div>
+                <div class="rec">
+                  <div class="issue"><span>Phone number does not match conversation data</span><input type="checkbox" class="chk" disabled aria-label="Cannot accept: phone number"></div>
+                  <div class="cols">
+                    <div><h5>Your input</h5><dl><dt>Phone no:</dt><dd>55553</dd></dl></div>
+                    <div><h5 class="airec">AI recommendation <svg class="ai"><use href="#ai"/></svg></h5><dl><dt>Phone no:</dt><dd class="diff">34343</dd></dl></div>
+                  </div>
+                  <div class="note"><i>!</i><span>You can not accept this recommendation as editing the phone number is not allowed in Intake. To make changes, go to Profile360.</span></div>
+                </div>
+                <div class="party" data-group><span><b>Power of attorney</b></span><small><b data-count>0</b> accepted</small></div>
+                <div class="rec">
+                  <div class="issue"><span>Passport expired on 31 Dec 2024</span><input type="checkbox" class="chk" aria-label="Accept: upload ID proof"></div>
+                  <div class="cols">
+                    <div><h5>Your input</h5><dl><dt>ID proof:</dt><dd><a href="#journey4" onclick="return false">Doc code 041 Proof of ID</a></dd></dl></div>
+                    <div><h5 class="airec">AI recommendation <svg class="ai"><use href="#ai"/></svg></h5><dl><dt>ID proof:</dt><dd><a href="#journey4" onclick="return false">Upload correct ID proof</a></dd></dl></div>
+                  </div>
+                </div>
+                <div class="rec">
+                  <div class="issue"><span>Missing post code in the utility bill</span><input type="checkbox" class="chk" aria-label="Accept: upload address proof"></div>
+                  <div class="cols">
+                    <div><h5>Your input</h5><dl><dt>Address proof:</dt><dd><a href="#journey4" onclick="return false">Doc code 045 Proof of address</a></dd></dl></div>
+                    <div><h5 class="airec">AI recommendation <svg class="ai"><use href="#ai"/></svg></h5><dl><dt>Address proof:</dt><dd><a href="#journey4" onclick="return false">Upload correct address proof</a></dd></dl></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <figcaption>rebuilt from the detailed flow, with roles in place of names. tick a box and the counts follow</figcaption>
+          </figure>
+          <figure class="st" style="--i:4; margin-top:16px">
+            <div class="panel tight"><a class="zoom" href="img/ob-sources.webp"><img class="shot" src="img/ob-sources.webp" alt="An address recommendation offering four versions to choose from: the proof of address, the existing record, the passport and the utility bill" width="1400" height="1031" loading="lazy"></a></div>
+            <span class="todo scr">[SCREEN: Deck 2, address comparison using the existing record, passport and utility bill; then a selected recommendation with the accepted count updated.]</span>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section id="journey5" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>12</i>One advisor journey</span>
+      <div class="split wide">
+        <div>
+          <div class="steps7 st" style="--i:1"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+          <span class="stepk st" style="--i:1"><i>5</i>Replace a document when a value change is not enough</span>
+          <h2 class="big st" style="--i:2">If a document has expired or lacks required information, the flow asks for a replacement.</h2>
+          <p class="lead st" style="--i:3">The upload dialog supports dropping a file or selecting one. It states that only PDF files are accepted and shows upload progress.</p>
+          <span class="todo st" style="--i:4">[SCREEN NEEDED: Unsupported file type, failed upload, retry and the state after a replacement document is checked. The supplied text shows a PDF restriction, not the complete failure behaviour.]</span>
+        </div>
+        <div>
+          <figure class="st" style="--i:3">
+            <div class="panel tight">
+              <div class="shots2" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)">
+                <a class="zoom" href="img/ob-upload-1.webp"><img class="shot" src="img/ob-upload-1.webp" alt="Upload document dialog with a drop area, a note that only PDF is accepted, and Upload and Cancel buttons" width="535" height="420" loading="lazy"></a>
+                <a class="zoom" href="img/ob-upload-2.webp"><img class="shot" src="img/ob-upload-2.webp" alt="Upload document dialog listing the uploaded file with a Delete link" width="535" height="420" loading="lazy"></a>
+              </div>
+            </div>
+            <figcaption>the upload dialog, empty and with the file in</figcaption>
+          </figure>
+          <figure class="st" style="--i:4; margin-top:14px">
+            <div class="panel tight"><a class="zoom" href="img/ob-upload-done.webp"><img class="shot" src="img/ob-upload-done.webp" alt="After the upload: the expired passport recommendation shows the uploaded file where the upload link was" width="1400" height="1032" loading="lazy"></a></div>
+            <span class="todo scr">[SCREEN: Deck 2, missing-postcode or expired-ID recommendation, followed by the replacement-document upload dialog.]</span>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section id="journey6" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>13</i>One advisor journey</span>
+      <div class="split wide">
+        <div>
+          <div class="steps7 st" style="--i:1"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+          <span class="stepk st" style="--i:1"><i>6</i>Finish the AI review</span>
+          <h2 class="big st" style="--i:2">After the selected recommendations are accepted, the flow confirms completion and points to Prefill Review.</h2>
+          <p class="lead st" style="--i:3">A separate state covers a review that returns no recommendations. It also allows the advisor to proceed.</p>
+          <span class="todo st" style="--i:4">[Confirm: When were changes saved? Was there a final confirmation before applying them? Could the advisor undo a change?]</span>
+          <span class="todo st" style="--i:5">[SCREEN NEEDED: Prefill Review after the handoff, showing how accepted changes appear.]</span>
+        </div>
+        <figure class="st" style="--i:3">
+          <div class="panel tight">
+            <div class="shots2" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)">
+              <a class="zoom" href="img/ob-done.webp"><img class="shot" src="img/ob-done.webp" alt="A dialog: AI review completed, the selected recommendations were accepted, the ticket will move to Prefill Review, with a Proceed button" width="1400" height="1032" loading="lazy"></a>
+              <a class="zoom" href="img/ob-none.webp"><img class="shot" src="img/ob-none.webp" alt="The review page with a tick and the message that the AI review completed with no recommendations" width="1400" height="1032" loading="lazy"></a>
+            </div>
+          </div>
+          <figcaption>completion after accepted recommendations, beside completion with none</figcaption>
+          <span class="todo scr">[SCREEN: Deck 2, completion after selected recommendations are accepted, beside completion with no recommendations.]</span>
+        </figure>
+      </div>
+    </section>
+
+    <section id="journey7" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>14</i>One advisor journey</span>
+      <div class="split wide">
+        <div>
+          <div class="steps7 st" style="--i:1"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+          <span class="stepk st" style="--i:1"><i>7</i>Continue when the AI cannot finish</span>
+          <h2 class="big st" style="--i:2">The slow-review state gives the advisor a choice: wait or proceed without AI review.</h2>
+          <p class="lead st" style="--i:3">The failure example identifies a failed demographics check and offers retry, skip to Prefill Review or quit. It makes the unfinished review visible rather than presenting it as complete.</p>
+          <span class="todo st" style="--i:4">[Confirm: Were partially completed checks retained? Were skipped or failed checks visible to the next reviewer? Could the advisor return to them later?]</span>
+          <span class="todo st" style="--i:5">[SCREEN NEEDED: Leave and return to a partly completed review, preserving the advisor&rsquo;s work. A &ldquo;Save and close&rdquo; label appears in the material, but the return behaviour is not shown.]</span>
+        </div>
+        <figure class="st" style="--i:3">
+          <div class="panel tight">
+            <div class="shots2" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)">
+              <a class="zoom" href="img/ob-slow.webp"><img class="shot" src="img/ob-slow.webp" alt="A dialog: AI review taking longer than expected, with the choice to wait or proceed without the AI review" width="1400" height="1032" loading="lazy"></a>
+              <a class="zoom" href="img/ob-failed.webp"><img class="shot" src="img/ob-failed.webp" alt="The progress list with the party demographics check marked failed, and the options to retry, skip to Prefill Review or quit" width="1400" height="1032" loading="lazy"></a>
+            </div>
+          </div>
+          <figcaption>slower than expected, and a failed check</figcaption>
+          <span class="todo scr">[SCREEN: Deck 2, &ldquo;AI review taking longer than expected&rdquo; and &ldquo;Party demographics failed&rdquo;.]</span>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ===== 15 CRAFT ===== -->
+    <section id="craft" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>15</i>Craft</span>
+      <h2 class="big st" style="--i:1">The craft was in making a dense review readable.</h2>
+      <div class="split wide" style="align-items:start">
+        <div>
+          <p class="lead st" style="--i:2">The design had to sit inside a detailed account-opening page. Client context, account stages and party information were already present.</p>
+          <p class="lead st" style="--i:3">The review explorations use repeated comparison patterns rather than a different layout for each discrepancy. The current value, suggested value, explanation and action have distinct places. The detailed flow also groups recommendations by party and keeps an accepted count visible.</p>
+          <p class="lead st" style="--i:4">The document examples need more room than a simple field comparison. The design gives them a different action rather than forcing them into the same value-edit pattern.</p>
+          <span class="todo st" style="--i:5">[Design-system contribution: Name the existing components I reused, the components I adapted, and any new pattern I contributed. Include the before/after component and the reason for the change. The decks do not identify the system or establish that I created these components.]</span>
+          <span class="todo st" style="--i:6">[Craft detail: Add one real decision about density, spacing, type, grouping or action hierarchy, with two versions and the reason I chose one.]</span>
+          <span class="todo st" style="--i:7">[Verification needed: Keyboard operation, focus order, non-colour status cues, readable document comparisons and the behaviour of long party names. Do not claim these were tested without evidence.]</span>
+        </div>
+        <div>
+          <figure class="st" style="--i:3">
+            <div class="panel tight"><a class="zoom" href="img/ob-locked.webp"><img class="shot" src="img/ob-locked.webp" alt="The full review page with the client context at the top, the account stages on the left, and two recommendation cards with their restriction notes" width="1400" height="1032" loading="lazy"></a></div>
+            <figcaption>the full page: client context, stages and parties around the review</figcaption>
+          </figure>
+          <figure class="st ui" style="--i:4; margin-top:14px">
+            <div class="rec">
+              <div class="issue"><span>Proof of address does not match the passport</span><input type="checkbox" class="chk" checked aria-label="Accepted"></div>
+              <div class="cols">
+                <div><h5>Your input</h5><dl><dt>Address line 1:</dt><dd>2300 Buckwheat Ave</dd><dt>City:</dt><dd>VT</dd><dt>Post code:</dt><dd>8411</dd></dl></div>
+                <div><h5 class="airec">AI recommendation <svg class="ai"><use href="#ai"/></svg></h5><dl><dt>Address line 1:</dt><dd>2300 Buckwheat Ave</dd><dt>City:</dt><dd class="diff">UT</dd><dt>Post code:</dt><dd class="diff">84111</dd></dl></div>
+              </div>
+            </div>
+            <figcaption style="font-family:'Patrick Hand',cursive;font-size:16px;color:var(--mid);margin-top:10px">a close-up of one comparison: current value, suggested value, explanation and action each have a place</figcaption>
+            <span class="todo scr">[SCREEN: An approved full review page, followed by a close-up of one comparison. Keep enough of the surrounding page to show navigation and context.]</span>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 16 TESTING ===== -->
+    <section id="testing" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>16</i>Testing</span>
+      <h2 class="big st" style="--i:1">What testing told me.</h2>
+      <div class="split" style="align-items:start">
+        <div>
+          <p class="lead st" style="--i:2">The testing slide says users agreed that the AI use case could help address data inconsistencies in Intake 2.0.</p>
+          <p class="lead st" style="--i:3">Their feedback on the preferred options was specific. They wanted to see where the information came from, understand the discrepancy, compare their input with the suggestion and act without extra clicks.</p>
+          <p class="lead st" style="--i:4">That supports the direction of the review interface. It does not show that review time fell or that the model detected discrepancies accurately.</p>
+          <p class="lead st" style="--i:5">The detailed flow also includes a recommendation-rating prompt.</p>
+          <span class="todo st" style="--i:6">[Confirm: Was feedback collected during a pilot? What did it ask, who reviewed it, and did it lead to a product or model change?]</span>
+        </div>
+        <div>
+          <ul class="ways st" style="--i:3; grid-template-columns: 1fr 1fr">
+            <li><span class="cell">1</span><b>Preferred: the card list grouped by party</b><p>Shows where the inputted information is from. Clear and concise discrepancy description. Clear to accept and reject.</p></li>
+            <li><span class="cell">2</span><b>Preferred: issue, current, suggested, accept</b><p>Fewer clicks to select an option. Clearly see your input against the AI suggestion.</p></li>
+          </ul>
+          <span class="todo st" style="--i:4">[Method: Number and roles of participants, regions, session format, tasks, prototype fidelity and date.]</span>
+          <span class="todo st" style="--i:5">[Iteration: The exact design before testing, what happened in the session, the change I made and what a follow-up check showed.]</span>
+          <span class="todo scr st" style="--i:6">[SCREEN: Deck 1, &ldquo;Testing our assumptions&rdquo;, paired with the relevant changed screen from Deck 2. Confirm that it is genuinely the next iteration before labelling it before/after.]</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 17 WHAT WAS BUILT ===== -->
+    <section id="built" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>17</i>Status</span>
+      <h2 class="big st" style="--i:1">What was built, and what is still unconfirmed.</h2>
+      <div class="split" style="align-items:start">
+        <div>
+          <p class="lead st" style="--i:2">The supplied material shows design work for the review page, comparisons, selective acceptance, document replacement, restrictions on editing records, completion, no-result, slow-review, failure and feedback states.</p>
+          <p class="lead st" style="--i:3">It does not establish which of those states reached production. The terms screen refers to internal use and testing.</p>
+          <span class="todo scr st" style="--i:4">[SCREEN: Employer-approved implementation screenshot, if available. Label a prototype as a prototype.]</span>
+        </div>
+        <ul class="fills st" style="--i:3">
+          <li><b>Shipped</b><span class="todo">[Exact functionality, launch date, audience and regions.]</span></li>
+          <li><b>Pilot or test only</b><span class="todo">[Exact scope, dates and participants.]</span></li>
+          <li><b>Deferred</b><span class="todo">[Items deliberately left out and the reason for each.]</span></li>
+          <li><b>My handoff</b><span class="todo">[What I delivered and how I worked with engineering to check the implementation.]</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== 18 WHAT CHANGED ===== -->
+    <section id="changed" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>18</i>Outcome</span>
+      <h2 class="big st" style="--i:1">What changed.</h2>
+      <div class="split" style="align-items:start">
+        <div>
+          <p class="lead st" style="--i:2">The material supports a design outcome: a review flow that exposes discrepancies and lets the advisor decide how to respond. It also records qualitative support for the use case and for two presentation options.</p>
+          <p class="lead st" style="--i:3">It does not contain a verified post-release business outcome. I would keep that distinction clear.</p>
+          <span class="todo st" style="--i:4">[If no outcome data exists: Replace the empty metrics with the actual pilot learning and the limits of that evidence. Do not use recommendation counts from the sample UI as impact numbers.]</span>
+        </div>
+        <ul class="fills st" style="--i:3">
+          <li><b>Outcome 1</b><span class="todo">[Review time changed from ___ to ___. Method: source ___; sample ___; period ___; active versus elapsed time ___; working versus calendar days ___; comparable case types ___.]</span></li>
+          <li><b>Outcome 2</b><span class="todo">[Cases returned for these discrepancies changed from ___ to ___. Method: source ___; denominator ___; baseline and follow-up periods ___; definition of a returned case ___.]</span></li>
+          <li><b>Safety result</b><span class="todo">[Incorrect recommendations, missed discrepancies or inappropriate accepted changes were ___. Method: reviewer ___; labelled sample ___; period ___; definition ___. Choose a measure that was actually collected.]</span></li>
+          <li><b>Attribution</b><span class="todo">[Other changes made during the same period, including staffing, process or model changes. Explain what the evidence can and cannot attribute to the design.]</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== 19 NEXT ===== -->
+    <section id="next" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>19</i>Reflection</span>
+      <h2 class="big st" style="--i:1">What I would change next.</h2>
+      <div class="grid3">
+        <div class="t st" style="--i:2">
+          <span class="lbl">Proposed reflection, to approve</span>
+          <h3>Test whether advisors inspect the evidence.</h3>
+          <p>I would test whether advisors inspect the evidence before accepting a recommendation. Preference for a layout does not tell me whether it helps them catch a wrong suggestion.</p>
+        </div>
+        <div class="t st" style="--i:3">
+          <span class="lbl">Proposed reflection, to approve</span>
+          <h3>Test the cases that do not fit a simple comparison.</h3>
+          <p>Two conflicting documents, a partially completed review and a change that must be made in another system.</p>
+        </div>
+        <div class="t st" style="--i:4">
+          <span class="lbl">My actual reflection</span>
+          <span class="todo" style="margin:0">[One decision I would change, why, and what I would do differently. Use a real example from this project.]</span>
+        </div>
+      </div>
+      <div class="st" style="--i:5; margin-top:28px">
+        <h3 style="font-size:15px;margin-bottom:6px">AI in my design process</h3>
+        <p class="lead">The product used AI to identify possible discrepancies. That is separate from how I used AI while designing it.</p>
+        <span class="todo">[If I used AI in my process: Tool ___; task ___; what it produced ___; what I checked or changed ___; how I protected internal data ___.]</span>
+        <span class="todo">[If I did not use AI in my process, cut this section. The decks do not establish that I used AI to research, write, prototype or code.]</span>
+      </div>
+    </section>
+
+    <!-- ===== 20 QUESTIONS ===== -->
+    <section id="questions" class="slide" data-play>
+      <span class="sn st" style="--i:0"><i>20</i>To finish</span>
+      <h2 class="big st" style="--i:1">Questions to finish this case study.</h2>
+      <ol class="qs st" style="--i:2">
+        <li>What did I personally own, and what did the team own?</li>
+        <li>Was this a prototype, a pilot or a production release? Which states were implemented?</li>
+        <li>What is the correct baseline? The source table mixes percentages and durations. What are the source, sample and time definitions?</li>
+        <li>How did I establish that these discrepancies were worth addressing before QC? Which were repetitive or low risk, and according to whom?</li>
+        <li>Which checks used AI, which used rules, and what sources were actually available?</li>
+        <li>Who took part in testing? What tasks did they do? Which final pattern did I choose and why?</li>
+        <li>What did I change because of testing? Is the detailed Intake flow the version after that test?</li>
+        <li>What happened to rejected or unselected recommendations? Could an accepted change be undone?</li>
+        <li>What happened after document replacement, a skipped check or a partial failure? Could the advisor return without losing work?</li>
+        <li>What did I add or adapt in the design system? What visual alternatives did I try?</li>
+        <li>What outcomes were measured? How did the team check model errors and inappropriate acceptance?</li>
+        <li>Which text and screens have explicit employer approval for external use?</li>
+      </ol>
+      <div class="next st" style="--i:3">
+        <span class="lbl">Next case study</span>
+        <a href="sow.html">Source of Wealth: a KYC tool for the same advisors &rarr;</a>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="deckbar" aria-label="Slide controls">
+  <span class="hintk">&larr; &rarr; keys</span>
+  <span><b id="deckCur">01</b> / <span id="deckAll">20</span></span>
+  <button id="deckPrev" aria-label="Previous slide">&uarr;</button>
+  <button id="deckNext" aria-label="Next slide">&darr;</button>
+</div>
+
+<script src="casestudy.js"></script>
+<script>
+// A slide plays its points as soon as a sliver of it is on screen. The shared
+// observer waits for 35% of an element, which a slide taller than the screen
+// never reaches, so the slides get their own.
+(() => {
+  const slides = [...document.querySelectorAll('.slide[data-play]')];
+  const io = new IntersectionObserver((es, obs) => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    e.target.classList.add('play'); obs.unobserve(e.target);
+  }), { threshold: 0.06 });
+  slides.forEach(s => io.observe(s));
+  addEventListener('load', () => setTimeout(() => slides.forEach(s => { const r = s.getBoundingClientRect(); if (r.bottom > 0 && r.top < innerHeight) s.classList.add('play'); }), 300));
+})();
+
+// Drafting notes on or off, remembered for this browser.
+(() => {
+  const t = document.getElementById('notesToggle');
+  let saved = null; try { saved = localStorage.getItem('ob-notes'); } catch (e) {}
+  if (saved === 'off') t.checked = false;
+  const apply = () => { document.documentElement.classList.toggle('notes-off', !t.checked); try { localStorage.setItem('ob-notes', t.checked ? 'on' : 'off'); } catch (e) {} };
+  t.addEventListener('change', apply); apply();
+})();
+
+// The deck: which slide is on screen, the counter, the arrow keys and the buttons.
+(() => {
+  const slides = [...document.querySelectorAll('.slide')];
+  const cur = document.getElementById('deckCur'), all = document.getElementById('deckAll');
+  const prev = document.getElementById('deckPrev'), next = document.getElementById('deckNext');
+  all.textContent = slides.length;
+  const soft = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let i = 0;
+  const docTop = el => el.getBoundingClientRect().top + scrollY;
+  const setIdx = n => {
+    i = n;
+    cur.textContent = String(n + 1).padStart(2, '0');
+    prev.disabled = n === 0; next.disabled = n === slides.length - 1;
+  };
+  const go = n => {
+    n = Math.max(0, Math.min(slides.length - 1, n));
+    slides[n].scrollIntoView({ behavior: soft ? 'auto' : 'smooth', block: 'start' });
+    history.replaceState(null, '', '#' + slides[n].id);
+  };
+  prev.addEventListener('click', () => go(i - 1));
+  next.addEventListener('click', () => go(i + 1));
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'button') return;
+    if (document.querySelector('.lb:not([hidden])')) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey)) { e.preventDefault(); go(i + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || (e.key === ' ' && e.shiftKey)) { e.preventDefault(); go(i - 1); }
+    else if (e.key === 'Home') { e.preventDefault(); go(0); }
+    else if (e.key === 'End') { e.preventDefault(); go(slides.length - 1); }
+  });
+  if (typeof view !== 'undefined') {
+    view.on((top, height) => {
+      let best = 0;
+      slides.forEach((s, k) => { if (docTop(s) <= top + height * 0.4) best = k; });
+      if (best !== i) setIdx(best);
+    });
+  }
+  setIdx(0);
+
+  // the rail and the slide controls go light over the dark opening
+  if (typeof view !== 'undefined') {
+    const links = [...document.querySelectorAll('.rail a')];
+    const darks = slides.filter(s => s.classList.contains('dark'));
+    view.on(() => {
+      const boxes = darks.map(b => { const r = b.getBoundingClientRect(); const t = r.top + scrollY; return [t, t + r.height]; });
+      links.forEach(a => {
+        const r = a.getBoundingClientRect(); const mid = r.top + scrollY + r.height / 2;
+        a.classList.toggle('over-dark', boxes.some(([t, b]) => mid >= t && mid <= b));
+      });
+    });
+  }
+})();
+
+// The rebuilt review page: a tick accepts a recommendation, and the counts follow.
+(() => {
+  const demo = document.getElementById('demo');
+  if (!demo) return;
+  const total = demo.querySelector('[data-total]');
+  const update = () => {
+    let all = 0;
+    demo.querySelectorAll('[data-group]').forEach(g => {
+      let n = 0, el = g.nextElementSibling;
+      while (el && !el.hasAttribute('data-group')) {
+        const c = el.querySelector('.chk');
+        const on = !!(c && c.checked);
+        if (on) n++;
+        el.classList.toggle('on', on);
+        el = el.nextElementSibling;
+      }
+      g.querySelector('[data-count]').textContent = n;
+      all += n;
+    });
+    total.textContent = all;
+  };
+  demo.addEventListener('change', update);
+  update();
+})();
+document.querySelectorAll('.rec .chk').forEach(c => c.addEventListener('change', () => c.closest('.rec').classList.toggle('on', c.checked)));
+</script>
+<script src="smooth.js"></script>
+</body>
+</html>

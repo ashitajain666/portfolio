@@ -8,7 +8,8 @@ Ashita Jain's portfolio. Plain HTML and CSS, no build step.
 | `about.html` | About |
 | `connectlab.html` | MiDigiWorld case study |
 | `servicenow.html` | ServiceNow MITRE ATT&CK case study |
-| `jpm.html` | JPMorgan Chase case study (gated) |
+| `sow.html` | JPMorgan Chase Source of Wealth case study (gated); `jpm.html` redirects to it |
+| `onboarding.html` | JPMorgan Chase onboarding AI review case study, as a slide deck. Draft: not gated or linked yet |
 | `casestudy.css` | Shared case study styles |
 | `img/` | Photos and screenshots |
 | `Ashita-Jain-Resume.pdf` | Resume, linked from the nav |
